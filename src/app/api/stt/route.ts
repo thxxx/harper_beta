@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@deepgram/sdk";
+// import { createClient } from "@deepgram/sdk";
 
-const deepgram = createClient("");
+// const deepgram = createClient("");
 
 export async function POST(req: Request) {
   if (req.method !== "POST") {
@@ -21,31 +21,31 @@ export async function POST(req: Request) {
     console.log("audioBuffer", audioBuffer.length / 16000);
 
     // 2) Deepgram에 raw linear16 + sample_rate 명시
-    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-      audioBuffer,
-      {
-        model: "nova-3",
-        smart_format: true,
-        language: "ko",
-        encoding: "linear16",
-        sample_rate: 16000,
-        channels: 1,
-      }
-    );
-    const transcript =
-      result?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+    // const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+    //   audioBuffer,
+    //   {
+    //     model: "nova-3",
+    //     smart_format: true,
+    //     language: "ko",
+    //     encoding: "linear16",
+    //     sample_rate: 16000,
+    //     channels: 1,
+    //   }
+    // );
+    // const transcript =
+    //   result?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
 
-    console.log(
-      "result",
-      result?.results?.channels?.[0]?.alternatives?.[0]?.paragraphs
-    );
-    console.log("transcript", transcript);
-    console.log("error", error);
+    // console.log(
+    //   "result",
+    //   result?.results?.channels?.[0]?.alternatives?.[0]?.paragraphs
+    // );
+    // console.log("transcript", transcript);
+    // console.log("error", error);
 
     return NextResponse.json(
       {
-        transcript,
-        error,
+        transcript: "",
+        error: "",
       },
       { status: 200 }
     );
