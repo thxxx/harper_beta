@@ -85,7 +85,7 @@ export class StreamingAudioPlayer {
     b64: string,
     mime: "audio/mpeg" | "audio/wav" = "audio/mpeg"
   ) {
-    const data = base64ToUint8Array(b64);
+    const data = base64ToUint8Array(b64) as any;
     const blob = new Blob([data], { type: mime });
     const url = URL.createObjectURL(blob);
     this.q.push({ url });
