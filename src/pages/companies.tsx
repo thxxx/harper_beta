@@ -4,8 +4,32 @@ import { Ampersand, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
 import Animate from "@/components/landing/Animate";
 import Header from "@/components/landing/Header";
-import { isValidEmail } from ".";
 import { supabase } from "@/lib/supabase";
+
+const isValidEmail = (email: string): boolean => {
+  const trimmed = email.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(trimmed)) return false;
+
+  const personalDomains = [
+    "gmail.com",
+    "naver.com",
+    "daum.net",
+    "daum.com",
+    "hanmail.net",
+    "yahoo.com",
+    "outlook.com",
+    "icloud.com",
+    "proton.me",
+  ];
+
+  const domain = trimmed.split("@")[1].toLowerCase();
+
+  // 3. 개인용 이메일인지 체크
+  if (personalDomains.includes(domain)) return false;
+
+  return true;
+};
 
 export default function CompanyPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +50,7 @@ export default function CompanyPage() {
     setUploading(true);
     if (!isValidEmail(email)) {
       showToast({
-        message: "Please enter a valid email",
+        message: "유효한 회사 이메일을 입력해주세요.",
         variant: "white",
       });
       setUploading(false);
@@ -94,6 +118,8 @@ export default function CompanyPage() {
                   <div className="flex flex-col text-xs sm:text-sm">
                     <label className="mb-1 text-xgray700">이메일</label>
                     <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       type="email"
                       className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm"
                     />
@@ -102,6 +128,8 @@ export default function CompanyPage() {
                     <label className="mb-1 text-xgray700">회사 명</label>
                     <input
                       type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
                       className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm"
                     />
                   </div>
@@ -115,6 +143,8 @@ export default function CompanyPage() {
                   <textarea
                     rows={3}
                     className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm resize-none"
+                    value={expect}
+                    onChange={(e) => setExpect(e.target.value)}
                   />
                 </div>
 
