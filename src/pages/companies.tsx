@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import "../globals.css";
 import { Ampersand, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
-import router from "next/router";
 import Animate from "@/components/landing/Animate";
-import { motion } from "framer-motion";
 import Header from "@/components/landing/Header";
-import { isValidEmail } from "./cand";
+import { isValidEmail } from ".";
 import { supabase } from "@/lib/supabase";
 
 export default function CompanyPage() {
