@@ -87,7 +87,6 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
           : "border-xopp/15 bg-xopp/10 text-opp/90",
         "",
       ].join(" ")}
-      role="status"
       aria-live="polite"
     >
       {Icon ? <Icon className="h-4 w-4 shrink-0 opacity-90" /> : null}
