@@ -4,6 +4,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { setToast, ToastOptions } from "./toast";
 import { CheckCircle2, XCircle, X } from "lucide-react";
+import Animate from "../landing/Animate";
 
 type Item = {
   id: string;
@@ -71,9 +72,12 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
       : null;
 
   return (
-    <div
+    <Animate
+      duration={0.3}
+      isSpring={true}
+      triggerOnce={true}
       className={[
-        "pointer-events-auto flex items-center gap-2 rounded-full border px-3 py-2 text-sm shadow-lg backdrop-blur",
+        "pointer-events-auto flex items-center gap-2 rounded-full border px-3 py-2 text-xs sm:text-sm shadow-lg backdrop-blur",
         item.variant === "success"
           ? "border-green-400/20 bg-green-400/10 text-green-100"
           : item.variant === "error"
@@ -81,7 +85,7 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
           : item.variant === "white"
           ? "border-white/100 bg-white/80 text-black"
           : "border-xopp/15 bg-xopp/10 text-opp/90",
-        "transition-all duration-500",
+        "",
       ].join(" ")}
       role="status"
       aria-live="polite"
@@ -95,6 +99,6 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
       >
         <X className="h-4 w-4" />
       </button> */}
-    </div>
+    </Animate>
   );
 }

@@ -3,7 +3,7 @@
 import GridSectionLayout from "@/components/landing/GridSectionLayout";
 import { ArrowRight, ChevronRight, LoaderCircle } from "lucide-react";
 import router from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { showToast } from "@/components/toast/toast";
@@ -13,21 +13,8 @@ import {
   WaitlistExtraInfoModal,
 } from "@/components/Modal/WaitlistInfoModal";
 import { useCountdown } from "@/hooks/useCountDown";
-
-const vcLogos = [
-  { key: "yc", src: "/images/logos/yc.svg", width: 136 },
-  { key: "a16z", src: "/images/logos/a16z.svg", width: 72 },
-  { key: "index", src: "/images/logos/index.png", width: 113 },
-  { key: "sequoia", src: "/images/logos/sequoia.png", width: 128 },
-];
-
-const vcLogosBottom = [
-  { key: "lightspeed", src: "/images/logos/lightspeed.png", width: 125 },
-  { key: "nvidia", src: "/images/logos/nvidia.png", width: 64 },
-  { key: "bessemer", src: "/images/logos/bessemer.png", width: 88 },
-  { key: "general-catalyst", src: "/images/logos/general.svg", width: 164 },
-  { key: "founders-fund", src: "/images/logos/foundersfund.svg", width: 180 },
-];
+import { DropdownMenu } from "@/components/ui/menu";
+import VCLogos from "@/components/landing/VCLogos";
 
 export const isValidEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -40,6 +27,25 @@ const CandidatePage = () => {
   const [isBelow, setIsBelow] = useState(false);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [abtest, setAbtest] = useState(-1);
+
+  useEffect(() => {
+    const abtest = localStorage.getItem("harper_abtest");
+    if (abtest) {
+      setAbtest(parseInt(abtest));
+    } else {
+      let newAbtest = Math.random();
+
+      if (newAbtest < 0.5) {
+        newAbtest = 0;
+      } else {
+        newAbtest = 1;
+      }
+      setAbtest(newAbtest);
+
+      localStorage.setItem("harper_abtest", newAbtest.toString());
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,6 +90,7 @@ const CandidatePage = () => {
     const body = {
       email: email,
       type: 0,
+      abtest: "2025_12_" + abtest.toString(),
     };
     await supabase.from("harper_waitlist").insert(body);
 
@@ -98,6 +105,7 @@ const CandidatePage = () => {
       role: data.currentRole,
       expect: data.interests,
       links: data.profileUrl,
+      abtest: "2025_12_" + abtest.toString(),
     };
     await supabase.from("harper_waitlist").upsert(body);
 
@@ -116,35 +124,58 @@ const CandidatePage = () => {
 
   const remain = useCountdown("2025-12-20T00:00:00");
 
+  const borderSoft = useMemo(
+    () => (abtest === 1 ? "border-beige200" : "border-xgray300"),
+    [abtest]
+  );
+  const bgSoft = useMemo(
+    () => (abtest === 1 ? "bg-beige100" : "bg-white"),
+    [abtest]
+  );
+
   return (
-    <main className="min-h-screen text-black font-inter">
+    <main className={`min-h-screen font-inter ${bgSoft}`}>
       <WaitlistExtraInfoModal
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
         onSubmit={handleSubmit}
       />
       <header
-        className={`fixed top-0 left-0 w-full flex items-center border-b justify-between px-0 lg:px-20 h-14 text-sm
+        className={`fixed top-0 left-0 z-20 w-full flex items-center border-b justify-between px-0 lg:px-20 h-12 md:h-14 text-sm
           ${
             isBelow
-              ? "border-b-xlightgray text-black bg-white/80 backdrop-blur"
-              : "border-b-white text-white bg-black"
+              ? `border-b-xlightgray text-black backdrop-blur ${bgSoft}/80`
+              : `${
+                  abtest === 1
+                    ? "border-b-beige200 text-black bg-beige100"
+                    : "border-b-white  text-white bg-black"
+                }`
           } transition-all duration-300
           `}
       >
         <div
-          className={`flex items-center justify-between w-full px-8 border-x ${
-            isBelow ? "border-black" : "border-white"
+          className={`flex items-center justify-between w-full px-4 md:px-8 border-0 sm:border-x ${
+            abtest === 1
+              ? borderSoft
+              : isBelow
+              ? "border-black"
+              : "border-white"
           } h-full`}
         >
           <div
-            className={`text-xl font-garamond w-[10%] ${
-              isBelow ? "font-bold text-xdarknavy" : "font-light text-white"
+            className={`text-xl font-garamond w-[40%] md:w-[10%] ${
+              isBelow
+                ? "font-bold text-xdarknavy"
+                : `${
+                    abtest === 1
+                      ? "text-black font-bold"
+                      : "text-white font-light"
+                  }`
             }`}
           >
             harper
           </div>
-          <nav className="flex items-center justify-center gap-8 text-xs sm:text-sm w-[40%]">
+          <nav className="hidden md:flex items-center justify-center gap-8 text-xs sm:text-sm w-[40%]">
             <div
               className="font-light cursor-pointer opacity-80 hover:opacity-95"
               onClick={() => router.push("companies")}
@@ -155,7 +186,7 @@ const CandidatePage = () => {
               Referral
             </div>
           </nav>
-          <div className="w-[10%]">
+          <div className="hidden md:flex w-[10%]">
             <button
               onClick={upScroll}
               className="font-light cursor-pointer py-2 px-4"
@@ -163,11 +194,35 @@ const CandidatePage = () => {
               Join Waitlist
             </button>
           </div>
+          <div className="block md:hidden">
+            <DropdownMenu
+              buttonLabel="Menu"
+              items={[
+                {
+                  label: "Join Waitlist",
+                  onClick: upScroll,
+                },
+                {
+                  label: "For companies",
+                  onClick: () => router.push("companies"),
+                },
+                { label: "Referral", onClick: () => router.push("referral") },
+              ]}
+            />
+          </div>
         </div>
       </header>
 
-      <div className="flex flex-col items-center justify-center px-0 md:px-20 w-full bg-black text-white h-screen">
-        <div className="flex flex-col items-center justify-center border-x border-white w-full h-full text-center">
+      <div
+        className={`flex flex-col items-center justify-center px-0 md:px-20 w-full ${
+          abtest === 1 ? "bg-beige100 text-black" : "bg-black text-white"
+        } h-screen`}
+      >
+        <div
+          className={`flex flex-col items-center justify-center border-0 sm:border-x ${
+            borderSoft === "border-xgray300" ? "border-white" : borderSoft
+          } w-full h-full text-center px-4`}
+        >
           {/* <div className="mb-4 flex flex-row items-center justify-center pl-[2px] py-[2px] pr-[12px] bg-white text-black gap-1.5 rounded-full">
             <div className="w-[24px] h-[24px] bg-black rounded-full flex items-center justify-center">
               <Building className="w-[14px] text-white" />
@@ -176,11 +231,13 @@ const CandidatePage = () => {
               팀의 50% 이상이 미국에 오피스를 두고 있습니다.
             </div>
           </div> */}
-          <div className="text-4xl font-medium leading-snug">
-            Harper : AI/ML 리서처·엔지니어를 <br />
+          <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-snug">
+            <span className="text-4xl mb-4 block md:hidden">Harper : </span>
+            <span className="hidden md:inline">Harper : </span>
+            AI/ML 리서처·엔지니어를 <br />
             세계 수준의 테크 스타트업과 연결합니다.
           </div>
-          <div className="text-lg font-light mt-8">
+          <div className="text-sm md:text-lg font-light mt-8">
             이력서를 업로드하고, AI Recruiter와 통화하세요.
             <br /> 그 다음부터는 Harper가 최적의 팀에게서 먼저 제안받으실 수
             있게 합니다.
@@ -188,14 +245,20 @@ const CandidatePage = () => {
           <div className="relative mt-24">
             <input
               type="email"
-              className={`min-w-[310px] py-3 px-5 font-light text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50`}
+              className={`min-w-[310px] py-3 px-5 font-light text-sm border ${
+                abtest === 1
+                  ? "text-black bg-xlightgray hover:border-black/20 focus:ring-black/50"
+                  : "text-white bg-white/10 hover:border-white/30 focus:ring-white/50"
+              } rounded-full transition-all duration-300 focus:outline-none focus:ring-1`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Example@gmail.com"
             />
             <div
               onClick={joinWaitlist}
-              className="absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-1 top-1/2 -translate-y-1/2 text-[13px] bg-white text-black px-4 py-2.5 rounded-full transition-all duration-300"
+              className={`absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-1 top-1/2 -translate-y-1/2 text-[13px] px-4 py-2.5 rounded-full transition-all duration-300 ${
+                abtest === 1 ? "bg-black text-white" : "bg-white text-black"
+              }`}
             >
               {uploading ? (
                 <div className="flex flex-row items-center justify-center gap-1">
@@ -215,61 +278,51 @@ const CandidatePage = () => {
           </div>
         </div>
       </div>
-      <GridSectionLayout>
-        <div className="bg-xlightgray gap-2 w-full text-left py-10 px-6">
+      <GridSectionLayout borderSoft={borderSoft}>
+        <div
+          className={`${
+            abtest === 1 ? "bg-beige200" : "bg-xlightgray"
+          } gap-2 w-full text-left py-6 md:py-10 px-6`}
+        >
           <h2 className="text-base font-medium text-neutral-900 md:text-lg">
             하퍼는 최고의 회사와 인재에 집중하고 있습니다.
           </h2>
-          <p className="text-sm text-xgray700">
+          <p className="text-sm text-xgray700 mt-2 md:mt-0">
             아래의 글로벌 탑티어 VC에게 투자받은 빠르게 성장하는
             스타트업들에게서 제안을 받아보세요.
           </p>
         </div>
       </GridSectionLayout>
-      <GridSectionLayout>
+      <GridSectionLayout borderSoft={borderSoft}>
         <div className="flex flex-col w-full">
-          <div className="flex flex-row border-b border-xgray300">
-            {vcLogos.map((vc, index) => (
-              <div
-                key={vc.key}
-                className={`flex h-32 items-center justify-center w-full ${
-                  index === vcLogos.length - 1 ? "border-r-0" : "border-r"
-                } border-xgray300`}
-              >
-                <Image
-                  src={vc.src}
-                  alt={vc.key}
-                  width={vc.width}
-                  height={100}
-                  className="object-contain"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-row">
-            {vcLogosBottom.map((vc) => (
-              <div
-                key={vc.key}
-                className="flex h-32 items-center justify-center w-full border-r border-xgray300"
-              >
-                <Image
-                  src={vc.src}
-                  alt={vc.key}
-                  width={vc.width}
-                  height={100}
-                  className="object-contain"
-                />
-              </div>
-            ))}
-          </div>
+          <VCLogos borderSoft={borderSoft} />
 
-          {/* 하단 통계 영역 */}
-          <div className="flex flex-col items-center justify-center gap-2 font-light border-t border-xgray300 px-7 py-12">
+          <div
+            className={`flex flex-col items-center justify-center gap-2 font-light border-t ${borderSoft} px-7 py-12`}
+          >
             <div className="flex items-center">
-              <div className="flex relative items-baseline gap-1 text-black font-normal">
-                <div className="absolute bottom-0 left-0 w-full h-[60%] bg-brightnavy/20"></div>
-                500+ in the waitlist : AI/ML Engineer 41% / Researcher 28% /
-                Software Engineer 21% / 기타 10%
+              <div className="relative items-baseline gap-1 text-black font-normal hidden md:flex">
+                <div
+                  className={`absolute bottom-0 left-0 w-full h-[60%] ${
+                    abtest === 1 ? "bg-[#ebb585]" : "bg-brightnavy/20"
+                  }`}
+                ></div>
+                <span className="z-10">
+                  500+ in the waitlist : AI/ML Engineer 41% / Researcher 28% /
+                  Software Engineer 21% / 기타 10%
+                </span>
+              </div>
+              <div className="flex flex-col items-center justify-center relative gap-1 text-black font-normal md:hidden">
+                <div className="relative text-lg mb-2 flex">
+                  <div
+                    className={`z-0 absolute bottom-0 left-0 w-full h-[60%] ${
+                      abtest === 1 ? "bg-[#ebb585]" : "bg-brightnavy/20"
+                    }`}
+                  ></div>
+                  <span className="z-10">500+ in the waitlist</span>
+                </div>
+                AI/ML Engineer 41% / Researcher 28% / Software Engineer 21% /
+                기타 10%
               </div>
               {/* <div className="flex -space-x-2">
                 <div className="h-7 w-7 rounded-full border border-white bg-neutral-300" />
@@ -277,7 +330,7 @@ const CandidatePage = () => {
                 <div className="h-7 w-7 rounded-full border border-white bg-neutral-300" />
               </div> */}
             </div>
-            <div className="text-xgray700">~ {formattedDate}</div>
+            <div className="text-xgray700 mt-2">~ {formattedDate}</div>
 
             {/* <div className="flex flex-col items-end gap-1 text-sm">
               <div className="text-xgray700">
@@ -292,30 +345,36 @@ const CandidatePage = () => {
         </div>
       </GridSectionLayout>
 
-      <GridSectionLayout>
-        <div className="flex h-5 bg-black w-full"></div>
+      <GridSectionLayout borderSoft={borderSoft}>
+        <div
+          className={`flex h-5 ${
+            borderSoft === "border-xgray300" ? "bg-black" : "bg-beige200"
+          } w-full`}
+        ></div>
       </GridSectionLayout>
-      <FeatureSection />
-      <GridSectionLayout>
+      <FeatureSection borderSoft={borderSoft} />
+      <GridSectionLayout borderSoft={borderSoft}>
         <div className="py-6 text-lg font-light italic">Why harper?</div>
       </GridSectionLayout>
-      <GridSectionLayout>
-        <div className="flex flex-row items-stretch">
+      <GridSectionLayout borderSoft={borderSoft}>
+        <div className="flex flex-col md:flex-row items-stretch">
           <WhyImageSection
             title="글로벌 시장에서 성장 중인 스타트업들과 함께합니다."
             desc="하퍼에서는 AI/ML Researcher/Engineer분들이 선호할만한 빠르게 성장중인 테크 스타트업들이 참여하여 인재를 찾고 있습니다. 50% 이상이 미국에 법인 혹은 오피스를 두고 있습니다."
             imageSrc="/images/why1.png"
             index={0}
+            borderSoft={borderSoft}
           />
           <WhyImageSection
             title="지원자님의 선호와 역량을 이해합니다."
             desc="하퍼는 대화를 통해 지원자님의 선호와 상황을 이해하고 깃헙, 논문, 이력서, 블로그 등 비정형 정보를 전부 매칭에 반영합니다. 이를 기반으로 모든 공고와 회사를 탐색하고, 최적의 기회들만 찾아 전달합니다."
             imageSrc="/images/why2.png"
             index={1}
+            borderSoft={borderSoft}
           />
         </div>
       </GridSectionLayout>
-      <GridSectionLayout>
+      <GridSectionLayout borderSoft={borderSoft}>
         <div className="flex flex-col items-start w-full gap-4 pt-8 pb-16 px-8">
           <div className="text-base font-medium italic">Our Values</div>
           <div className="text-sm text-left leading-6 font-normal text-xgray600">
@@ -331,13 +390,13 @@ const CandidatePage = () => {
           </div>
         </div>
       </GridSectionLayout>
-      <GridSectionLayout>
+      <GridSectionLayout borderSoft={borderSoft}>
         <div className="w-full flex flex-col items-center justify-center bg-black">
           <div className="flex flex-col items-center justify-center w-full lg:w-[94%] border-b border-xgray700 py-32 text-white">
-            <div className="text-5xl font-light font-hedvig">
+            <div className="text-4xl sm:text-5xl font-light font-hedvig">
               Join Waitlist.
             </div>
-            <div className="text-base font-light text-white/80 mt-6 leading-6">
+            <div className="text-sm sm:text-base font-light text-white/80 mt-6 leading-6">
               서비스는 아직 오픈 준비 중입니다.
               <br />
               런칭까지 <span className="text-white font-normal">
@@ -351,16 +410,18 @@ const CandidatePage = () => {
             <div className="relative mt-12">
               <input
                 type="email"
-                className="py-3 px-5 font-light text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full min-w-[300px] transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
+                className="py-3 px-5 font-light text-xs sm:text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full min-w-[260px] sm:min-w-[300px] transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Example@gmail.com"
               />
               <div
                 onClick={joinWaitlist}
-                className="absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-1 top-1/2 -translate-y-1/2 text-[13px] bg-white text-black px-4 py-2.5 rounded-full transition-all duration-300"
+                className="absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-0.5 sm:right-1 top-1/2 -translate-y-1/2 text-[13px] bg-white text-black px-4 py-2.5 rounded-full transition-all duration-300"
               >
-                <span>Join waitlist</span>
+                <span>
+                  Join<span className="hidden sm:inline"> waitlist</span>
+                </span>
                 <ArrowRight
                   size={16}
                   strokeWidth={2.2}
@@ -370,11 +431,11 @@ const CandidatePage = () => {
             </div>
           </div>
           <div className="flex flex-col items-center justify-center w-full pt-10">
-            <div className="w-full flex flex-col items-center justify-center">
+            <div className="w-full flex flex-col items-center justify-center pb-10">
               <div className="text-lg font-light text-white/80">
                 Question Answers
               </div>
-              <div className="flex flex-row items-start justify-start text-white/70 font-thin w-[80%] mt-8">
+              <div className="flex flex-col sm:flex-row items-start justify-start text-white/70 font-thin w-[80%] mt-8">
                 <QuestionAnswer
                   question="누가 제 프로필을 볼 수 있나요"
                   answer="직접 검증한 회사들만 볼 수 있습니다. 지원자분의 이전 회사에는 공개되지 않도록 합니다."
@@ -393,7 +454,7 @@ const CandidatePage = () => {
               <div className="font-garamond text-lg">harper</div>
               <div
                 onClick={handleContactUs}
-                className="font-thin cursor-pointer hover:text-white/75"
+                className="text-xs sm:text-sm font-thin cursor-pointer hover:text-white/75"
               >
                 contact us
               </div>
@@ -416,7 +477,7 @@ const QuestionAnswer = ({
 }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col items-start justify-start w-[33%] min-h-[240px] px-4">
+    <div className="flex flex-col items-start justify-start w-full sm:w-[33%] mb-4 min-h-[30px] sm:min-h-[200px] px-4">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -452,20 +513,25 @@ const QuestionAnswer = ({
   );
 };
 
-const FeatureSection = () => {
+const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
   return (
-    <GridSectionLayout>
-      <div className="flex flex-col items-center justify-center w-full">
-        <div className="py-10 w-[34%] text-base font-normal border-x border-xgray300">
+    <GridSectionLayout borderSoft={borderSoft}>
+      <div
+        className={`flex flex-col items-center justify-center w-full border-b ${borderSoft} md:border-b-0`}
+      >
+        <div
+          className={`py-10 w-full sm:w-[34%] text-base font-normal md:border-x ${borderSoft}`}
+        >
           하퍼는 이렇게 진행돼요
         </div>
       </div>
-      <div className="flex flex-row items-stretch w-full">
+      <div className="flex flex-col sm:flex-row items-stretch w-full">
         <ImageSection
           title="간단하게 가입하세요."
           desc="이력서를 올리고, AI recruiter와 대화하며 어떤 기회를 탐색중이고 어떤 팀을 선호하는지 알려주세요. 언제 어디서든 원할 때 진행 가능하고, 모든 정보는 철저히 보호됩니다."
           imageSrc="/images/feat1.png"
           index={0}
+          borderSoft={borderSoft}
         />
         <ImageSection
           title="적합한 기회만 찾아서 알려드려요."
@@ -473,6 +539,7 @@ const FeatureSection = () => {
 "
           imageSrc="/images/feat2.png"
           index={1}
+          borderSoft={borderSoft}
         />
         <ImageSection
           title="회사에게서 직접 제안 받으세요."
@@ -481,6 +548,7 @@ const FeatureSection = () => {
 회사에서 먼저 제안받으실 수 있게 합니다."
           imageSrc="/images/feat3.png"
           index={2}
+          borderSoft={borderSoft}
         />
       </div>
     </GridSectionLayout>
@@ -492,25 +560,29 @@ const ImageSection = ({
   desc,
   imageSrc,
   index,
+  borderSoft,
 }: {
   title: string;
   desc: string;
   imageSrc: string;
   index: number;
+  borderSoft: string;
 }) => {
   return (
     <div
-      className={`flex flex-1 flex-col border-xgray300 ${
-        index !== 2 ? "border-r" : "border-r-0"
-      } ${index === 1 ? "w-[34%]" : "w-[33%]"}`}
+      className={`flex flex-1 w-full max-w-full flex-col ${borderSoft} ${
+        index !== 0 ? "border-b sm:border-b-0 sm:border-l" : "sm:border-l-0"
+      } ${index === 1 ? "sm:max-w-[34%]" : "sm:max-w-[33%]"}`}
     >
-      <div className="h-[280px] w-full overflow-hidden flex justify-end items-end border-y border-xgray300">
+      <div
+        className={`h-[18vw] min-h-[220px] w-full overflow-hidden flex justify-end items-end border-y ${borderSoft}`}
+      >
         <Image
           src={imageSrc}
           alt={title}
           width={600}
           height={400}
-          style={{ height: "100%", width: "auto" }}
+          style={{ height: "auto", width: "100%" }}
           className="object-center max-w-none"
         />
       </div>
@@ -527,30 +599,33 @@ const WhyImageSection = ({
   desc,
   imageSrc,
   index,
+  borderSoft,
 }: {
   title: string;
   desc: string;
   imageSrc: string;
   index: number;
+  borderSoft: string;
 }) => {
   return (
     <div
-      className={`flex flex-1 flex-col border-xgray300 max-w-full ${
+      className={`flex flex-1 flex-col ${borderSoft} max-w-full ${
         index !== 1 ? "border-r" : "border-r-0"
       }`}
     >
       <div className="flex flex-col items-start justify-start w-full px-7 gap-3 py-8 pb-14 text-left">
-        <div className="text-lg font-normal">{title}</div>
+        <div className="text-base sm:text-lg font-normal">{title}</div>
         <div className="text-sm leading-6 font-light text-xgray700">{desc}</div>
       </div>
-      <div className="h-[400px] w-full overflow-hidden flex justify-center items-center border-y border-xgray300">
+      <div
+        className={`h-[280px] md:h-[460px] relative w-full overflow-hidden flex justify-center items-center border-y ${borderSoft}`}
+      >
         <Image
           src={imageSrc}
           alt={title}
-          width={600}
-          height={400}
-          style={{ width: "100%", height: "auto" }}
-          className="object-center max-w-none"
+          fill
+          // style={{ width: "100%", height: "auto" }}
+          className="object-cover"
         />
       </div>
     </div>

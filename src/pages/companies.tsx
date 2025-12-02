@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import "../globals.css";
-import { Ampersand, LoaderCircle } from "lucide-react";
+import { Inbox, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
 import Animate from "@/components/landing/Animate";
 import Header from "@/components/landing/Header";
 import { supabase } from "@/lib/supabase";
+import Head from "next/head";
 
 const isValidEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -74,6 +75,13 @@ export default function CompanyPage() {
 
   return (
     <main className="min-h-screen text-white font-inter">
+      <Head>
+        <title>Harper | AI Recruiter</title>
+        <meta
+          name="description"
+          content="Harper is your team's dedicated AI recruiter."
+        />
+      </Head>
       {/* Background image + overlay */}
       <div
         className="relative min-h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col"
@@ -85,23 +93,30 @@ export default function CompanyPage() {
         }}
       >
         <Header page="company" />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 pb-10 sm:pb-16">
-          <Animate className="flex flex-row items-center justify-center pl-[2px] py-[2px] pr-[12px] bg-white text-black gap-1.5 rounded-full">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 pb-10 sm:pb-16 pt-8 md:pt-0">
+          <Animate
+            triggerOnce={true}
+            className="flex flex-row items-center justify-center pl-[2px] py-[2px] pr-[12px] bg-white text-black gap-1.5 rounded-full"
+          >
             <div className="w-[24px] h-[24px] bg-black rounded-full flex items-center justify-center">
-              <Ampersand className="w-[16px] text-white" />
+              <Inbox className="w-[14px] text-white" />
             </div>
             <div className="text-[12px] font-light">Join waitlist</div>
           </Animate>
 
-          <Animate className="mt-8 max-w-2xl text-center" delay={0.4}>
-            <h1 className="text-4xl font-extralight leading-snug">
-              최고의 엔지니어/리서처를 발견하세요.
+          <Animate
+            className="mt-4 md:mt-8 max-w-2xl text-center"
+            delay={0.4}
+            triggerOnce={true}
+          >
+            <h1 className="text-3xl md:text-4xl font-extralight leading-snug">
+              최고의 엔지니어/리서처를 <br className="block sm:hidden" />
+              발견하세요.
             </h1>
 
-            <p className="mt-4 text-base text-white/50 leading-relaxed font-thin">
+            <p className="mt-4 text-sm md:text-base text-white/50 leading-relaxed font-thin">
               하퍼는 지원자와 직접 이야기하여 알아낸 정보와 이력서, 깃헙, 논문
-              등 모든 정보를 사용하여
-              <br />
+              등 모든 정보를 사용하여 <br className="hidden sm:block" />
               회사에 가장 적합한 인재를 찾고 연결해줍니다.
             </p>
           </Animate>
@@ -109,6 +124,7 @@ export default function CompanyPage() {
           {/* Form card */}
           <div className="mt-10 sm:mt-14 w-full flex justify-center">
             <Animate
+              triggerOnce={true}
               className="w-full max-w-2xl rounded-[20px] bg-white text-black shadow-2xl px-5 py-6"
               delay={0.8}
             >
@@ -169,11 +185,13 @@ export default function CompanyPage() {
         <Animate delay={2.2} duration={0.8} isUp={false}>
           <div className="flex flex-row items-center justify-between gap-4 pb-2 px-4 w-full text-white/40">
             <div className="font-garamond text-base font-thin">
-              Harper is your team{"'"}s dedicated AI recruiter.
+              Harper is your team{"'"}s
+              <br className="block sm:hidden" />
+              dedicated AI recruiter.
             </div>
             <div
               onClick={handleContactUs}
-              className="cursor-pointer font-inter text-sm font-light hover:text-white/75"
+              className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"
             >
               Contact Us
             </div>

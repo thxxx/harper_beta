@@ -19,6 +19,8 @@ module.exports = {
         xgray700: "#4B5462",
         xdarknavy: "#0B1957",
         brightnavy: "#0624A8",
+        beige100: "#FAF9F6",
+        beige200: "#F6F0E4",
       },
       keyframes: {
         upDowns: {

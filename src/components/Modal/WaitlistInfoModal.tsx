@@ -64,7 +64,7 @@ export const WaitlistExtraInfoModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex absolute top-4 right-4 h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-50"
+            className="flex absolute md:top-2 md:right-2 top-0 right-0 h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-50"
           >
             <X className="h-5 w-5" />
           </button>

@@ -40,3 +40,12 @@ body {
 .pattern {
   background-image: "url(/images/pattern.png)";
 }
+
+/* globals.css */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}

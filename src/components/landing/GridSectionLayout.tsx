@@ -1,9 +1,21 @@
 import React from "react";
 
-const GridSectionLayout = ({ children }: { children: React.ReactNode }) => {
+const GridSectionLayout = ({
+  children,
+  borderSoft,
+}: {
+  children: React.ReactNode;
+  borderSoft: string;
+}) => {
   return (
-    <div className="flex flex-col items-center justify-start px-0 md:px-20 w-full bg-white text-black border-t border-xgray300">
-      <div className="flex flex-col items-center justify-start border-x border-black w-full h-full text-center">
+    <div
+      className={`flex flex-col items-center justify-start px-0 md:px-20 w-full text-black border-t ${borderSoft}`}
+    >
+      <div
+        className={`flex flex-col items-center justify-start border-0 sm:border-x w-full h-full text-center ${
+          borderSoft === "border-xgray300" ? "border-black" : borderSoft
+        }`}
+      >
         {children}
       </div>
     </div>
