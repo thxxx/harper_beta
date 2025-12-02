@@ -3,7 +3,7 @@
 import GridSectionLayout from "@/components/landing/GridSectionLayout";
 import { ArrowRight, ChevronRight, LoaderCircle } from "lucide-react";
 import router from "next/router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { showToast } from "@/components/toast/toast";
@@ -234,13 +234,18 @@ const CandidatePage = () => {
           <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-snug">
             <span className="text-4xl mb-4 block md:hidden">Harper : </span>
             <span className="hidden md:inline">Harper : </span>
-            AI/ML 리서처·엔지니어를 <br />
-            세계 수준의 테크 스타트업과 연결합니다.
+            세계 최고 AI/ML 엔지니어의
+            <br /> 다음 커리어가 시작되는 곳
           </div>
-          <div className="text-sm md:text-lg font-light mt-8">
-            이력서를 업로드하고, AI Recruiter와 통화하세요.
+          <div className="text-sm md:text-lg font-normal mt-8 text-xgray700">
+            {/* AI 리크루터 하퍼와의 단 한 번의 AI 통화로 지원자의 360도 프로필을 완성합니다. 글로벌 AI 스타트업의 최적의 기회를 하퍼가 상시로 연결해 드립니다. */}
+            AI 리크루터 하퍼와 단 한 번의 통화로 앞으로의 커리어에 대한 니즈와
+            선호를 알려주세요. <br className="hidden md:block" />
+            글로벌 스타트업 등에서의 최적의 기회를 하퍼가 쉬지 않고 찾아 연결해
+            드립니다.
+            {/* 이력서를 업로드하고, AI Recruiter와 통화하세요.
             <br /> 그 다음부터는 Harper가 최적의 팀에게서 먼저 제안받으실 수
-            있게 합니다.
+            있게 합니다. */}
           </div>
           <div className="relative mt-24">
             <input
@@ -285,12 +290,14 @@ const CandidatePage = () => {
           } gap-2 w-full text-left py-6 md:py-10 px-6`}
         >
           <h2 className="text-base font-medium text-neutral-900 md:text-lg">
-            하퍼는 최고의 회사와 인재에 집중하고 있습니다.
+            {/* 하퍼는 최고의 회사와 인재에 집중하고 있습니다. */}
+            하퍼는 오직 글로벌 Top-Tier VC가 투자하여 빠르게 성장하고 있는
+            검증된 스타트업의 기회만을 선별하여 연결합니다.
           </h2>
-          <p className="text-sm text-xgray700 mt-2 md:mt-0">
+          {/* <p className="text-sm text-xgray700 mt-2 md:mt-0">
             아래의 글로벌 탑티어 VC에게 투자받은 빠르게 성장하는
             스타트업들에게서 제안을 받아보세요.
-          </p>
+          </p> */}
         </div>
       </GridSectionLayout>
       <GridSectionLayout borderSoft={borderSoft}>
@@ -359,15 +366,15 @@ const CandidatePage = () => {
       <GridSectionLayout borderSoft={borderSoft}>
         <div className="flex flex-col md:flex-row items-stretch">
           <WhyImageSection
-            title="글로벌 시장에서 성장 중인 스타트업들과 함께합니다."
-            desc="하퍼에서는 AI/ML Researcher/Engineer분들이 선호할만한 빠르게 성장중인 테크 스타트업들이 참여하여 인재를 찾고 있습니다. 50% 이상이 미국에 법인 혹은 오피스를 두고 있습니다."
+            title="한 번의 인터뷰, 무한한 기회."
+            desc="서류 지원과 인터뷰를 공고마다 반복할 필요가 없습니다. 하퍼와의 단 한 번의 대화로 정규직·파트타임·프리랜서 등 모든 종류의 커리어를 동시에 탐색하고 제안받을 수 있습니다."
             imageSrc="/images/why1.png"
             index={0}
             borderSoft={borderSoft}
           />
           <WhyImageSection
-            title="지원자님의 선호와 역량을 이해합니다."
-            desc="하퍼는 대화를 통해 지원자님의 선호와 상황을 이해하고 깃헙, 논문, 이력서, 블로그 등 비정형 정보를 전부 매칭에 반영합니다. 이를 기반으로 모든 공고와 회사를 탐색하고, 최적의 기회들만 찾아 전달합니다."
+            title="이전에는 불가능했던, 지원자에 대한 깊이 있는 이해."
+            desc="하퍼는 통화를 통해 지원자의 상황을 이해하고 블로그, GitHub, 작성한 논문 등 비정형 정보까지 종합적으로 분석하여 기존 이력서에서는 알 수 없었던 심층 프로파일링을 완성합니다. 데이터에 기반해 지원자의 선호와 숨겨진 역량까지 정확히 파악하고, 완벽에 가까운 포지션만을 선별하여 제안합니다."
             imageSrc="/images/why2.png"
             index={1}
             borderSoft={borderSoft}
@@ -527,25 +534,22 @@ const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
       </div>
       <div className="flex flex-col sm:flex-row items-stretch w-full">
         <ImageSection
-          title="간단하게 가입하세요."
+          title="1. 간단하게 가입하세요."
           desc="이력서를 올리고, AI recruiter와 대화하며 어떤 기회를 탐색중이고 어떤 팀을 선호하는지 알려주세요. 언제 어디서든 원할 때 진행 가능하고, 모든 정보는 철저히 보호됩니다."
           imageSrc="/images/feat1.png"
           index={0}
           borderSoft={borderSoft}
         />
         <ImageSection
-          title="적합한 기회만 찾아서 알려드려요."
-          desc="전체 공고들 중 주요 기술 스택, 회사 분위기, 보상 조건 등 복잡한 조건들도 고려해 최적의 역할만 찾아 알려드립니다.
-"
+          title="2. AI 리크루터 하퍼와의 대화"
+          desc="다음 커리어 목표를 설정하고, 찾고 있는 기회에 대해 AI 리크루터 하퍼에게 자세히 알려주세요. 모든 정보는 철저히 보호됩니다."
           imageSrc="/images/feat2.png"
           index={1}
           borderSoft={borderSoft}
         />
         <ImageSection
-          title="회사에게서 직접 제안 받으세요."
-          desc="지원자님의 선호와 역량을 바탕으로
-인재를 필요로하는 회사에게 지원자님을 추천하고,
-회사에서 먼저 제안받으실 수 있게 합니다."
+          title="3. 회사에게서 직접 제안 받으세요."
+          desc="완성된 프로필을 기반으로 정규직, 파트타임을 가리지 않고 지원자님께 딱 맞는 좋은 기회를 하퍼가 상시로 선별하여 연결해 드립니다."
           imageSrc="/images/feat3.png"
           index={2}
           borderSoft={borderSoft}

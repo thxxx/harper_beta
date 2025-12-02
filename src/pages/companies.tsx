@@ -110,14 +110,16 @@ export default function CompanyPage() {
             triggerOnce={true}
           >
             <h1 className="text-3xl md:text-4xl font-extralight leading-snug">
-              최고의 엔지니어/리서처를 <br className="block sm:hidden" />
-              발견하세요.
+              최고의 기업이 <br className="block sm:hidden" />
+              최정예 인재를 만나는 곳
             </h1>
 
             <p className="mt-4 text-sm md:text-base text-white/50 leading-relaxed font-thin">
-              하퍼는 지원자와 직접 이야기하여 알아낸 정보와 이력서, 깃헙, 논문
-              등 모든 정보를 사용하여 <br className="hidden sm:block" />
-              회사에 가장 적합한 인재를 찾고 연결해줍니다.
+              Recruiter agent 하퍼가 지원자와 직접 이야기하여 알아낸 정보와
+              이력서, 깃헙, 논문 등 모든 정보를 사용하여{" "}
+              <br className="hidden sm:block" />
+              불필요한 탐색 시간을 최소화하고 회사의 문화와 필요 포지션에 가장
+              적합한 인재를 연결해줍니다.
             </p>
           </Animate>
 

@@ -1,64 +1,40 @@
+import { Education, WorkExperience } from "@/pages/onboard";
 import { useUploadProfile } from "@/states/useUploadProfile";
 import { useUserProfile } from "@/states/useUserProfile";
+import useProfileStore from "@/store/useProfileStore";
 import { FileText, Loader2, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 10MB
 
-const ProfileResume = () => {
-  const [univName, setUnivName] = useState("");
-  const [univMajor, setUnivMajor] = useState("");
-  const [univDegree, setUnivDegree] = useState("");
-  const [univGraduation, setUnivGraduation] = useState("");
-  const [univIn, setUnivIn] = useState("");
-  const [univGpa, setUnivGpa] = useState("");
-
-  const [workExperiences, setWorkExperiences] = useState<
-    {
-      company: string;
-      position: string;
-      startDate: string;
-      endDate: string;
-      description: string;
-    }[]
-  >([
-    {
-      company: "",
-      position: "",
-      startDate: "",
-      endDate: "",
-      description: "",
-    },
-  ]);
-
+const ProfileResume = ({
+  workExperiences,
+  setWorkExperiences,
+  educations,
+  setEducations,
+}: {
+  workExperiences: WorkExperience[];
+  setWorkExperiences: (workExperiences: WorkExperience[]) => void;
+  educations: Education[];
+  setEducations: (educations: Education[]) => void;
+}) => {
+  // ----- Resume / File -----
   const [loadingPdf, setLoadingPdf] = useState(false);
-  const [resumeIdState, setResumeIdState] = useState("");
-  const [resumeText, setResumeText] = useState("");
 
-  const [files, setFiles] = useState<File | null>(null);
-  const [isFileChanged, setIsFileChanged] = useState(false);
-
-  const [fileName, setFileName] = useState("");
-  const [fileSize, setFileSize] = useState(0);
-
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-  const { data: userProfile, isLoading: isUserProfileLoading } =
-    useUserProfile(userId);
-
-  const uploadProfileMutation = useUploadProfile();
-
-  useEffect(() => {
-    if (!userProfile) return;
-    setResumeIdState(userProfile.resume_id ?? "");
-
-    if (userProfile.resumes && userProfile.resumes.length > 0) {
-      const latestResume = userProfile.resumes[0];
-      setResumeText(latestResume.resume_text ?? "");
-      setFileName(latestResume.file_name ?? "");
-      setFileSize(latestResume.file_size ?? 0);
-    }
-  }, [userProfile]);
+  const {
+    resumeIdState,
+    setResumeIdState,
+    resumeText,
+    setResumeText,
+    files,
+    setFiles,
+    isFileChanged,
+    setIsFileChanged,
+    fileName,
+    setFileName,
+    fileSize,
+    setFileSize,
+  } = useProfileStore();
 
   const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -68,24 +44,30 @@ const ProfileResume = () => {
 
     if (selected.size > MAX_FILE_SIZE) {
       alert("File size is too large");
+      setLoadingPdf(false);
       return;
     }
 
-    console.log(selected);
-    readPdf(selected);
+    readPdf(selected)
+      .catch((err) => {
+        console.error(err);
+        alert("Failed to read file");
+      })
+      .finally(() => {
+        setLoadingPdf(false);
+      });
+
     setFileName(selected.name);
     setFileSize(selected.size);
 
     setFiles(selected);
     setIsFileChanged(true);
-    setLoadingPdf(false);
   };
 
   const readPdf = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // 2. API Route로 전송
     const response = await fetch("/api/pdf", {
       method: "POST",
       body: formData,
@@ -99,17 +81,12 @@ const ProfileResume = () => {
     console.log("--- Extracted Text (Client Side) ---");
     console.log(data.text.slice(0, 100), data.length);
     setResumeText(data.text);
-
-    // 내용 뽑아달라고 하기
-
-    // const result = await askGpt(data.text);
-    // console.log("result ", result);
   };
 
-  // Add new work experience
+  // ----- Work Experience -----
   const addWorkExperience = () => {
-    setWorkExperiences((prev) => [
-      ...prev,
+    const newWorkExperiences = [
+      ...workExperiences,
       {
         company: "",
         position: "",
@@ -117,27 +94,61 @@ const ProfileResume = () => {
         endDate: "",
         description: "",
       },
-    ]);
+    ];
+    setWorkExperiences(newWorkExperiences);
   };
 
-  // Update specific field of work experience
   const updateWorkExperience = (
     index: number,
     field: "company" | "position" | "startDate" | "endDate" | "description",
     value: string
   ) => {
-    setWorkExperiences((prev) =>
-      prev.map((exp, i) => (i === index ? { ...exp, [field]: value } : exp))
+    const newWorkExperiences = workExperiences.map((exp, i) =>
+      i === index ? { ...exp, [field]: value } : exp
     );
+    setWorkExperiences(newWorkExperiences);
   };
 
-  // Remove work experience
   const removeWorkExperience = (index: number) => {
-    setWorkExperiences((prev) => prev.filter((_, i) => i !== index));
+    const newWorkExperiences = workExperiences.filter((_, i) => i !== index);
+    setWorkExperiences(newWorkExperiences);
+  };
+
+  // ----- Education -----
+  const addEducation = () => {
+    const newEducations = [
+      ...educations,
+      {
+        school: "",
+        major: "",
+        startDate: "",
+        endDate: "",
+        degree: "",
+        gpa: "",
+      },
+    ];
+    setEducations(newEducations);
+  };
+
+  const updateEducation = (
+    index: number,
+    field: keyof Education,
+    value: string
+  ) => {
+    const newEducations = educations.map((edu, i) =>
+      i === index ? { ...edu, [field]: value } : edu
+    );
+    setEducations(newEducations);
+  };
+
+  const removeEducation = (index: number) => {
+    const newEducations = educations.filter((_, i) => i !== index);
+    setEducations(newEducations);
   };
 
   return (
     <div className="w-full">
+      {/* Resume Upload */}
       <SectionLayout>
         <div>
           <input
@@ -191,60 +202,114 @@ const ProfileResume = () => {
         <div className="text-[12px] font-light text-xgray500">
           Uploading a new resume will also update the resume on your profile.
           <br />
-          By uploading your resume, you agree to our Terms and
-          Conditions and Privacy Policy.
+          By uploading your resume, you agree to our Terms and Conditions and
+          Privacy Policy.
           <br />
           We will not share your resume with any third parties.
         </div>
       </SectionLayout>
+
+      {/* Education */}
       <SectionLayout>
         <div className="flex flex-row items-center justify-between mb-2">
           <div className="text-[14px] font-medium">Education</div>
         </div>
-        <div className="flex flex-row gap-4 w-full">
-          <Input
-            label="학교"
-            value={univName}
-            onChange={(e) => setUnivName(e.target.value)}
-            placeholder=""
-          />
-          <Input
-            label="전공"
-            value={univMajor}
-            onChange={(e) => setUnivMajor(e.target.value)}
-            placeholder="컴퓨터과학"
-          />
-        </div>
-        <div className="flex flex-row gap-4 w-full">
-          <Input
-            label="입학"
-            value={univIn}
-            onChange={(e) => setUnivDegree(e.target.value)}
-            placeholder="2020.03"
-          />
-          <Input
-            label="졸업"
-            noneText="재학중"
-            value={univGraduation}
-            onChange={(e) => setUnivGraduation(e.target.value)}
-            placeholder="2024.02"
-          />
-        </div>
-        <div className="flex flex-row gap-4 w-full">
-          <Input
-            label="학위"
-            value={univDegree}
-            onChange={(e) => setUnivDegree(e.target.value)}
-            placeholder="학사"
-          />
-          <Input
-            label="학위"
-            value={univGpa}
-            onChange={(e) => setUnivGpa(e.target.value)}
-            placeholder="N/4.3"
-          />
+
+        <div className="flex flex-col gap-4">
+          {educations.map((edu, index) => (
+            <div key={index} className="w-full flex flex-col gap-3 bg-white">
+              {/* header */}
+              <div className="flex flex-row items-center justify-between">
+                <div className="text-[13px] font-medium text-xgray700">
+                  학력 {index + 1}
+                </div>
+                {educations.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeEducation(index)}
+                    className="text-sm text-xgray500 hover:text-red-500"
+                  >
+                    삭제
+                  </button>
+                )}
+              </div>
+
+              {/* 학교 / 전공 */}
+              <div className="flex flex-row gap-4 w-full">
+                <Input
+                  label="학교"
+                  value={edu.school}
+                  onChange={(e) =>
+                    updateEducation(index, "school", e.target.value)
+                  }
+                  placeholder=""
+                />
+                <Input
+                  label="전공"
+                  value={edu.major}
+                  onChange={(e) =>
+                    updateEducation(index, "major", e.target.value)
+                  }
+                  placeholder="컴퓨터과학"
+                />
+              </div>
+
+              {/* 입학 / 졸업 */}
+              <div className="flex flex-row gap-4 w-full">
+                <Input
+                  label="입학"
+                  value={edu.startDate}
+                  onChange={(e) =>
+                    updateEducation(index, "startDate", e.target.value)
+                  }
+                  placeholder="2020.03"
+                />
+                <Input
+                  label="졸업"
+                  noneText="재학중"
+                  value={edu.endDate}
+                  onChange={(e) =>
+                    updateEducation(index, "endDate", e.target.value)
+                  }
+                  placeholder="2024.02"
+                />
+              </div>
+
+              {/* 학위 / 학점 */}
+              <div className="flex flex-row gap-4 w-full">
+                <Input
+                  label="학위"
+                  value={edu.degree}
+                  onChange={(e) =>
+                    updateEducation(index, "degree", e.target.value)
+                  }
+                  placeholder="학사"
+                />
+                <Input
+                  label="학점"
+                  value={edu.gpa}
+                  onChange={(e) =>
+                    updateEducation(index, "gpa", e.target.value)
+                  }
+                  placeholder="N/4.3"
+                />
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-row items-center justify-start">
+            <button
+              type="button"
+              onClick={addEducation}
+              className="text-sm px-3 py-1.5 text-brightnavy rounded-[5px] hover:bg-xlightgray"
+            >
+              + 학력 추가
+            </button>
+          </div>
         </div>
       </SectionLayout>
+
+      {/* Work Experience */}
       <SectionLayout>
         <div className="flex flex-row items-center justify-between mb-2">
           <div className="text-[14px] font-medium">Work Experience</div>
@@ -253,7 +318,6 @@ const ProfileResume = () => {
         <div className="flex flex-col gap-4">
           {workExperiences.map((exp, index) => (
             <div key={index} className="w-full flex flex-col gap-3 bg-white">
-              {/* header: title + delete button */}
               <div className="flex flex-row items-center justify-between">
                 <div className="text-[13px] font-medium text-xgray700">
                   경력 {index + 1}
@@ -267,7 +331,6 @@ const ProfileResume = () => {
                 </button>
               </div>
 
-              {/* company / position */}
               <div className="flex flex-row gap-4 w-full">
                 <Input
                   label="회사"
@@ -287,7 +350,6 @@ const ProfileResume = () => {
                 />
               </div>
 
-              {/* dates */}
               <div className="flex flex-row gap-4 w-full">
                 <Input
                   label="입사"
@@ -308,7 +370,6 @@ const ProfileResume = () => {
                 />
               </div>
 
-              {/* description */}
               <div className="flex flex-col gap-1 w-full">
                 <div className="flex flex-row justify-between items-center">
                   <div className="text-[14px] font-medium">
@@ -345,7 +406,7 @@ export default React.memo(ProfileResume);
 
 const SectionLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col gap-2  border-t border-xgray400 pt-8 mt-8">
+    <div className="flex flex-col gap-2 border-t border-xgray400 pt-8 mt-8">
       {children}
     </div>
   );
@@ -392,7 +453,7 @@ const Input = ({
         <input
           disabled={value === "default"}
           placeholder={placeholder}
-          className={`w-full h-[36px] px-3 py-2 border border-xgray400 rounded-[5px] text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none`}
+          className="w-full h-[36px] px-3 py-2 border border-xgray400 rounded-[5px] text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
           value={value}
           onChange={onChange}
         />

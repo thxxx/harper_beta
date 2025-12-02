@@ -2,11 +2,22 @@
 
 import ProgressBar from "@/components/apply/ProgressBar";
 import { ArrowRight, CornerDownLeft, LoaderCircle } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileResume from "@/components/apply/ProfileResume";
 import Image from "next/image";
 import router from "next/router";
+import { useUserProfile } from "@/states/useUserProfile";
+import { useUploadProfile } from "@/states/useUploadProfile";
+import useProfileStore from "@/store/useProfileStore";
+
+const STEP_KEY = "harper-onboard-step";
 
 const Options = [
   "풀타임 정규직",
@@ -49,8 +60,24 @@ const steps = [
   },
 ];
 
+export type WorkExperience = {
+  company: string;
+  position: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+};
+
+export type Education = {
+  school: string;
+  major: string;
+  startDate: string; // 입학
+  endDate: string; // 졸업 (재학중이면 "default")
+  degree: string;
+  gpa: string;
+};
+
 const Onboard: React.FC = () => {
-  // 0-based step index
   const [step, setStep] = useState(0);
   const [submitLoading, setSubmitLoading] = useState(false);
 
@@ -60,55 +87,79 @@ const Onboard: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
-
   const [links, setLinks] = useState<string[]>(["", "", ""]);
-
   const [roles, setRoles] = useState<string[]>([]);
+
+  const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([
+    {
+      company: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ]);
+  const [educations, setEducations] = useState<Education[]>([
+    {
+      school: "",
+      major: "",
+      startDate: "",
+      endDate: "",
+      degree: "",
+      gpa: "",
+    },
+  ]);
+
+  const [isDirty, setIsDirty] = useState(false);
 
   const isLastStep = useMemo(() => step === steps.length - 1, [step]);
 
-  const handleNext = useCallback(() => {
-    // TODO: submit logic here
-    if (isLastStep) {
-      setSubmitLoading(true);
-      console.log("Submit form");
-      setTimeout(() => {
-        setSubmitLoading(false);
-        setStep(5);
-      }, 1000);
-      return;
-    }
-    console.log("Next step", step);
-    setStep((prev) => Math.min(prev + 1, steps.length - 1));
-  }, [isLastStep, step]);
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const { data: userProfile, isLoading: isUserProfileLoading } =
+    useUserProfile(userId);
 
-  const handlePrev = () => {
-    setStep((prev) => Math.max(prev - 1, 0));
-  };
+  const uploadProfileMutation = useUploadProfile();
+
+  const {
+    resumeIdState,
+    setResumeIdState,
+    resumeText,
+    setResumeText,
+    files,
+    setFiles,
+    isFileChanged,
+    setIsFileChanged,
+    fileName,
+    setFileName,
+    fileSize,
+    setFileSize,
+  } = useProfileStore();
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        const target = e.target as HTMLElement;
-        if (target.tagName === "TEXTAREA") return;
+    if (!userProfile) return;
+    setResumeIdState(userProfile.resume_id ?? "");
 
-        e.preventDefault();
-        handleNext();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext]);
-
-  const handleRoleChange = (value: string) => {
-    console.log(value);
-    if (roles.includes(value)) {
-      setRoles((prev) => prev.filter((role) => role !== value));
-    } else {
-      setRoles((prev) => [...prev, value]);
+    if (userProfile.resumes && userProfile.resumes.length > 0) {
+      const latestResume = userProfile.resumes[0];
+      setResumeText(latestResume.resume_text ?? "");
+      setFileName(latestResume.file_name ?? "");
+      setFileSize(latestResume.file_size ?? 0);
     }
-  };
+  }, [userProfile]);
+
+  useEffect(() => {
+    if (isUserProfileLoading) return;
+    localStorage.setItem(STEP_KEY, step.toString());
+  }, [step, isUserProfileLoading]);
+
+  useEffect(() => {
+    const step = localStorage.getItem(STEP_KEY);
+    console.log("step", step);
+    if (step) {
+      setStep(parseInt(step));
+    }
+  }, []);
 
   const classifyLinks = (links: string[] | null | undefined) => {
     const result = ["", "", ""];
@@ -133,9 +184,195 @@ const Onboard: React.FC = () => {
     return result;
   };
 
+  useEffect(() => {
+    if (!userProfile) return;
+
+    setName(userProfile.name ?? "");
+    setEmail(userProfile.email ?? "");
+    setPhone(userProfile.phone ?? "");
+    setCountry(userProfile.country ?? "");
+    setCity(userProfile.city ?? "");
+    setRoles(userProfile.open_opportunities ?? []);
+    setWorkExperiences(userProfile.work_experiences ?? []);
+    setEducations(userProfile.educations ?? []);
+
+    const parsed = classifyLinks(userProfile.links);
+    setLinks(parsed);
+  }, [userProfile]);
+
+  const handleNext = useCallback(() => {
+    isNext.current = true;
+
+    if (isDirty || isFileChanged) {
+      console.log("Upload profile!");
+      uploadProfileMutation.mutate({
+        name,
+        email,
+        phone,
+        country,
+        city,
+        open_opportunities: roles,
+        links,
+        workExperiences,
+        educations: educations,
+        files,
+        isFileChanged,
+        resumeText,
+        resumeIdState,
+      });
+      setIsDirty(false);
+    }
+
+    if (isLastStep) {
+      setSubmitLoading(true);
+      console.log("Submit form");
+      setTimeout(() => {
+        setSubmitLoading(false);
+        setStep(5);
+      }, 1000);
+      return;
+    }
+
+    console.log("Next step", step);
+    setStep((prev) => Math.min(prev + 1, steps.length - 1));
+  }, [
+    isLastStep,
+    step,
+    isDirty,
+    uploadProfileMutation,
+    name,
+    email,
+    phone,
+    country,
+    city,
+    roles,
+    links,
+    userId,
+    educations,
+    workExperiences,
+    files,
+    isFileChanged,
+    resumeText,
+    resumeIdState,
+  ]);
+
+  const handlePrev = () => {
+    isNext.current = false;
+
+    setStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const lock = useRef(false);
+  const isNext = useRef(true);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      if (lock.current) return;
+
+      const target = e.target as HTMLElement;
+      if (target.tagName === "TEXTAREA") return;
+
+      e.preventDefault();
+      console.log("Enter key pressed");
+
+      handleNext();
+
+      lock.current = true;
+      setTimeout(() => {
+        lock.current = false;
+      }, 500);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleNext]);
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (lock.current) return;
+      if (window.scrollY !== 0) {
+        lock.current = true;
+        setTimeout(() => {
+          lock.current = false;
+        }, 800);
+        return;
+      }
+
+      if (e.deltaY < -75) {
+        lock.current = true;
+        isNext.current = false;
+        setStep((prev) => Math.max(prev - 1, 0));
+
+        setTimeout(() => {
+          lock.current = false;
+        }, 500);
+      } else if (e.deltaY > 75) {
+        lock.current = true;
+        isNext.current = true;
+        setStep((prev) => Math.min(prev + 1, steps.length - 1));
+
+        setTimeout(() => {
+          lock.current = false;
+        }, 500);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel);
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
+
+  const handleRoleChange = (value: string) => {
+    console.log(value);
+    if (roles.includes(value)) {
+      setRoles((prev) => prev.filter((role) => role !== value));
+    } else {
+      setRoles((prev) => [...prev, value]);
+    }
+  };
+
   const handleChangeLink = (index: number, value: string) => {
+    setIsDirty(true);
     setLinks((prev) => prev.map((link, i) => (i === index ? value : link)));
   };
+
+  useEffect(() => {
+    document.documentElement.classList.add("noneoverscroll");
+
+    return () => {
+      document.documentElement.classList.remove("noneoverscroll");
+    };
+  }, []);
+
+  const slideVariants = {
+    enter: (isNext: boolean) => ({
+      opacity: 0,
+      y: isNext ? 40 : -40, // ⭐️ forward면 아래→위, backward면 위→아래
+    }),
+    center: {
+      opacity: 1,
+      y: 0,
+    },
+    exit: (isNext: boolean) => ({
+      opacity: 0,
+      y: isNext ? -40 : 40, // ⭐️ forward면 위로 사라지고, backward면 아래로 사라짐
+    }),
+  };
+
+  // useEffect(() => {
+  //   if (!isDirty) return;
+
+  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  //     e.preventDefault();
+  //     e.returnValue = "";
+  //   };
+
+  //   window.addEventListener("beforeunload", handleBeforeUnload);
+
+  //   return () => {
+  //     window.removeEventListener("beforeunload", handleBeforeUnload);
+  //   };
+  // }, [isDirty]);
 
   return (
     <main className="flex flex-col justify-center items-center min-h-screen bg-white text-black font-inter">
@@ -172,16 +409,18 @@ const Onboard: React.FC = () => {
             </div>
           </div>
 
-          <form
+          <div
             onSubmit={(e) => e.preventDefault()}
             className="flex flex-col gap-4 max-w-[800px] w-full"
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" custom={isNext.current}>
               <motion.div
                 key={step}
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                variants={slideVariants}
+                custom={isNext.current}
                 transition={{ duration: 0.35, ease: "easeInOut" }}
                 className="flex flex-col gap-4"
               >
@@ -209,13 +448,19 @@ const Onboard: React.FC = () => {
                       label="Country"
                       placeholder="대한민국"
                       value={country}
-                      onChange={(e) => setCountry(e.target.value)}
+                      onChange={(e) => {
+                        setCountry(e.target.value);
+                        setIsDirty(true);
+                      }}
                     />
                     <TextInput
                       label="City"
                       placeholder="서울"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setIsDirty(true);
+                      }}
                     />
                   </>
                 )}
@@ -227,19 +472,28 @@ const Onboard: React.FC = () => {
                       label="이름"
                       placeholder="Enter your name..."
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setIsDirty(true);
+                      }}
                     />
                     <TextInput
                       label="이메일"
                       placeholder="Enter your email..."
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setIsDirty(true);
+                      }}
                     />
                     <TextInput
                       label="전화번호"
                       placeholder="Enter your phone number..."
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        setIsDirty(true);
+                      }}
                     />
                   </>
                 )}
@@ -250,7 +504,10 @@ const Onboard: React.FC = () => {
                       {Options.map((option) => (
                         <div
                           key={option}
-                          onClick={() => handleRoleChange(option)}
+                          onClick={() => {
+                            handleRoleChange(option);
+                            setIsDirty(true);
+                          }}
                           className={`flex flex-row transition-all duration-200 items-center gap-2 cursor-pointer border border-2 py-2 px-3 min-w-[200px] rounded-[4px]
                             ${
                               roles.includes(option)
@@ -268,7 +525,18 @@ const Onboard: React.FC = () => {
 
                 {step === 3 && (
                   <>
-                    <ProfileResume />
+                    <ProfileResume
+                      workExperiences={workExperiences}
+                      setWorkExperiences={(e) => {
+                        setWorkExperiences(e);
+                        setIsDirty(true);
+                      }}
+                      educations={educations}
+                      setEducations={(e) => {
+                        setEducations(e);
+                        setIsDirty(true);
+                      }}
+                    />
                   </>
                 )}
 
@@ -301,9 +569,10 @@ const Onboard: React.FC = () => {
                           {links.slice(3).map((link, index) => (
                             <div className="relative" key={index}>
                               <div
-                                onClick={() =>
-                                  setLinks((prev) => prev.slice(0, -1))
-                                }
+                                onClick={() => {
+                                  setIsDirty(true);
+                                  setLinks((prev) => prev.slice(0, -1));
+                                }}
                                 className="flex rounded-full w-4 h-4 absolute top-[11px] right-[-28px] bg-red-100 text-red-400 items-center justify-center cursor-pointer hover:bg-red-200"
                               >
                                 -
@@ -338,7 +607,7 @@ const Onboard: React.FC = () => {
                 <div className="flex flex-row items-center gap-3 mt-4">
                   <button
                     onClick={handleNext}
-                    className="bg-brightnavy transition-all duration-200 cursor-pointer text-white px-4 h-11 rounded-[4px] text-lg font-medium hover:opacity-90"
+                    className="bg-brightnavy shadow-lg transition-all duration-200 cursor-pointer text-white px-4 h-11 rounded-[4px] text-lg font-medium hover:opacity-90"
                   >
                     {submitLoading ? (
                       <span className="animate-spin">
@@ -359,7 +628,7 @@ const Onboard: React.FC = () => {
                 </div>
               </motion.div>
             </AnimatePresence>
-          </form>
+          </div>
 
           {/* Bottom-left dev nav (optional) */}
           <div className="flex flex-row items-center gap-2 fixed bottom-4 left-4 text-sm text-xgray600">

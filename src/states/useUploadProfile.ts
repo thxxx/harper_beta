@@ -3,17 +3,22 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { v4 } from "uuid";
 import router from "next/router";
+import { Education, WorkExperience } from "@/pages/onboard";
 
 type UploadProfileArgs = {
   name: string;
   email: string;
   phone: string;
-  location: string;
+  country: string;
+  city: string;
+  open_opportunities: string[];
   links: string[];
-  files: File | null;
-  isFileChanged: boolean;
-  resumeText: string;
-  resumeIdState: string;
+  workExperiences: WorkExperience[];
+  files?: File | null;
+  isFileChanged?: boolean;
+  resumeText?: string;
+  resumeIdState?: string;
+  educations: Education[];
 };
 
 export function useUploadProfile() {
@@ -23,8 +28,12 @@ export function useUploadProfile() {
         name,
         email,
         phone,
-        location,
+        country,
+        city,
+        open_opportunities,
         links,
+        workExperiences,
+        educations,
         files,
         isFileChanged,
         resumeText,
@@ -80,10 +89,15 @@ export function useUploadProfile() {
         name,
         email,
         phone,
-        location,
+        country,
+        city,
+        open_opportunities,
         links,
         resume_id: resumeId,
+        work_experiences: workExperiences,
+        educations: educations,
       };
+      console.log("body", body);
 
       const resUser = await supabase.from("users").upsert(body);
       if (resUser.status !== 200 && resUser.status !== 201) {
@@ -93,7 +107,8 @@ export function useUploadProfile() {
       return { userId, resumeId };
     },
     onSuccess: () => {
-      router.push("/call");
+      console.log("upload profile success");
+      // router.push("/call");
     },
   });
 }

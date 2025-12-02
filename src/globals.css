@@ -31,6 +31,12 @@ body {
   background-color: black;
 }
 
+@layer base {
+  html.noneoverscroll {
+    overscroll-behavior-y: none;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
