@@ -114,12 +114,12 @@ export default function CompanyPage() {
               최정예 인재를 만나는 곳
             </h1>
 
-            <p className="mt-4 text-sm md:text-base text-white/50 leading-relaxed font-thin">
+            <p className="mt-4 text-sm md:text-base text-white/60 leading-relaxed font-thin">
               Recruiter agent 하퍼가 지원자와 직접 이야기하여 알아낸 정보와
-              이력서, 깃헙, 논문 등 모든 정보를 사용하여{" "}
+              이력서, 깃헙, 논문 등 모든 정보를{" "}
               <br className="hidden sm:block" />
-              불필요한 탐색 시간을 최소화하고 회사의 문화와 필요 포지션에 가장
-              적합한 인재를 연결해줍니다.
+              사용하여 불필요한 탐색 시간을 최소화하고 회사의 문화와 필요 역량에
+              가장 적합한 인재를 연결해줍니다.
             </p>
           </Animate>
 
