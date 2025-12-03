@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import "../globals.css";
-import { Inbox, LoaderCircle } from "lucide-react";
+import { ArrowRight, Building, Inbox, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
 import Animate from "@/components/landing/Animate";
 import Header from "@/components/landing/Header";
 import { supabase } from "@/lib/supabase";
 import Head from "next/head";
+import router from "next/router";
 
-const isValidEmail = (email: string): boolean => {
+export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(trimmed)) return false;
@@ -33,11 +34,6 @@ const isValidEmail = (email: string): boolean => {
 };
 
 export default function CompanyPage() {
-  const [email, setEmail] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [expect, setExpect] = useState("");
-  const [uploading, setUploading] = useState(false);
-
   const handleContactUs = async () => {
     await navigator.clipboard.writeText("chris@asksonus.com");
     showToast({
@@ -46,32 +42,32 @@ export default function CompanyPage() {
     });
   };
 
-  const handleJoinWaitlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setUploading(true);
-    if (!isValidEmail(email)) {
-      showToast({
-        message: "유효한 회사 이메일을 입력해주세요.",
-        variant: "white",
-      });
-      setUploading(false);
-      return;
-    }
+  // const handleJoinWaitlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  //   e.preventDefault();
+  //   setUploading(true);
+  //   if (!isValidEmail(email)) {
+  //     showToast({
+  //       message: "유효한 회사 이메일을 입력해주세요.",
+  //       variant: "white",
+  //     });
+  //     setUploading(false);
+  //     return;
+  //   }
 
-    const body = {
-      email: email,
-      type: 1,
-      companyName: companyName,
-      expect: expect,
-    };
-    await supabase.from("harper_waitlist").insert(body);
+  //   const body = {
+  //     email: email,
+  //     type: 1,
+  //     companyName: companyName,
+  //     expect: expect,
+  //   };
+  //   await supabase.from("harper_waitlist").insert(body);
 
-    showToast({
-      message: "등록이 완료되었습니다. 감사합니다.",
-      variant: "white",
-    });
-    setUploading(false);
-  };
+  //   showToast({
+  //     message: "등록이 완료되었습니다. 감사합니다.",
+  //     variant: "white",
+  //   });
+  //   setUploading(false);
+  // };
 
   return (
     <main className="min-h-screen text-white font-inter">
@@ -93,15 +89,18 @@ export default function CompanyPage() {
         }}
       >
         <Header page="company" />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 pb-10 sm:pb-16 pt-8 md:pt-0">
+        <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pb-10 sm:pb-16 pt-12 md:pt-32">
           <Animate
             triggerOnce={true}
-            className="flex flex-row items-center justify-center pl-[2px] py-[2px] pr-[12px] bg-white text-black gap-1.5 rounded-full"
+            className="flex flex-row items-center justify-between px-1 w-[144px] h-[32px] border border-[#0FA4E8] text-white gap-1.5 rounded-full"
           >
-            <div className="w-[24px] h-[24px] bg-black rounded-full flex items-center justify-center">
-              <Inbox className="w-[14px] text-white" />
+            <div className="w-[22px] h-[22px] bg-[#0FA4E8] rounded-full flex items-center justify-center">
+              {/* <Inbox className="w-[13px] text-white" /> */}
+              <Building className="w-[13px] text-white" />
             </div>
-            <div className="text-[12px] font-light">Join waitlist</div>
+            <div className="text-[13px] font-normal w-[80%] pl-1">
+              For companies
+            </div>
           </Animate>
 
           <Animate
@@ -109,12 +108,12 @@ export default function CompanyPage() {
             delay={0.4}
             triggerOnce={true}
           >
-            <h1 className="text-3xl md:text-4xl font-extralight leading-snug">
+            <h1 className="text-3xl md:text-4xl font-normal leading-snug">
               최고의 기업이 <br className="block sm:hidden" />
               최정예 인재를 만나는 곳
             </h1>
 
-            <p className="mt-4 text-sm md:text-base text-white/60 leading-relaxed font-thin">
+            <p className="mt-4 text-sm md:text-base text-white/60 leading-relaxed font-light">
               Recruiter agent 하퍼가 지원자와 직접 이야기하여 알아낸 정보와
               이력서, 깃헙, 논문 등 모든 정보를{" "}
               <br className="hidden sm:block" />
@@ -123,15 +122,39 @@ export default function CompanyPage() {
             </p>
           </Animate>
 
+          <Animate
+            delay={0.8}
+            triggerOnce={true}
+            className="flex flex-row items-center justify-center gap-4 mt-12 sm:mt-14 "
+          >
+            <div
+              onClick={() => router.push("/join")}
+              className="group flex rounded-full px-6 py-3 items-center justify-center font-normal
+            cursor-pointer text-black bg-white transition-all duration-300 gap-2"
+            >
+              <span className="text-center">Join waitlist</span>
+              <ArrowRight
+                strokeWidth={2.2}
+                className="group-hover:w-[16px] w-0 transition-all duration-300"
+              />
+            </div>
+            <div
+              onClick={handleContactUs}
+              className="flex rounded-full px-5 py-3.5 items-center justify-center font-light text-sm
+            cursor-pointer text-white border border-white/15 bg-white/0 transition-all duration-300 gap-2 hover:bg-white/5"
+            >
+              Contact Us
+            </div>
+          </Animate>
+
           {/* Form card */}
-          <div className="mt-10 sm:mt-14 w-full flex justify-center">
+          {/* <div className="mt-10 sm:mt-14 w-full flex justify-center">
             <Animate
               triggerOnce={true}
               className="w-full max-w-2xl rounded-[20px] bg-white text-black shadow-2xl px-5 py-6"
               delay={0.8}
             >
               <form className="space-y-6">
-                {/* Second row: Email / Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div className="flex flex-col text-xs sm:text-sm">
                     <label className="mb-1 text-xgray700">이메일</label>
@@ -153,7 +176,6 @@ export default function CompanyPage() {
                   </div>
                 </div>
 
-                {/* Message */}
                 <div className="flex flex-col text-xs sm:text-sm">
                   <label className="mb-1 text-gray-500">
                     어떤 역할을 찾고 계신가요?
@@ -166,7 +188,6 @@ export default function CompanyPage() {
                   />
                 </div>
 
-                {/* CTA button */}
                 <div className="pt-2">
                   <button
                     type="submit"
@@ -182,7 +203,7 @@ export default function CompanyPage() {
                 </div>
               </form>
             </Animate>
-          </div>
+          </div> */}
         </div>
         <Animate delay={2.2} duration={0.8} isUp={false}>
           <div className="flex flex-row items-center justify-between gap-4 pb-2 px-4 w-full text-white/40">
@@ -191,12 +212,7 @@ export default function CompanyPage() {
               <br className="block sm:hidden" />
               dedicated AI recruiter.
             </div>
-            <div
-              onClick={handleContactUs}
-              className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"
-            >
-              Contact Us
-            </div>
+            <div className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"></div>
           </div>
         </Animate>
       </div>

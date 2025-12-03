@@ -16,12 +16,10 @@ const Header = ({ page }: { page: "company" | "candidate" }) => {
           {page === "company" ? "For candidates" : "For companies"}
         </div> */}
       </nav>
-      <div className="w-[10%] hidden sm:block text-right">
+      <div className="w-[40%] sm:w-[10%] text-right">
         <div
           className="font-light cursor-pointer opacity-60 hover:opacity-75"
-          onClick={() =>
-            router.push(page === "company" ? "/cand" : "/companies")
-          }
+          onClick={() => router.push(page === "company" ? "/" : "/companies")}
         >
           {page === "company" ? "For candidates" : "For companies"}
         </div>

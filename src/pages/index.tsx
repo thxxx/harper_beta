@@ -28,6 +28,7 @@ const CandidatePage = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [abtest, setAbtest] = useState(-1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const abtest = localStorage.getItem("harper_abtest");
@@ -67,6 +68,12 @@ const CandidatePage = () => {
   const upScroll = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const downScroll = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
+  };
 
   const handleContactUs = async () => {
     await navigator.clipboard.writeText("chris@asksonus.com");
@@ -96,6 +103,7 @@ const CandidatePage = () => {
 
     setIsOpenModal(true);
     setUploading(false);
+    setIsSubmitted(true);
   };
 
   const handleSubmit = async (data: WaitlistExtraInfo) => {
@@ -182,8 +190,11 @@ const CandidatePage = () => {
             >
               For companies
             </div>
-            <div className="font-light cursor-pointer opacity-80 hover:opacity-95">
-              Referral
+            <div
+              onClick={downScroll}
+              className="font-light cursor-pointer opacity-80 hover:opacity-95"
+            >
+              FAQ
             </div>
           </nav>
           <div className="hidden md:flex w-[10%]">
@@ -231,56 +242,74 @@ const CandidatePage = () => {
               팀의 50% 이상이 미국에 오피스를 두고 있습니다.
             </div>
           </div> */}
-          <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-snug">
+          <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-normal">
             <span className="text-4xl mb-4 block md:hidden">Harper : </span>
             <span className="hidden md:inline">Harper : </span>
             세계 최고 AI/ML 엔지니어의
             <br /> 다음 커리어가 시작되는 곳
           </div>
-          <div className="text-sm md:text-lg font-normal mt-8 text-xgray700">
+          <div
+            className={`text-sm md:text-lg font-light mt-8 ${
+              abtest === 1 ? "text-black" : "text-white"
+            }`}
+          >
             {/* AI 리크루터 하퍼와의 단 한 번의 AI 통화로 지원자의 360도 프로필을 완성합니다. 글로벌 AI 스타트업의 최적의 기회를 하퍼가 상시로 연결해 드립니다. */}
             AI 리크루터 하퍼와 단 한 번의 통화로 앞으로의 커리어에 대한 니즈와
             선호를 알려주세요. <br className="hidden md:block" />
-            글로벌 스타트업 등에서의 최적의 기회를 하퍼가 쉬지 않고 찾아 연결해
+            글로벌 스타트업에서의 최적의 기회를 하퍼가 쉬지 않고 찾아 연결해
             드립니다.
             {/* 이력서를 업로드하고, AI Recruiter와 통화하세요.
             <br /> 그 다음부터는 Harper가 최적의 팀에게서 먼저 제안받으실 수
             있게 합니다. */}
           </div>
-          <div className="relative mt-24">
-            <input
-              type="email"
-              className={`min-w-[310px] py-3 px-5 font-light text-sm border ${
-                abtest === 1
-                  ? "text-black bg-xlightgray hover:border-black/20 focus:ring-black/50"
-                  : "text-white bg-white/10 hover:border-white/30 focus:ring-white/50"
-              } rounded-full transition-all duration-300 focus:outline-none focus:ring-1`}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Example@gmail.com"
-            />
-            <div
-              onClick={joinWaitlist}
-              className={`absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-1 top-1/2 -translate-y-1/2 text-[13px] px-4 py-2.5 rounded-full transition-all duration-300 ${
-                abtest === 1 ? "bg-black text-white" : "bg-white text-black"
-              }`}
-            >
-              {uploading ? (
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <LoaderCircle className="w-4 h-4 animate-spin text-black" />
-                </div>
-              ) : (
-                <>
-                  <span>Join waitlist</span>
-                  <ArrowRight
-                    size={16}
-                    strokeWidth={2.2}
-                    className="text-black group-hover:w-[12px] w-0 transition-all duration-300"
-                  />
-                </>
-              )}
+          {isSubmitted ? (
+            <div className="relative mt-24">
+              <div
+                className={`py-5 px-8 font-light text-sm border ${
+                  abtest === 1
+                    ? "text-black bg-xlightgray hover:border-black/20 focus:ring-black/50"
+                    : "text-white bg-white/10 border-white/15 hover:border-white/30 focus:ring-white/50"
+                } rounded-lg transition-all duration-300 focus:outline-none focus:ring-1`}
+              >
+                감사합니다! 곧 연락드리겠습니다.
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative mt-24">
+              <input
+                type="email"
+                className={`min-w-[310px] py-3 px-5 font-light text-sm border ${
+                  abtest === 1
+                    ? "text-black bg-xlightgray hover:border-black/20 focus:ring-black/50"
+                    : "text-white bg-white/10 border-white/15 hover:border-white/30 focus:ring-white/50"
+                } rounded-full transition-all duration-300 focus:outline-none focus:ring-1`}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Example@gmail.com"
+              />
+              <div
+                onClick={joinWaitlist}
+                className={`absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-1 top-1/2 -translate-y-1/2 text-[13px] px-4 py-2.5 rounded-full transition-all duration-300 ${
+                  abtest === 1 ? "bg-black text-white" : "bg-white text-black"
+                }`}
+              >
+                {uploading ? (
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <LoaderCircle className="w-4 h-4 animate-spin text-black" />
+                  </div>
+                ) : (
+                  <>
+                    <span>Join waitlist</span>
+                    <ArrowRight
+                      size={16}
+                      strokeWidth={2.2}
+                      className="text-black group-hover:w-[12px] w-0 transition-all duration-300"
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <GridSectionLayout borderSoft={borderSoft}>
@@ -374,7 +403,7 @@ const CandidatePage = () => {
           />
           <WhyImageSection
             title="이전에는 불가능했던, 지원자에 대한 깊이 있는 이해."
-            desc="하퍼는 통화를 통해 지원자의 상황을 이해하고 블로그, GitHub, 작성한 논문 등 비정형 정보까지 종합적으로 분석하여 기존 이력서에서는 알 수 없었던 심층 프로파일링을 완성합니다. 데이터에 기반해 지원자의 선호와 숨겨진 역량까지 정확히 파악하고, 완벽에 가까운 포지션만을 선별하여 제안합니다."
+            desc="하퍼는 대화를 통해 지원자의 상황을 이해하고 블로그, GitHub, 작성한 논문 등 비정형 정보까지 종합적으로 분석하여 기존 이력서에서는 알 수 없었던 심층 프로파일링을 완성합니다. 데이터에 기반해 지원자의 선호와 숨겨진 역량까지 정확히 파악하고, 완벽에 가까운 포지션만을 선별하여 제안합니다."
             imageSrc="/images/why2.png"
             index={1}
             borderSoft={borderSoft}
@@ -387,13 +416,13 @@ const CandidatePage = () => {
           <div className="text-sm text-left leading-6 font-normal text-xgray600">
             하퍼는 올라왔다 사라지는 공고들, 반복적인 지원 및 1차 인터뷰, <br />
             그리고 지원자의 역량과 역량과 니즈를 제대로 이해하지 못한 채
-            이루어지는 리크루터의 연락 등 비효율적인 채용 프로세스를 개선하고자
-            합니다. <br />
-            한번의 등록만으로, 모든 Researcher와 Engineer들이 최고의 팀에서 일할
-            수 있게 되기를 희망합니다.
+            이루어지는 리크루터의 제안들... 이러한 비효율적인 채용 프로세스를
+            AI로 개선하고자 합니다. <br />
+            한번의 등록만으로, 모든 AI/ML Engineer들이 최고의 팀에서 일할 수
+            있게 되기를 희망합니다.
             <br />
             <br />
-            from Chris, Harper
+            Co-founder Chris & Daniel
           </div>
         </div>
       </GridSectionLayout>
@@ -414,28 +443,43 @@ const CandidatePage = () => {
               <br />
               메일을 남겨주시면 출시와 함께 가장 먼저 안내드릴게요.
             </div>
-            <div className="relative mt-12">
-              <input
-                type="email"
-                className="py-3 px-5 font-light text-xs sm:text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full min-w-[260px] sm:min-w-[300px] transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Example@gmail.com"
-              />
-              <div
-                onClick={joinWaitlist}
-                className="absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-0.5 sm:right-1 top-1/2 -translate-y-1/2 text-[13px] bg-white text-black px-4 py-2.5 rounded-full transition-all duration-300"
-              >
-                <span>
-                  Join<span className="hidden sm:inline"> waitlist</span>
-                </span>
-                <ArrowRight
-                  size={16}
-                  strokeWidth={2.2}
-                  className="text-black group-hover:w-[12px] w-0 transition-all duration-300"
-                />
+
+            {isSubmitted ? (
+              <div className="relative mt-12">
+                <div
+                  className={`py-5 px-8 font-light text-sm border ${
+                    abtest === 1
+                      ? "text-black bg-xlightgray hover:border-black/20 focus:ring-black/50"
+                      : "text-white bg-white/10 border-white/15 hover:border-white/30 focus:ring-white/50"
+                  } rounded-lg transition-all duration-300 focus:outline-none focus:ring-1`}
+                >
+                  감사합니다! 곧 연락드리겠습니다.
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative mt-12">
+                <input
+                  type="email"
+                  className="py-3 px-5 font-light text-xs sm:text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full min-w-[260px] sm:min-w-[300px] transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Example@gmail.com"
+                />
+                <div
+                  onClick={joinWaitlist}
+                  className="absolute flex flex-row items-center justify-center gap-1 group cursor-pointer right-0.5 sm:right-1 top-1/2 -translate-y-1/2 text-[13px] bg-white text-black px-4 py-2.5 rounded-full transition-all duration-300"
+                >
+                  <span>
+                    Join<span className="hidden sm:inline"> waitlist</span>
+                  </span>
+                  <ArrowRight
+                    size={16}
+                    strokeWidth={2.2}
+                    className="text-black group-hover:w-[12px] w-0 transition-all duration-300"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col items-center justify-center w-full pt-10">
             <div className="w-full flex flex-col items-center justify-center pb-10">
@@ -613,7 +657,7 @@ const WhyImageSection = ({
 }) => {
   return (
     <div
-      className={`flex flex-1 flex-col ${borderSoft} max-w-full ${
+      className={`flex flex-1 flex-col items-center justify-between ${borderSoft} max-w-full ${
         index !== 1 ? "border-r" : "border-r-0"
       }`}
     >

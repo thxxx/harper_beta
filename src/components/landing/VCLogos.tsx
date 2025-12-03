@@ -14,7 +14,7 @@ const vcLogosBottom = [
   { key: "lightspeed", src: "/images/logos/lightspeed.png", width: 125 },
   { key: "nvidia", src: "/images/logos/nvidia.png", width: 64 },
   { key: "bessemer", src: "/images/logos/bessemer.png", width: 88 },
-  { key: "general-catalyst", src: "/images/logos/general.svg", width: 92 },
+  { key: "general-catalyst", src: "/images/logos/general.png", width: 104 },
   { key: "founders-fund", src: "/images/logos/foundersfund.svg", width: 180 },
 ];
 
