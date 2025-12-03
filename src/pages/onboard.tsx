@@ -16,6 +16,10 @@ import router from "next/router";
 import { useUserProfile } from "@/states/useUserProfile";
 import { useUploadProfile } from "@/states/useUploadProfile";
 import useProfileStore from "@/store/useProfileStore";
+import TextInput from "@/components/apply/TextInput";
+import LinkInput from "@/components/apply/LinkInput";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import MultiSelects from "@/components/apply/MultiSelects";
 
 const STEP_KEY = "harper-onboard-step";
 
@@ -78,10 +82,6 @@ export type Education = {
 };
 
 const Onboard: React.FC = () => {
-  const [step, setStep] = useState(0);
-  const [submitLoading, setSubmitLoading] = useState(false);
-
-  // form states (you can add more later)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -89,6 +89,7 @@ const Onboard: React.FC = () => {
   const [city, setCity] = useState("");
   const [links, setLinks] = useState<string[]>(["", "", ""]);
   const [roles, setRoles] = useState<string[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
 
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([
     {
@@ -109,10 +110,6 @@ const Onboard: React.FC = () => {
       gpa: "",
     },
   ]);
-
-  const [isDirty, setIsDirty] = useState(false);
-
-  const isLastStep = useMemo(() => step === steps.length - 1, [step]);
 
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
@@ -136,6 +133,52 @@ const Onboard: React.FC = () => {
     setFileSize,
   } = useProfileStore();
 
+  const onSave = useCallback(() => {
+    console.log("Save!", isDirty, isFileChanged);
+    if (isDirty || isFileChanged) {
+      console.log("Upload profile!");
+      uploadProfileMutation.mutate({
+        name,
+        email,
+        phone,
+        country,
+        city,
+        open_opportunities: roles,
+        links,
+        workExperiences,
+        educations: educations,
+        files,
+        isFileChanged,
+        resumeText,
+        resumeIdState,
+      });
+      setIsDirty(false);
+    }
+  }, [
+    isDirty,
+    uploadProfileMutation,
+    name,
+    email,
+    phone,
+    country,
+    city,
+    roles,
+    links,
+    userId,
+    educations,
+    workExperiences,
+    files,
+    isFileChanged,
+    resumeText,
+    resumeIdState,
+  ]);
+
+  const { step, submitLoading, setStep, handleNext, handlePrev, isNextRef } =
+    useOnboarding({
+      save: onSave,
+      totalSteps: steps.length,
+    });
+
   useEffect(() => {
     if (!userProfile) return;
     setResumeIdState(userProfile.resume_id ?? "");
@@ -147,19 +190,6 @@ const Onboard: React.FC = () => {
       setFileSize(latestResume.file_size ?? 0);
     }
   }, [userProfile]);
-
-  useEffect(() => {
-    if (isUserProfileLoading) return;
-    localStorage.setItem(STEP_KEY, step.toString());
-  }, [step, isUserProfileLoading]);
-
-  useEffect(() => {
-    const step = localStorage.getItem(STEP_KEY);
-    console.log("step", step);
-    if (step) {
-      setStep(parseInt(step));
-    }
-  }, []);
 
   const classifyLinks = (links: string[] | null | undefined) => {
     const result = ["", "", ""];
@@ -200,137 +230,6 @@ const Onboard: React.FC = () => {
     setLinks(parsed);
   }, [userProfile]);
 
-  const handleNext = useCallback(() => {
-    isNext.current = true;
-
-    if (isDirty || isFileChanged) {
-      console.log("Upload profile!");
-      uploadProfileMutation.mutate({
-        name,
-        email,
-        phone,
-        country,
-        city,
-        open_opportunities: roles,
-        links,
-        workExperiences,
-        educations: educations,
-        files,
-        isFileChanged,
-        resumeText,
-        resumeIdState,
-      });
-      setIsDirty(false);
-    }
-
-    if (isLastStep) {
-      setSubmitLoading(true);
-      console.log("Submit form");
-      setTimeout(() => {
-        setSubmitLoading(false);
-        setStep(5);
-      }, 1000);
-      return;
-    }
-
-    console.log("Next step", step);
-    setStep((prev) => Math.min(prev + 1, steps.length - 1));
-  }, [
-    isLastStep,
-    step,
-    isDirty,
-    uploadProfileMutation,
-    name,
-    email,
-    phone,
-    country,
-    city,
-    roles,
-    links,
-    userId,
-    educations,
-    workExperiences,
-    files,
-    isFileChanged,
-    resumeText,
-    resumeIdState,
-  ]);
-
-  const handlePrev = () => {
-    isNext.current = false;
-
-    setStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const lock = useRef(false);
-  const isNext = useRef(true);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Enter") return;
-      if (lock.current) return;
-
-      const target = e.target as HTMLElement;
-      if (target.tagName === "TEXTAREA") return;
-
-      e.preventDefault();
-      console.log("Enter key pressed");
-
-      handleNext();
-
-      lock.current = true;
-      setTimeout(() => {
-        lock.current = false;
-      }, 500);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext]);
-
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (lock.current) return;
-      if (window.scrollY !== 0) {
-        lock.current = true;
-        setTimeout(() => {
-          lock.current = false;
-        }, 800);
-        return;
-      }
-
-      if (e.deltaY < -75) {
-        lock.current = true;
-        isNext.current = false;
-        setStep((prev) => Math.max(prev - 1, 0));
-
-        setTimeout(() => {
-          lock.current = false;
-        }, 500);
-      } else if (e.deltaY > 75) {
-        lock.current = true;
-        isNext.current = true;
-        setStep((prev) => Math.min(prev + 1, steps.length - 1));
-
-        setTimeout(() => {
-          lock.current = false;
-        }, 500);
-      }
-    };
-
-    window.addEventListener("wheel", handleWheel);
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, []);
-
-  const handleRoleChange = (value: string) => {
-    console.log(value);
-    if (roles.includes(value)) {
-      setRoles((prev) => prev.filter((role) => role !== value));
-    } else {
-      setRoles((prev) => [...prev, value]);
-    }
-  };
-
   const handleChangeLink = (index: number, value: string) => {
     setIsDirty(true);
     setLinks((prev) => prev.map((link, i) => (i === index ? value : link)));
@@ -359,29 +258,13 @@ const Onboard: React.FC = () => {
     }),
   };
 
-  // useEffect(() => {
-  //   if (!isDirty) return;
-
-  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  //     e.preventDefault();
-  //     e.returnValue = "";
-  //   };
-
-  //   window.addEventListener("beforeunload", handleBeforeUnload);
-
-  //   return () => {
-  //     window.removeEventListener("beforeunload", handleBeforeUnload);
-  //   };
-  // }, [isDirty]);
-
   return (
-    <main className="flex flex-col justify-center items-center min-h-screen bg-white text-black font-inter">
-      {/* Top progress bar */}
+    <main className="flex flex-col justify-start md:justify-center items-center min-h-screen bg-white text-black font-inter pt-4 md:pt-0">
       <div className="w-full fixed top-0 left-0 z-20">
         <ProgressBar currentStep={step + 1} totalSteps={steps.length} />
       </div>
 
-      {step === 5 ? (
+      {step === steps.length ? (
         <>
           <div className="flex flex-col gap-4 items-center justify-center h-full w-full text-center">
             <div className="text-2xl font-normal">
@@ -403,37 +286,40 @@ const Onboard: React.FC = () => {
         </>
       ) : (
         <div className="flex flex-row items-start justify-center h-full w-full px-4 pb-20 pt-16">
-          <div className="h-full flex items-start justify-center min-w-16 pt-1">
+          <div className="h-full items-start justify-center min-w-16 pt-1 hidden md:flex">
             <div className="flex flex-row items-center gap-1 font-light text-brightnavy">
               {step + 1} <ArrowRight size={16} strokeWidth={2} />
             </div>
+          </div>
+          <div className="flex md:hidden rounded-md w-6 h-6 text-sm bg-brightnavy/80 text-white mb-4 items-center justify-center">
+            {step + 1}
           </div>
 
           <div
             onSubmit={(e) => e.preventDefault()}
             className="flex flex-col gap-4 max-w-[800px] w-full"
           >
-            <AnimatePresence mode="wait" custom={isNext.current}>
+            <AnimatePresence mode="wait" custom={isNextRef.current}>
               <motion.div
                 key={step}
                 initial="enter"
                 animate="center"
                 exit="exit"
                 variants={slideVariants}
-                custom={isNext.current}
+                custom={isNextRef.current}
                 transition={{ duration: 0.35, ease: "easeInOut" }}
                 className="flex flex-col gap-4"
               >
                 {/* Title / description */}
                 {step < steps.length && steps[step].title ? (
-                  <div className="flex text-2xl font-normal">
+                  <div className="flex text-xl md:text-2xl font-normal">
                     {steps[step].title ?? ""}
                   </div>
                 ) : (
                   <></>
                 )}
                 {step < steps.length && steps[step].description ? (
-                  <div className="text-xgray700 text-xl font-normal mb-4">
+                  <div className="text-xgray600 text-xl font-normal mb-4">
                     {steps[step].description ?? ""}
                   </div>
                 ) : (
@@ -500,26 +386,12 @@ const Onboard: React.FC = () => {
 
                 {step === 2 && (
                   <>
-                    <div className="flex flex-row gap-2 flex-wrap">
-                      {Options.map((option) => (
-                        <div
-                          key={option}
-                          onClick={() => {
-                            handleRoleChange(option);
-                            setIsDirty(true);
-                          }}
-                          className={`flex flex-row transition-all duration-200 items-center gap-2 cursor-pointer border border-2 py-2 px-3 min-w-[200px] rounded-[4px]
-                            ${
-                              roles.includes(option)
-                                ? "bg-brightnavy/20  hover:bg-brightnavy/20 border-brightnavy"
-                                : "bg-brightnavy/5  hover:bg-brightnavy/30 active:border-brightnavy border-brightnavy/10"
-                            }
-                            `}
-                        >
-                          {option}
-                        </div>
-                      ))}
-                    </div>
+                    <MultiSelects
+                      selects={roles}
+                      setSelects={setRoles}
+                      setIsDirty={setIsDirty}
+                      options={Options}
+                    />
                   </>
                 )}
 
@@ -613,7 +485,7 @@ const Onboard: React.FC = () => {
                       <span className="animate-spin">
                         <LoaderCircle className="w-6 h-6 animate-spin text-white" />
                       </span>
-                    ) : isLastStep ? (
+                    ) : step === steps.length - 1 ? (
                       "Submit"
                     ) : (
                       "Next"
@@ -654,77 +526,3 @@ const Onboard: React.FC = () => {
 };
 
 export default Onboard;
-
-type TextInputProps = {
-  label: string;
-  placeholder: string;
-  value: string;
-  rows?: number;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  autoFocus?: boolean;
-};
-
-const TextInput = ({
-  label,
-  placeholder,
-  value,
-  rows,
-  onChange,
-  autoFocus = false,
-}: TextInputProps) => {
-  return (
-    <div className="w-full group flex flex-col">
-      <label className="mb-1 font-medium text-sm">{label}</label>
-      {rows ? (
-        <textarea
-          placeholder={placeholder}
-          className="transition-colors duration-200 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-xl font-normal leading-5 focus:outline-none outline-none resize-none"
-          value={value}
-          onChange={onChange}
-          rows={rows}
-          autoFocus={autoFocus}
-        />
-      ) : (
-        <input
-          placeholder={placeholder}
-          className="transition-colors duration-200 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-xl font-normal leading-5 focus:outline-none outline-none"
-          value={value}
-          onChange={onChange}
-          autoFocus={autoFocus}
-        />
-      )}
-      <div className="transition-colors duration-200 rounded-full w-full h-[1px] bg-white/0 group-focus-within:bg-brightnavy"></div>
-    </div>
-  );
-};
-
-const LinkInput = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  imgSrc,
-}: {
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
-  imgSrc: string;
-}) => {
-  return (
-    <div className="flex flex-row w-full justify-between items-center">
-      <div className="text-[15px] font-medium w-1/3 flex flex-row items-center gap-2">
-        <Image src={imgSrc} alt={label} width={16} height={16} />
-        <div>{label}</div>
-      </div>
-      <input
-        placeholder={placeholder}
-        className="w-full h-[36px] px-3 py-2 border border-xgray400 rounded-[5px] text-[14px] font-light leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
-        value={value}
-        onChange={onChange}
-      />
-    </div>
-  );
-};

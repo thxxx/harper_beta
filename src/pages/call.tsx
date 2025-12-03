@@ -80,7 +80,7 @@ const Call: React.FC = () => {
   }, [isRecording]);
 
   return (
-    <div className="w-full max-w-[100vw] h-[100vh] flex flex-col gap-2 items-center justify-center">
+    <div className="w-full max-w-[100vw] h-[100vh] flex flex-col gap-2 items-center justify-center bg-white text-black font-inter">
       <div className="flex items-stretch justify-center gap-8">
         {/* Left side: Call visuals */}
         <div className="flex flex-row flex-1 items-center justify-center gap-2 md:flex-col w-[440px]">
@@ -88,9 +88,7 @@ const Call: React.FC = () => {
           <div className="w-full rounded-lg flex items-center justify-center border border-xlightgray h-[280px] shadow-sm">
             <HarperCircle />
           </div>
-          <div className="w-full rounded-lg flex items-center justify-center border border-xgray300 h-[320px]">
-            User
-          </div>
+          <div className="w-full rounded-lg flex items-center justify-center border border-xgray300/0 h-[320px]"></div>
         </div>
 
         {callStatus === "ended" && (

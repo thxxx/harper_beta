@@ -151,7 +151,7 @@ const CandidatePage = () => {
     year: "numeric",
   });
 
-  const remain = useCountdown("2025-12-20T00:00:00");
+  const remain = useCountdown("2025-12-19T00:00:00");
 
   const borderSoft = useMemo(
     () => (abtest === 1 ? "border-beige200" : "border-xgray300"),
@@ -367,7 +367,7 @@ const CandidatePage = () => {
           >
             <div className="flex items-center flex-row gap-2">
               <div className="relative items-baseline gap-1 text-black font-normal flex">
-                <div>500+ in the waitlist from </div>
+                <div>500+ in the waitlist </div>
               </div>
               <div className="flex -space-x-2">
                 <div className="h-7 w-7 rounded-full border border-xgray300">
@@ -522,15 +522,15 @@ const CandidatePage = () => {
               <div className="flex flex-col sm:flex-row items-start justify-start text-white/70 font-thin w-[80%] mt-8">
                 <QuestionAnswer
                   question="누가 제 프로필을 볼 수 있나요"
-                  answer="직접 검증한 회사들만 볼 수 있습니다. 지원자분의 이전 회사에는 공개되지 않도록 합니다."
+                  answer="하퍼의 엄격한 심사 기준을 통과한 검증된 기업만 프로필을 열람할 수 있습니다. 특히, 지원자의 현재 소속된 회사는 IP/도메인 차단 시스템을 통해 철저히 비공개 처리되어 익명성을 완벽하게 보장합니다."
                 />
                 <QuestionAnswer
                   question="당장 구직/이직 의사가 없더라도 등록해둘 수 있나요?"
-                  answer="현재 학생/연구원이거나 이직 의사가 없더라도 등록해둘 수 있습니다. 편하게 제안을 받고, 그 다음 결정하세요."
+                  answer="네 가능합니다. 하퍼는 정규직 채용 외에도 파트타임, 프리랜싱, 자문 등 지원자님의 커리어에 도움이 될 수 있는 다양한 형태의 기회를 함께 연결합니다. 현재 이직 의사나 정규직 여부와 관계없이, 시장 최고 수준의 제안을 받아보시고, 커리어를 확장할 수 있는 새로운 가능성을 편하게 탐색하세요."
                 />
                 <QuestionAnswer
                   question="어떤 회사들에게서 제안이 오나요?"
-                  answer="글로벌에서 성장 중인 테크 스타트업들을 모십니다. 지원자 분들에 맞는 회사를 찾아 가입을 요청하여, 모든 지원자분들이 최소 한번 이상의 제안을 받으실 수 있게 합니다."
+                  answer="글로벌 성장 잠재력을 갖춘 딥테크(Deep Tech) 및 AI 분야의 혁신적인 테크 기업들입니다. 하퍼는 AI 매칭 시스템을 통해 지원자분들의 역량과 니즈에 부합하는 포지션을 직접 찾아 해당 기업에 가입을 요청합니다. 이처럼 맞춤형 매칭을 통해 모든 지원자분들이 최소 한 번 이상의 퀄리티 높은 제안을 반드시 받으실 수 있도록 보장합니다."
                 />
               </div>
             </div>
@@ -618,7 +618,7 @@ const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
           borderSoft={borderSoft}
         />
         <ImageSection
-          title="2. AI 리크루터 하퍼와의 대화"
+          title="2. AI 리크루터 하퍼와의 대화."
           desc="다음 커리어 목표를 설정하고, 찾고 있는 기회에 대해 AI 리크루터 하퍼에게 자세히 알려주세요. 모든 정보는 철저히 보호됩니다."
           imageSrc="/images/feat1.png"
           index={1}
