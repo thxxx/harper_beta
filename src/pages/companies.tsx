@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../globals.css";
 import { ArrowRight, Building, Inbox, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
@@ -7,6 +7,7 @@ import Header from "@/components/landing/Header";
 import { supabase } from "@/lib/supabase";
 import Head from "next/head";
 import router from "next/router";
+import { v4 } from "uuid";
 
 export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -34,6 +35,24 @@ export const isValidCompanyEmail = (email: string): boolean => {
 };
 
 export default function CompanyPage() {
+  const [landingId, setLandingId] = useState("");
+
+  useEffect(() => {
+    const localId = localStorage.getItem("harper_landing_id");
+    if (!localId) {
+      const newId = v4();
+      localStorage.setItem("harper_landing_id", newId);
+      setLandingId(newId);
+      const body = {
+        local_id: landingId,
+        action: "enter_company",
+      };
+      supabase.from("landing_logs").insert(body);
+    } else {
+      setLandingId(localId as string);
+    }
+  }, []);
+
   const handleContactUs = async () => {
     await navigator.clipboard.writeText("chris@asksonus.com");
     showToast({
@@ -88,7 +107,26 @@ export default function CompanyPage() {
           backgroundPosition: "center",
         }}
       >
-        <Header page="company" />
+        <header className="flex items-center justify-between px-4 lg:px-8 py-4 text-sm">
+          <div className="text-lg font-light font-garamond w-[10%]">harper</div>
+
+          <nav className="flex items-center justify-end sm:justify-center gap-8 text-sm sm:text-sm w-[60%] sm:w-[40%]"></nav>
+          <div className="w-[40%] sm:w-[10%] text-right">
+            <div
+              className="font-light cursor-pointer opacity-60 hover:opacity-75"
+              onClick={() => {
+                const body = {
+                  local_id: landingId,
+                  action: "click_candidates",
+                };
+                supabase.from("landing_logs").insert(body);
+                router.push("/");
+              }}
+            >
+              For candidates
+            </div>
+          </div>
+        </header>
         <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pb-10 sm:pb-16 pt-12 md:pt-32">
           <Animate
             triggerOnce={true}
@@ -128,7 +166,14 @@ export default function CompanyPage() {
             className="flex flex-row items-center justify-center gap-4 mt-12 sm:mt-14 "
           >
             <div
-              onClick={() => router.push("/join")}
+              onClick={() => {
+                const body = {
+                  local_id: landingId,
+                  action: "click_join",
+                };
+                supabase.from("landing_logs").insert(body);
+                router.push("/join");
+              }}
               className="group flex rounded-full px-6 py-3 items-center justify-center font-normal
             cursor-pointer text-black bg-white transition-all duration-300 gap-2"
             >

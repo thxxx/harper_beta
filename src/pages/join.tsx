@@ -89,7 +89,7 @@ const steps = [
 ];
 
 const Onboard: React.FC = () => {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(7);
   const [submitLoading, setSubmitLoading] = useState(false);
 
   // form states (you can add more later)
@@ -260,7 +260,6 @@ const Onboard: React.FC = () => {
 
   return (
     <main className="flex flex-col justify-start md:justify-center items-center min-h-screen bg-white text-black font-inter pt-4 md:pt-0">
-      {/* Top progress bar */}
       <div className="w-full fixed top-0 left-0 z-20">
         <ProgressBar currentStep={step + 1} totalSteps={steps.length} />
       </div>
@@ -359,7 +358,7 @@ const Onboard: React.FC = () => {
                     <TextInput
                       autoFocus
                       label="회사명"
-                      placeholder="Harper"
+                      placeholder="예) Harper"
                       value={company}
                       onChange={(e) => {
                         setCompany(e.target.value);
@@ -368,7 +367,7 @@ const Onboard: React.FC = () => {
                     />
                     <TextInput
                       label="홈페이지 URL"
-                      placeholder="https://matchharper.com"
+                      placeholder="예) https://matchharper.com"
                       value={companyLink}
                       onChange={(e) => {
                         setCompanyLink(e.target.value);
@@ -409,14 +408,12 @@ const Onboard: React.FC = () => {
                   <>
                     <TextInput
                       autoFocus
-                      label="Position"
-                      placeholder="Machine Learning 엔지니어 2명, Deep Learning 연구원 1명)"
+                      placeholder="예) Machine Learning 엔지니어 2명, Deep Learning 연구원 1명)"
                       value={needs}
                       onChange={(e) => {
                         setNeeds(e.target.value);
                         setIsDirty(true);
                       }}
-                      rows={3}
                     />
                   </>
                 )}
@@ -425,8 +422,7 @@ const Onboard: React.FC = () => {
                   <>
                     <TextInput
                       autoFocus
-                      label="보상"
-                      placeholder="1억 - 1억 5천만원"
+                      placeholder="예) 1억 - 1억 5천만원"
                       value={salary}
                       onChange={(e) => {
                         setSalary(e.target.value);
@@ -451,8 +447,7 @@ const Onboard: React.FC = () => {
                   <>
                     <TextInput
                       autoFocus
-                      label="추가 전달 사항"
-                      placeholder="ex. 현재 채용이 빠를 수록 좋은데 언제부터 사용 가능할까요?"
+                      placeholder="예) 현재 채용이 빠를 수록 좋은데 언제부터 사용 가능할까요?"
                       value={additional}
                       onChange={(e) => {
                         setAdditional(e.target.value);
@@ -624,7 +619,7 @@ const Selections = ({
 };
 
 type TextInputProps = {
-  label: string;
+  label?: string;
   placeholder: string;
   value: string;
   rows?: number;
@@ -644,7 +639,7 @@ const TextInput = ({
 }: TextInputProps) => {
   return (
     <div className="w-full group flex flex-col mt-2">
-      <label className="mb-1 font-medium text-sm">{label}</label>
+      {label && <label className="mb-1 font-medium text-sm">{label}</label>}
       {rows ? (
         <textarea
           placeholder={placeholder}

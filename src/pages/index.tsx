@@ -15,6 +15,7 @@ import {
 import { useCountdown } from "@/hooks/useCountDown";
 import { DropdownMenu } from "@/components/ui/menu";
 import VCLogos from "@/components/landing/VCLogos";
+import { v4 } from "uuid";
 
 export const isValidEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -29,6 +30,25 @@ const CandidatePage = () => {
   const [uploading, setUploading] = useState(false);
   const [abtest, setAbtest] = useState(-1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [landingId, setLandingId] = useState("");
+
+  useEffect(() => {
+    const localId = localStorage.getItem("harper_landing_id");
+    if (!localId) {
+      const newId = v4();
+      localStorage.setItem("harper_landing_id", newId);
+      setLandingId(newId);
+
+      const body = {
+        local_id: landingId,
+        action: "enter",
+        abtest: "2025_12_" + abtest.toString(),
+      };
+      supabase.from("landing_logs").insert(body);
+    } else {
+      setLandingId(localId as string);
+    }
+  }, []);
 
   useEffect(() => {
     const abtest = localStorage.getItem("harper_abtest");
@@ -96,6 +116,7 @@ const CandidatePage = () => {
 
     const body = {
       email: email,
+      local_id: landingId,
       type: 0,
       abtest: "2025_12_" + abtest.toString(),
     };
@@ -186,7 +207,15 @@ const CandidatePage = () => {
           <nav className="hidden md:flex items-center justify-center gap-8 text-xs sm:text-sm w-[40%]">
             <div
               className="font-light cursor-pointer opacity-80 hover:opacity-95"
-              onClick={() => router.push("companies")}
+              onClick={() => {
+                const body = {
+                  local_id: landingId,
+                  action: "click_company",
+                  abtest: "2025_12_" + abtest.toString(),
+                };
+                supabase.from("landing_logs").insert(body);
+                router.push("companies");
+              }}
             >
               For companies
             </div>
@@ -334,49 +363,53 @@ const CandidatePage = () => {
           <VCLogos borderSoft={borderSoft} />
 
           <div
-            className={`flex flex-col items-center justify-center gap-2 font-light border-t ${borderSoft} px-7 py-12`}
+            className={`flex flex-col md:flex-row items-center justify-between gap-2 font-light border-t ${borderSoft} px-7 py-12`}
           >
-            <div className="flex items-center">
-              <div className="relative items-baseline gap-1 text-black font-normal hidden md:flex">
-                <div
-                  className={`absolute bottom-0 left-0 w-full h-[60%] ${
-                    abtest === 1 ? "bg-[#ebb585]" : "bg-brightnavy/20"
-                  }`}
-                ></div>
-                <span className="z-10">
-                  500+ in the waitlist : AI/ML Engineer 41% / Researcher 28% /
-                  Software Engineer 21% / 기타 10%
-                </span>
+            <div className="flex items-center flex-row gap-2">
+              <div className="relative items-baseline gap-1 text-black font-normal flex">
+                <div>500+ in the waitlist from </div>
               </div>
-              <div className="flex flex-col items-center justify-center relative gap-1 text-black font-normal md:hidden">
-                <div className="relative text-lg mb-2 flex">
-                  <div
-                    className={`z-0 absolute bottom-0 left-0 w-full h-[60%] ${
-                      abtest === 1 ? "bg-[#ebb585]" : "bg-brightnavy/20"
-                    }`}
-                  ></div>
-                  <span className="z-10">500+ in the waitlist</span>
+              <div className="flex -space-x-2">
+                <div className="h-7 w-7 rounded-full border border-xgray300">
+                  <Image
+                    src="/images/person1.png"
+                    alt="person1"
+                    className="rounded-full"
+                    width={28}
+                    height={28}
+                  />
                 </div>
-                AI/ML Engineer 41% / Researcher 28% / Software Engineer 21% /
-                기타 10%
+                <div className="h-7 w-7 rounded-full border border-xgray300 bg-neutral-300">
+                  <Image
+                    src="/images/person2.png"
+                    alt="person2"
+                    className="rounded-full"
+                    width={28}
+                    height={28}
+                  />
+                </div>
+                <div className="h-7 w-7 rounded-full border border-xgray300 bg-neutral-300">
+                  <Image
+                    src="/images/person3.png"
+                    alt="person3"
+                    className="rounded-full"
+                    width={28}
+                    height={28}
+                  />
+                </div>
               </div>
-              {/* <div className="flex -space-x-2">
-                <div className="h-7 w-7 rounded-full border border-white bg-neutral-300" />
-                <div className="h-7 w-7 rounded-full border border-white bg-neutral-300" />
-                <div className="h-7 w-7 rounded-full border border-white bg-neutral-300" />
-              </div> */}
             </div>
-            <div className="text-xgray700 mt-2">~ {formattedDate}</div>
+            {/* <div className="text-xgray700 mt-2">~ {formattedDate}</div> */}
 
-            {/* <div className="flex flex-col items-end gap-1 text-sm">
-              <div className="text-xgray700">
+            <div className="flex flex-col mt-4 md:mt-0 items-center md:items-end gap-1 text-sm">
+              <div className="text-xgray700/90">
                 현재 등록된 비율 :{" "}
                 <span>
                   Engineer 42% / Researcher 33% / Backend 15% / 기타 10%
                 </span>
               </div>
               <div className="text-black">~ {formattedDate}</div>
-            </div> */}
+            </div>
           </div>
         </div>
       </GridSectionLayout>
@@ -430,7 +463,7 @@ const CandidatePage = () => {
         <div className="w-full flex flex-col items-center justify-center bg-black">
           <div className="flex flex-col items-center justify-center w-full lg:w-[94%] border-b border-xgray700 py-32 text-white">
             <div className="text-4xl sm:text-5xl font-light font-hedvig">
-              Join Waitlist.
+              Join the Waitlist.
             </div>
             <div className="text-sm sm:text-base font-light text-white/80 mt-6 leading-6">
               서비스는 아직 오픈 준비 중입니다.
@@ -580,14 +613,14 @@ const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
         <ImageSection
           title="1. 간단하게 가입하세요."
           desc="이력서를 올리고, AI recruiter와 대화하며 어떤 기회를 탐색중이고 어떤 팀을 선호하는지 알려주세요. 언제 어디서든 원할 때 진행 가능하고, 모든 정보는 철저히 보호됩니다."
-          imageSrc="/images/feat1.png"
+          imageSrc="/images/feat4.png"
           index={0}
           borderSoft={borderSoft}
         />
         <ImageSection
           title="2. AI 리크루터 하퍼와의 대화"
           desc="다음 커리어 목표를 설정하고, 찾고 있는 기회에 대해 AI 리크루터 하퍼에게 자세히 알려주세요. 모든 정보는 철저히 보호됩니다."
-          imageSrc="/images/feat2.png"
+          imageSrc="/images/feat1.png"
           index={1}
           borderSoft={borderSoft}
         />
