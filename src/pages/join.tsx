@@ -89,12 +89,12 @@ const steps = [
 ];
 
 const Onboard: React.FC = () => {
-  const [step, setStep] = useState(8);
+  const [step, setStep] = useState(0);
   const [submitLoading, setSubmitLoading] = useState(false);
 
   // form states (you can add more later)
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("khj605123@gmail.com");
+  const [email, setEmail] = useState("");
 
   const [company, setCompany] = useState("");
   const [needs, setNeeds] = useState("");
