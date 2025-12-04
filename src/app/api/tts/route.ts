@@ -1,4 +1,5 @@
 // app/api/tts/route.ts
+import { ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID } from "@/utils/constantkeys";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -9,8 +10,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
     }
 
-    const apiKey = "";
-    const voiceId = "";
+    const apiKey = ELEVENLABS_API_KEY;
+    const voiceId = ELEVENLABS_VOICE_ID;
 
     if (!apiKey || !voiceId) {
       return NextResponse.json(

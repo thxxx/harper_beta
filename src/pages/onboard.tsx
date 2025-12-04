@@ -21,14 +21,12 @@ import LinkInput from "@/components/apply/LinkInput";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import MultiSelects from "@/components/apply/MultiSelects";
 
-const STEP_KEY = "harper-onboard-step";
-
 const Options = [
   "풀타임 정규직",
   "인턴",
   "파트타임/외주",
   "Expert call",
-  "커피챗",
+  "해외 취업",
   "해당 없음",
 ];
 // step metadata (title, description 등)
@@ -237,7 +235,6 @@ const Onboard: React.FC = () => {
 
   useEffect(() => {
     document.documentElement.classList.add("noneoverscroll");
-
     return () => {
       document.documentElement.classList.remove("noneoverscroll");
     };
@@ -246,7 +243,7 @@ const Onboard: React.FC = () => {
   const slideVariants = {
     enter: (isNext: boolean) => ({
       opacity: 0,
-      y: isNext ? 40 : -40, // ⭐️ forward면 아래→위, backward면 위→아래
+      y: isNext ? 40 : -40,
     }),
     center: {
       opacity: 1,
@@ -254,7 +251,7 @@ const Onboard: React.FC = () => {
     },
     exit: (isNext: boolean) => ({
       opacity: 0,
-      y: isNext ? -40 : 40, // ⭐️ forward면 위로 사라지고, backward면 아래로 사라짐
+      y: isNext ? -40 : 40,
     }),
   };
 
@@ -285,7 +282,7 @@ const Onboard: React.FC = () => {
           </div>
         </>
       ) : (
-        <div className="flex flex-row items-start justify-center h-full w-full px-4 pb-20 pt-16">
+        <div className="flex flex-col md:flex-row items-start justify-center h-full w-full px-4 pb-20 pt-4 md:pt-8 md:pb-28">
           <div className="h-full items-start justify-center min-w-16 pt-1 hidden md:flex">
             <div className="flex flex-row items-center gap-1 font-light text-brightnavy">
               {step + 1} <ArrowRight size={16} strokeWidth={2} />

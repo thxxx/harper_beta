@@ -16,6 +16,7 @@ import { useCountdown } from "@/hooks/useCountDown";
 import { DropdownMenu } from "@/components/ui/menu";
 import VCLogos from "@/components/landing/VCLogos";
 import { v4 } from "uuid";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export const isValidEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -32,6 +33,8 @@ const CandidatePage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [landingId, setLandingId] = useState("");
 
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     const localId = localStorage.getItem("harper_landing_id");
     if (!localId) {
@@ -43,6 +46,7 @@ const CandidatePage = () => {
         local_id: landingId,
         action: "enter",
         abtest: "2025_12_" + abtest.toString(),
+        is_mobile: isMobile,
       };
       supabase.from("landing_logs").insert(body);
     } else {
@@ -119,6 +123,7 @@ const CandidatePage = () => {
       local_id: landingId,
       type: 0,
       abtest: "2025_12_" + abtest.toString(),
+      is_mobile: isMobile,
     };
     await supabase.from("harper_waitlist").insert(body);
 
@@ -135,6 +140,7 @@ const CandidatePage = () => {
       expect: data.interests,
       links: data.profileUrl,
       abtest: "2025_12_" + abtest.toString(),
+      is_mobile: isMobile,
     };
     await supabase.from("harper_waitlist").upsert(body);
 
@@ -192,7 +198,7 @@ const CandidatePage = () => {
           } h-full`}
         >
           <div
-            className={`text-xl font-garamond w-[40%] md:w-[10%] ${
+            className={`text-xl font-garamond w-[40%] md:w-[15%] ${
               isBelow
                 ? "font-bold text-xdarknavy"
                 : `${
@@ -212,6 +218,7 @@ const CandidatePage = () => {
                   local_id: landingId,
                   action: "click_company",
                   abtest: "2025_12_" + abtest.toString(),
+                  is_mobile: isMobile,
                 };
                 supabase.from("landing_logs").insert(body);
                 router.push("companies");
@@ -226,7 +233,7 @@ const CandidatePage = () => {
               FAQ
             </div>
           </nav>
-          <div className="hidden md:flex w-[10%]">
+          <div className="hidden md:flex w-[10%] md:w-[15%] items-center justify-end">
             <button
               onClick={upScroll}
               className="font-light cursor-pointer py-2 px-4"
@@ -272,8 +279,8 @@ const CandidatePage = () => {
             </div>
           </div> */}
           <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-normal">
-            <span className="text-4xl mb-4 block md:hidden">Harper : </span>
-            <span className="hidden md:inline">Harper : </span>
+            <span className="text-4xl mb-4 block md:hidden">harper : </span>
+            <span className="hidden md:inline">harper : </span>
             세계 최고 AI/ML 엔지니어의
             <br /> 다음 커리어가 시작되는 곳
           </div>
@@ -352,10 +359,10 @@ const CandidatePage = () => {
             하퍼는 오직 글로벌 Top-Tier VC가 투자하여 빠르게 성장하고 있는
             검증된 스타트업의 기회만을 선별하여 연결합니다.
           </h2>
-          {/* <p className="text-sm text-xgray700 mt-2 md:mt-0">
-            아래의 글로벌 탑티어 VC에게 투자받은 빠르게 성장하는
-            스타트업들에게서 제안을 받아보세요.
-          </p> */}
+          <p className="text-sm text-xgray700 mt-2 md:mt-1">
+            정말 좋은 기회들은 절대 공고로 올라오지 않습니다. 하퍼에서 먼저
+            제안을 받아보세요.
+          </p>
         </div>
       </GridSectionLayout>
       <GridSectionLayout borderSoft={borderSoft}>
@@ -379,6 +386,11 @@ const CandidatePage = () => {
                     height={28}
                   />
                 </div>
+                {/* <div className="h-7 w-7 rounded-full border border-xgray300">
+                  <div className="h-full w-full flex items-center text-xs justify-center text-white rounded-full bg-blue-500">
+                    <span>H</span>
+                  </div>
+                </div> */}
                 <div className="h-7 w-7 rounded-full border border-xgray300 bg-neutral-300">
                   <Image
                     src="/images/person2.png"
@@ -444,7 +456,7 @@ const CandidatePage = () => {
         </div>
       </GridSectionLayout>
       <GridSectionLayout borderSoft={borderSoft}>
-        <div className="flex flex-col items-start w-full gap-4 pt-8 pb-16 px-8">
+        <div className="flex flex-col items-start w-full gap-4 pt-12 pb-20 px-8">
           <div className="text-base font-medium italic">Our Values</div>
           <div className="text-sm text-left leading-6 font-normal text-xgray600">
             하퍼는 올라왔다 사라지는 공고들, 반복적인 지원 및 1차 인터뷰, <br />
@@ -461,11 +473,11 @@ const CandidatePage = () => {
       </GridSectionLayout>
       <GridSectionLayout borderSoft={borderSoft}>
         <div className="w-full flex flex-col items-center justify-center bg-black">
-          <div className="flex flex-col items-center justify-center w-full lg:w-[94%] border-b border-xgray700 py-32 text-white">
+          <div className="flex flex-col items-center justify-center w-full lg:w-[94%] border-b border-xgray700 py-48 text-white">
             <div className="text-4xl sm:text-5xl font-light font-hedvig">
               Join the Waitlist.
             </div>
-            <div className="text-sm sm:text-base font-light text-white/80 mt-6 leading-6">
+            <div className="text-sm sm:text-base font-light text-white/80 mt-10 leading-6">
               서비스는 아직 오픈 준비 중입니다.
               <br />
               런칭까지 <span className="text-white font-normal">
@@ -478,7 +490,7 @@ const CandidatePage = () => {
             </div>
 
             {isSubmitted ? (
-              <div className="relative mt-12">
+              <div className="relative mt-16">
                 <div
                   className={`py-5 px-8 font-light text-sm border ${
                     abtest === 1
@@ -490,7 +502,7 @@ const CandidatePage = () => {
                 </div>
               </div>
             ) : (
-              <div className="relative mt-12">
+              <div className="relative mt-16">
                 <input
                   type="email"
                   className="py-3 px-5 font-light text-xs sm:text-sm border text-white bg-white/10 border-[rgba(255,255,255,0.16)] rounded-full min-w-[260px] sm:min-w-[300px] transition-all duration-300 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
@@ -517,7 +529,7 @@ const CandidatePage = () => {
           <div className="flex flex-col items-center justify-center w-full pt-10">
             <div className="w-full flex flex-col items-center justify-center pb-10">
               <div className="text-lg font-light text-white/80">
-                Question Answers
+                Questions & Answers
               </div>
               <div className="flex flex-col sm:flex-row items-start justify-start text-white/70 font-thin w-[80%] mt-8">
                 <QuestionAnswer
@@ -601,12 +613,12 @@ const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
   return (
     <GridSectionLayout borderSoft={borderSoft}>
       <div
-        className={`flex flex-col items-center justify-center w-full border-b ${borderSoft} md:border-b-0`}
+        className={`flex flex-row items-center justify-center w-full border-b ${borderSoft} md:border-b-0`}
       >
         <div
-          className={`py-10 w-full sm:w-[34%] text-base font-normal md:border-x ${borderSoft}`}
+          className={`h-28 flex items-center justify-center w-full sm:w-[34%] text-lg italic font-light md:border-x ${borderSoft}`}
         >
-          하퍼는 이렇게 진행돼요
+          How it works
         </div>
       </div>
       <div className="flex flex-col sm:flex-row items-stretch w-full">
@@ -656,15 +668,14 @@ const ImageSection = ({
       } ${index === 1 ? "sm:max-w-[34%]" : "sm:max-w-[33%]"}`}
     >
       <div
-        className={`h-[18vw] min-h-[220px] w-full overflow-hidden flex justify-end items-end border-y ${borderSoft}`}
+        className={`h-[18vw] min-h-[220px] w-full overflow-hidden flex justify-end items-center border-y ${borderSoft}`}
       >
         <Image
           src={imageSrc}
           alt={title}
           width={600}
           height={400}
-          style={{ height: "auto", width: "100%" }}
-          className="object-center max-w-none"
+          className="object-center max-w-none h-auto md:h-full w-full md:w-auto"
         />
       </div>
       <div className="flex flex-col items-start justify-start w-full px-7 gap-3 py-6 pb-14 text-left">

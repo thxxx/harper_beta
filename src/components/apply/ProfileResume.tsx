@@ -4,6 +4,8 @@ import { useUserProfile } from "@/states/useUserProfile";
 import useProfileStore from "@/store/useProfileStore";
 import { FileText, Loader2, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import ConfirmModal from "../Modal/ConfirmModal";
+import { extractResumeInfo } from "@/lib/llm/llm";
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 10MB
 
@@ -20,6 +22,8 @@ const ProfileResume = ({
 }) => {
   // ----- Resume / File -----
   const [loadingPdf, setLoadingPdf] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [readingLoading, setReadingLoading] = useState(false);
 
   const {
     resumeIdState,
@@ -81,6 +85,30 @@ const ProfileResume = ({
     console.log("--- Extracted Text (Client Side) ---");
     console.log(data.text.slice(0, 100), data.length);
     setResumeText(data.text);
+
+    // educations, workExperiences가 각 값들이 비어있는지 체크
+    if (
+      educations.every(
+        (edu) =>
+          edu.school === "" &&
+          edu.major === "" &&
+          edu.startDate === "" &&
+          edu.endDate === "" &&
+          edu.degree === "" &&
+          edu.gpa === ""
+      ) &&
+      workExperiences.every(
+        (exp) =>
+          exp.company === "" &&
+          exp.position === "" &&
+          exp.startDate === "" &&
+          exp.endDate === "" &&
+          exp.description === ""
+      )
+    ) {
+    } else {
+      setShowConfirmModal(true);
+    }
   };
 
   // ----- Work Experience -----
@@ -146,10 +174,29 @@ const ProfileResume = ({
     setEducations(newEducations);
   };
 
+  const addContentFromResume = async () => {
+    setReadingLoading(true);
+    const result = await extractResumeInfo(resumeText);
+    console.log("addContentFromResume", result);
+    setReadingLoading(false);
+  };
+
   return (
     <div className="w-full">
+      {showConfirmModal && (
+        <ConfirmModal
+          open={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={() => addContentFromResume()}
+          confirmLabel="예, 자동 채우기"
+          cancelLabel="아니오"
+          title="이력서에 기반해 자동으로 아래 내용을 채우시겠습니까?"
+          description="작성하신 내역이 있다면 지워질 수 있습니다."
+        />
+      )}
       {/* Resume Upload */}
       <SectionLayout>
+        <button onClick={() => addContentFromResume()}>자동 채우기</button>
         <div>
           <input
             onChange={handleChangeFile}
@@ -177,11 +224,16 @@ const ProfileResume = ({
 `}
           >
             <div className="flex-wrap w-fit p-3 bg-white rounded-full border border-xgray300">
-              {loadingPdf && <Loader2 size={20} strokeWidth={1.6} />}
-              {!loadingPdf && fileName ? (
-                <FileText size={20} strokeWidth={1.6} />
+              {loadingPdf || readingLoading ? (
+                <Loader2 size={20} strokeWidth={1.6} className="animate-spin" />
               ) : (
-                <Upload size={20} strokeWidth={1.6} />
+                <>
+                  {!loadingPdf && fileName ? (
+                    <FileText size={20} strokeWidth={1.6} />
+                  ) : (
+                    <Upload size={20} strokeWidth={1.6} />
+                  )}
+                </>
               )}
             </div>
 

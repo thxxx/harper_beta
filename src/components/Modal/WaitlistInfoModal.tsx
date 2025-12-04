@@ -1,8 +1,9 @@
 "use client";
 
-import { LoaderCircle, X } from "lucide-react";
-import React, { useState } from "react";
+import { Check, LoaderCircle, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import Animate from "../landing/Animate";
+import { showToast } from "../toast/toast";
 
 export type WaitlistExtraInfo = {
   currentRole: string;
@@ -34,6 +35,15 @@ export const WaitlistExtraInfoModal: React.FC<Props> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (profileUrl.trim() === "") {
+      showToast({
+        message: "프로필 링크를 입력해주세요.",
+        variant: "white",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await onSubmit({
@@ -49,14 +59,14 @@ export const WaitlistExtraInfoModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-      <Animate className="relative w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl md:p-6">
+      <Animate className="relative w-full max-w-lg rounded-xl bg-white p-4 shadow-2xl md:p-6">
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-black md:text-lg">
+            <h2 className="text-sm md:text-base font-semibold text-black">
               등록해주셔서 감사합니다.
             </h2>
-            <p className="mt-1 text-sm font-normal text-xgray500">
+            <p className="mt-1 text-xs md:text-sm font-normal text-xgray500">
               아래 정보는 모두 선택 사항입니다. 알려주시면 더 잘 맞는 팀과
               기회를 소개해드릴 수 있어요.
             </p>
@@ -110,16 +120,18 @@ export const WaitlistExtraInfoModal: React.FC<Props> = ({
 
           {/* Current role */}
           <Input
-            label="현재 역할 혹은 희망하는 역할"
-            value={currentRole}
-            onChange={(e: any) => setCurrentRole(e.target.value)}
-            placeholder="예: ML Engineer, AI Researcher, 학생 등"
-          />
-          <Input
             label="주요 프로필 링크"
             value={profileUrl}
             onChange={(e: any) => setProfileUrl(e.target.value)}
             placeholder="LinkedIn, GitHub 또는 개인 사이트 링크"
+            isDefault
+            isRequired
+          />
+          <Input
+            label="현재 역할 혹은 희망하는 역할"
+            value={currentRole}
+            onChange={(e: any) => setCurrentRole(e.target.value)}
+            placeholder="예: ML Engineer, AI Researcher, 학생 등"
           />
           <Input
             label="어떤 팀 혹은 기회를 찾고 계신가요?"
@@ -195,31 +207,68 @@ const Input = ({
   onChange,
   placeholder,
   rows,
+  isDefault,
+  isRequired,
 }: {
   label: string;
   value: string;
   onChange: any;
   placeholder: string;
   rows?: number;
+  isDefault?: boolean;
+  isRequired?: boolean;
 }) => {
+  const isDisabled = useMemo(() => value === "default", [value]);
+
   return (
-    <div className="flex flex-col gap-1 w-full">
-      <div className="text-[14px] font-medium">{label}</div>
-      {rows ? (
-        <textarea
-          placeholder={placeholder}
-          className="w-full px-3 py-2 border border-xgray400 rounded-[5px] text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
-          value={value}
-          onChange={onChange}
-          rows={rows}
-        />
+    <div className="flex flex-col gap-1 w-full mt-0 md:mt-2">
+      <div className="flex flex-row items-center justify-between text-[14px] font-medium">
+        <div className="text-sm md:text-base">
+          {label} {isRequired && <span className="text-red-500">*</span>}
+        </div>
+        {isDefault && (
+          <div
+            onClick={() => {
+              if (isDisabled) {
+                onChange({ target: { value: "" } });
+              } else {
+                onChange({ target: { value: "default" } });
+              }
+            }}
+            className="flex flex-row items-center gap-1 text-[12px] font-normal text-xgray600"
+          >
+            <div
+              className={`w-[14px] h-[14px] border border-xgray500 rounded-[3px] mt-[0px] flex items-center justify-center ${
+                isDisabled ? "bg-brightnavy" : "bg-white"
+              }`}
+            >
+              <Check strokeWidth={3} className="w-2 h-2 text-white" />
+            </div>
+            <div>없음</div>
+          </div>
+        )}
+      </div>
+      {!isDisabled ? (
+        <>
+          {rows ? (
+            <textarea
+              placeholder={placeholder}
+              className="w-full px-3 py-2 border border-xgray400 rounded-[5px] text-xs md:text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
+              value={value}
+              onChange={onChange}
+              rows={rows}
+            />
+          ) : (
+            <input
+              placeholder={placeholder}
+              className="w-full h-[36px] px-3 py-2 border border-xgray400 rounded-[5px] text-xs md:text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
+              value={value}
+              onChange={onChange}
+            />
+          )}
+        </>
       ) : (
-        <input
-          placeholder={placeholder}
-          className="w-full h-[36px] px-3 py-2 border border-xgray400 rounded-[5px] text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none"
-          value={value}
-          onChange={onChange}
-        />
+        <div className="w-full h-[36px] px-3 py-2 bg-xlightgray border border-xgray400 rounded-[5px] text-xs md:text-[13px] font-normal leading-5 focus:ring-1 focus:ring-brightnavy outline-none" />
       )}
     </div>
   );

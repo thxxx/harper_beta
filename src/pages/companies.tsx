@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import Head from "next/head";
 import router from "next/router";
 import { v4 } from "uuid";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -36,6 +37,7 @@ export const isValidCompanyEmail = (email: string): boolean => {
 
 export default function CompanyPage() {
   const [landingId, setLandingId] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const localId = localStorage.getItem("harper_landing_id");
@@ -46,6 +48,7 @@ export default function CompanyPage() {
       const body = {
         local_id: landingId,
         action: "enter_company",
+        is_mobile: isMobile,
       };
       supabase.from("landing_logs").insert(body);
     } else {
@@ -118,6 +121,7 @@ export default function CompanyPage() {
                 const body = {
                   local_id: landingId,
                   action: "click_candidates",
+                  is_mobile: isMobile,
                 };
                 supabase.from("landing_logs").insert(body);
                 router.push("/");
@@ -170,6 +174,7 @@ export default function CompanyPage() {
                 const body = {
                   local_id: landingId,
                   action: "click_join",
+                  is_mobile: isMobile,
                 };
                 supabase.from("landing_logs").insert(body);
                 router.push("/join");
