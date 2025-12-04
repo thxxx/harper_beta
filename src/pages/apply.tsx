@@ -2,10 +2,6 @@ import Appbar from "@/components/Appbar";
 import { ChevronsLeft, FileText, Loader2, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import router from "next/router";
-import { askGpt } from "@/lib/llm/llm";
-import { supabase } from "@/lib/supabase";
-import { v4 } from "uuid";
 import { useUserProfile } from "@/states/useUserProfile";
 import { useUploadProfile } from "@/states/useUploadProfile";
 
