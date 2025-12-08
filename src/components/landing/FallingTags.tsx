@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 
 type Tag = {
@@ -65,10 +65,17 @@ const TAGS: Tag[] = [
 ];
 
 export const FallingTags: React.FC = () => {
+  const [start, setStart] = useState(false);
+
+  // ⏱️ 1.5초 뒤에 애니메이션 시작
+  useEffect(() => {
+    const t = setTimeout(() => setStart(true), 2400);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="relative flex w-full justify-center overflow-visible">
       {TAGS.map((tag, index) => (
-        // 바깥 레이어: '상자' 자체가 떨어져서 자리 잡는 역할
         <motion.div
           key={tag.label}
           className="absolute"
@@ -79,13 +86,21 @@ export const FallingTags: React.FC = () => {
             opacity: 0,
             scale: 0.8,
           }}
-          animate={{
-            x: tag.x,
-            y: tag.y,
-            rotate: tag.rotate,
-            opacity: 1,
-            scale: 1,
-          }}
+          animate={
+            start
+              ? {
+                  x: tag.x,
+                  y: tag.y,
+                  rotate: tag.rotate,
+                  opacity: 1,
+                  scale: 1,
+                }
+              : {
+                  // 시작 전 상태 그대로 유지
+                  y: -220,
+                  opacity: 0,
+                }
+          }
           transition={{
             type: "spring",
             stiffness: 260,
@@ -94,10 +109,9 @@ export const FallingTags: React.FC = () => {
             delay: index * 0.12,
           }}
         >
-          {/* 안쪽 레이어: 이 안에서만 드래그 + 제자리 복귀 */}
           <motion.div
             className={
-              "select-none rounded-lg pl-2 pr-4 py-2 text-xs font-medium shadow-xl flex flex-row items-center justify-start gap-1 cursor-grab active:cursor-grabbing border bg-gray-500/10 border-white/10 backdrop-blur-sm"
+              "select-none rounded-lg pl-2 pr-4 py-2 text-xs font-medium shadow-xl flex flex-row items-center justify-start gap-1.5 cursor-grab active:cursor-grabbing border bg-gray-500/10 border-white/10 backdrop-blur-sm"
             }
             drag
             dragElastic={0.25}

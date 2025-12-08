@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { LoaderCircle } from "lucide-react";
+import GradientBackground from "@/components/landing/GradientBackground";
+import Header from "@/components/landing/Header";
+import { showToast } from "@/components/toast/toast";
+import { handleContactUs } from "@/utils/info";
+import router from "next/router";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginSuccess() {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [invalidMessage, setInvalidMessage] = useState("코드를 입력해주세요.");
+  const [invalidMessage, setInvalidMessage] = useState("");
   const [isShake, setIsShake] = useState(false);
+
+  const interactiveRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isShake) {
@@ -23,20 +31,38 @@ export default function LoginSuccess() {
     if (!code) {
       setIsShake(true);
       setInvalidMessage("초대 코드를 입력해주세요.");
+      setIsLoading(false);
+      return;
     }
-    if (code.length !== 6) {
-      setIsShake(true);
-      setInvalidMessage("초대 코드는 6자리입니다.");
-    }
-    setIsLoading(false);
+
+    supabase
+      .from("company_code")
+      .select("*")
+      .eq("code", code)
+      .single()
+      .then((res) => {
+        if (res.data) {
+          router.push("/");
+        } else {
+          setIsShake(true);
+          setInvalidMessage("초대 코드가 일치하지 않습니다.");
+        }
+        setIsLoading(false);
+      });
   };
 
   return (
-    <div className="min-h-screen bg-black font-inter text-neutral-50 flex items-center justify-center px-4">
-      <div className="flex flex-col items-center text-center max-w-xl w-full space-y-10">
-        {/* Logo */}
+    <div className="relative min-h-screen bg-black font-inter text-white flex items-center justify-center px-4 w-full h-full">
+      <Header page="company" />
+      <GradientBackground interactiveRef={interactiveRef} />
+      <div className="z-20 flex flex-col items-center text-center max-w-xl w-full space-y-10">
         <div className="w-9 h-9 rounded-full">
-          <Image src="/images/logo.png" alt="Harper" width={36} height={36} />
+          <Image
+            src="/svgs/logo_white.svg"
+            alt="Harper"
+            width={36}
+            height={36}
+          />
         </div>
 
         {/* Heading */}
@@ -47,14 +73,14 @@ export default function LoginSuccess() {
           <p className="text-sm md:text-base font-light text-xgray500 leading-relaxed mt-8">
             하퍼는 현재 비공개 베타 중입니다. 초대 코드를 입력해주세요.
             <br />
-            초대코드가 필요하신분은 대기목록에 등록해주세요.
+            초대코드가 필요하신분은 대기자 명단에 등록해주세요.
           </p>
         </div>
 
         {/* Card */}
         <div className="w-full max-w-lg">
           <div
-            className={`rounded-3xl bg-neutral-900/60 border border-neutral-800/80 shadow-xl px-6 py-8 md:px-8 md:py-8 ${
+            className={`rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-xl px-6 py-8 md:px-8 md:py-8 ${
               isShake ? "animate-shake" : ""
             }`}
           >
@@ -68,10 +94,12 @@ export default function LoginSuccess() {
             >
               <input
                 type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
                 placeholder="초대 코드"
-                className="flex-1 rounded-3xl w-full bg-transparent border border-neutral-800/80 px-4 py-4 text-sm md:text-sm
+                className="flex-1 rounded-3xl w-full bg-white/10 border border-neutral-800/80 px-4 py-4 text-sm md:text-sm
                 transition-all duration-200 hover:border-xgray700
-                text-neutral-50 placeholder:text-neutral-500 focus:outline-none font-light focus:ring-0.5 focus:ring-xgray600 focus:border-xgray600"
+                 placeholder:text-neutral-300 focus:outline-none font-light focus:ring-0.5 focus:ring-xgray600 focus:border-xgray600"
               />
               <button
                 type="submit"
@@ -94,18 +122,26 @@ export default function LoginSuccess() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 mt-10 mb-9">
-              <div className="h-px flex-1 bg-neutral-800" />
+              <div className="h-px flex-1 bg-neutral-600" />
               <span className="text-xs text-neutral-500">또는</span>
-              <div className="h-px flex-1 bg-neutral-800" />
+              <div className="h-px flex-1 bg-neutral-600" />
             </div>
 
             {/* Waitlist button */}
-            <button className="w-full rounded-full bg-neutral-50 text-black py-3.5 text-sm md:text-base font-medium hover:bg-neutral-200 transition-colors">
-              Join waitlist
+            <button
+              onClick={() => {
+                router.push("/join");
+              }}
+              className="w-full rounded-full bg-neutral-50 text-black py-3.5 text-sm md:text-base font-medium hover:bg-neutral-200 active:scale-95 transition-all duration-200"
+            >
+              사전 등록하기
             </button>
 
             {/* Logout */}
-            <button className="mt-8 w-full text-xs md:text-sm text-neutral-500 hover:text-neutral-400 mb-4">
+            <button
+              onClick={handleContactUs}
+              className="mt-8 w-full text-xs md:text-sm text-neutral-500 hover:text-neutral-400 mb-4 transition-all duration-200"
+            >
               문의하기
             </button>
           </div>

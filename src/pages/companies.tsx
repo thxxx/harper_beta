@@ -9,6 +9,8 @@ import router from "next/router";
 import { v4 } from "uuid";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { FallingTags } from "@/components/landing/FallingTags";
+import GradientBackground from "@/components/landing/GradientBackground";
+import Header from "@/components/landing/Header";
 
 export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -50,7 +52,7 @@ export default function CompanyPage() {
         action: "enter_company",
         is_mobile: isMobile,
       };
-      supabase.from("landing_logs").insert(body);
+      // supabase.from("landing_logs").insert(body);
     } else {
       setLandingId(localId as string);
     }
@@ -109,39 +111,6 @@ export default function CompanyPage() {
 
   const interactiveRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const interBubble = interactiveRef.current;
-    if (!interBubble) return;
-
-    let curX = 0;
-    let curY = 0;
-    let tgX = 0;
-    let tgY = 0;
-    let animationId = 0;
-
-    const move = () => {
-      curX += (tgX - curX) / 20;
-      curY += (tgY - curY) / 20;
-      interBubble.style.transform = `translate(${Math.round(
-        curX
-      )}px, ${Math.round(curY)}px)`;
-      animationId = window.requestAnimationFrame(move);
-    };
-
-    const handleMouseMove = (event: MouseEvent) => {
-      tgX = event.clientX;
-      tgY = event.clientY;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    move();
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
-
   return (
     <main
       onMouseMove={handleMouseMove}
@@ -159,61 +128,9 @@ export default function CompanyPage() {
       </Head>
       {/* Background image + overlay */}
       <div className="relative min-h-screen w-full flex flex-col">
-        <header className="z-20 flex items-center justify-between px-4 lg:px-8 py-4 text-sm bg-black/0">
-          <div className="text-lg font-light text-white/50 font-garamond w-[10%]">
-            harper
-          </div>
-
-          <nav className="flex items-center justify-end sm:justify-center gap-8 text-sm sm:text-sm w-[60%] sm:w-[40%]"></nav>
-          <div className="w-[40%] sm:w-[10%] text-right">
-            {/* <div
-              className="font-light cursor-pointer opacity-60 hover:opacity-75"
-              onClick={() => {
-                const body = {
-                  local_id: landingId,
-                  action: "click_candidates",
-                  is_mobile: isMobile,
-                };
-                supabase.from("landing_logs").insert(body);
-                router.push("/");
-              }}
-            >
-              For candidates
-            </div> */}
-          </div>
-        </header>
-        <div className="absolute bg-black/80 top-0 left-0 w-full h-full inset-0 z-10"></div>
-        <div className="gradient-bg absolute top-0 left-0 w-full h-full inset-0 z-0">
-          {/* goo 필터 정의용 SVG */}
-          <svg xmlns="http://www.w3.org/2000/svg" className="svgBlur">
-            <defs>
-              <filter id="goo">
-                <feGaussianBlur
-                  in="SourceGraphic"
-                  stdDeviation="10"
-                  result="blur"
-                />
-                <feColorMatrix
-                  in="blur"
-                  mode="matrix"
-                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
-                  result="goo"
-                />
-                <feBlend in="SourceGraphic" in2="goo" />
-              </filter>
-            </defs>
-          </svg>
-
-          <div className="gradients-container">
-            <div className="g1" />
-            <div className="g2" />
-            <div className="g3" />
-            <div className="g4" />
-            <div className="g5" />
-            <div className="interactive" ref={interactiveRef} />
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-between px-4 sm:px-8 pt-12 md:pt-28 z-20">
+        <GradientBackground interactiveRef={interactiveRef} />
+        <Header page="company" />
+        <div className="flex-1 flex flex-col items-center justify-between px-4 sm:px-8 pt-12 md:pt-40 z-20">
           <div className="flex-1 flex flex-col items-center justify-start">
             <Animate
               className="max-w-4xl text-center flex flex-col items-center justify-center"
@@ -221,21 +138,31 @@ export default function CompanyPage() {
               triggerOnce={true}
             >
               <h1 className="text-5xl font-light tracking-tighter leading-tight">
-                Find the best AI Engineer/Researcher.
+                {/* Find the best AI Engineer/Researcher. */}
+                최고의 <span className="font-extralight">AI</span>{" "}
+                엔지니어/리서처를 찾아보세요.
               </h1>
-
+            </Animate>
+            <Animate
+              className="max-w-4xl text-center flex flex-col items-center justify-center"
+              delay={0.8}
+              triggerOnce={true}
+            >
               <p className="mt-6 text-[32px] text-white font-extralight tracking-tighter">
-                Find, track, and hire the best researchers.
+                {/* Find, track, and hire the best researchers. */}
+                훌륭한 인재가 곧 회사를 정의합니다.
               </p>
 
               <p className="mt-4 text-[18px] text-white/60 leading-relaxed font-extralight max-w-[620px]">
-                Research talent is a competitive advantage, and we{"'"}re here
-                to help you win that advantage.
+                {/* Research talent is a competitive advantage, and we{"'"}re here
+                to help you win that advantage. */}
+                하퍼가 이력, 깃헙, 논문 등 모든 비정형 정보를 사용하여 회사의
+                문화와 필요 역량에 가장 적합한 인재를 찾고 연결해드립니다.
               </p>
             </Animate>
 
             <Animate
-              delay={0.8}
+              delay={1.2}
               triggerOnce={true}
               className="flex flex-row items-center justify-center gap-4 mt-12 sm:mt-14 "
             >

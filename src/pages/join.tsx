@@ -48,7 +48,7 @@ const steps = [
   {
     id: 1,
     title: "성함과 연락받으실 회사 이메일 주소를 알려주세요.",
-    description: "(회사 이메일 외 불가)",
+    description: "(회사 이메일)",
   },
   {
     id: 2,
@@ -69,23 +69,23 @@ const steps = [
     id: 5,
     title:
       "가장 중요하게 채용이 필요한 포지션(직무)과 대략적인 인원수를 알려주세요",
-    description: "",
+    description: "optional",
   },
   {
     id: 6,
     title: "현재 채용하는 포지션의 평균 예상 연봉 범위를 알려주세요.",
-    description: "",
+    description: "optional",
   },
+  // {
+  //   id: 7,
+  //   title: "하퍼를 통해 기대하는 가장 중요한 가치는 무엇입니까?",
+  //   description: "",
+  // },
   {
     id: 7,
-    title: "하퍼를 통해 기대하는 가장 중요한 가치는 무엇입니까?",
-    description: "",
-  },
-  {
-    id: 8,
     title:
       "하퍼에게 추가로 전달하고 싶은 내용이나, 현재 채용에 대한 고민이 있다면 자유롭게 적어주세요",
-    description: "",
+    description: "optional",
   },
 ];
 
@@ -433,7 +433,7 @@ const Onboard: React.FC = () => {
                   </>
                 )}
 
-                {step === 6 && (
+                {/* {step === 6 && (
                   <>
                     <MultiSelects
                       selects={value}
@@ -442,9 +442,9 @@ const Onboard: React.FC = () => {
                       options={ValueOptions}
                     />
                   </>
-                )}
+                )} */}
 
-                {step === 7 && (
+                {step === 6 && (
                   <>
                     <TextInput
                       autoFocus
