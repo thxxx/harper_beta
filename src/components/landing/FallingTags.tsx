@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import React from "react";
-import clsx from "clsx";
 import { Search } from "lucide-react";
 
 type Tag = {
@@ -97,18 +96,9 @@ export const FallingTags: React.FC = () => {
         >
           {/* 안쪽 레이어: 이 안에서만 드래그 + 제자리 복귀 */}
           <motion.div
-            className={clsx(
-              "select-none rounded-lg pl-2 pr-4 py-2 text-xs font-medium shadow-xl flex flex-row items-center justify-start gap-1",
-              "cursor-grab active:cursor-grabbing border",
-              "bg-gray-500/10 border-white/10 backdrop-blur-sm"
-            )}
-            // className={clsx(
-            //   "select-none rounded-full px-4 py-2 text-xs font-medium shadow-xl",
-            //   "cursor-grab active:cursor-grabbing border border-white/10",
-            //   tag.color.includes("text-")
-            //     ? tag.color
-            //     : clsx(tag.color, "text-white")
-            // )}
+            className={
+              "select-none rounded-lg pl-2 pr-4 py-2 text-xs font-medium shadow-xl flex flex-row items-center justify-start gap-1 cursor-grab active:cursor-grabbing border bg-gray-500/10 border-white/10 backdrop-blur-sm"
+            }
             drag
             dragElastic={0.25}
             dragMomentum
