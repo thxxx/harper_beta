@@ -55,7 +55,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         <div className="w-full mt-8 flex flex-row justify-end gap-2">
           <button
-            type="button"
             className="w-full inline-flex items-center justify-center rounded-md border border-xgray300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             onClick={onClose}
             disabled={isLoading}
@@ -63,7 +62,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             {cancelLabel}
           </button>
           <button
-            type="button"
             className="w-full inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-70"
             onClick={onConfirm}
             disabled={isLoading}

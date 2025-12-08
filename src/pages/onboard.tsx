@@ -11,7 +11,6 @@ import React, {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileResume from "@/components/apply/ProfileResume";
-import Image from "next/image";
 import router from "next/router";
 import { useUserProfile } from "@/states/useUserProfile";
 import { useUploadProfile } from "@/states/useUploadProfile";

@@ -210,9 +210,9 @@ const CandidatePage = () => {
           >
             harper
           </div>
-          <nav className="hidden md:flex items-center justify-center gap-8 text-xs sm:text-sm w-[40%]">
+          <nav className="hidden font-normal text-xgray600 md:flex items-center justify-center gap-8 text-xs sm:text-sm w-[40%]">
             <div
-              className="font-light cursor-pointer opacity-80 hover:opacity-95"
+              className="cursor-pointer opacity-80 hover:opacity-95"
               onClick={() => {
                 const body = {
                   local_id: landingId,
@@ -228,7 +228,7 @@ const CandidatePage = () => {
             </div>
             <div
               onClick={downScroll}
-              className="font-light cursor-pointer opacity-80 hover:opacity-95"
+              className="cursor-pointer opacity-80 hover:opacity-95"
             >
               FAQ
             </div>
@@ -236,7 +236,7 @@ const CandidatePage = () => {
           <div className="hidden md:flex w-[10%] md:w-[15%] items-center justify-end">
             <button
               onClick={upScroll}
-              className="font-light cursor-pointer py-2 px-4"
+              className="font-normal cursor-pointer py-2 px-4"
             >
               Join Waitlist
             </button>
@@ -279,8 +279,6 @@ const CandidatePage = () => {
             </div>
           </div> */}
           <div className="text-xl md:text-4xl sm:text-3xl font-medium leading-normal">
-            <span className="text-4xl mb-4 block md:hidden">harper : </span>
-            <span className="hidden md:inline">harper : </span>
             세계 최고 AI/ML 엔지니어의
             <br /> 다음 커리어가 시작되는 곳
           </div>
@@ -290,10 +288,10 @@ const CandidatePage = () => {
             }`}
           >
             {/* AI 리크루터 하퍼와의 단 한 번의 AI 통화로 지원자의 360도 프로필을 완성합니다. 글로벌 AI 스타트업의 최적의 기회를 하퍼가 상시로 연결해 드립니다. */}
-            AI 리크루터 하퍼와 단 한 번의 통화로 앞으로의 커리어에 대한 니즈와
-            선호를 알려주세요. <br className="hidden md:block" />
-            글로벌 스타트업에서의 최적의 기회를 하퍼가 쉬지 않고 찾아 연결해
-            드립니다.
+            글로벌 역량을 펼쳐 AI의 미래를 주도하세요.{" "}
+            <br className="hidden md:block" />
+            하퍼가 세계적인 리더십과 함께한 최적의 커리어 기회를 쉬지 않고 찾아
+            연결해 드립니다.
             {/* 이력서를 업로드하고, AI Recruiter와 통화하세요.
             <br /> 그 다음부터는 Harper가 최적의 팀에게서 먼저 제안받으실 수
             있게 합니다. */}
@@ -356,12 +354,12 @@ const CandidatePage = () => {
         >
           <h2 className="text-base font-medium text-neutral-900 md:text-lg">
             {/* 하퍼는 최고의 회사와 인재에 집중하고 있습니다. */}
-            하퍼는 오직 글로벌 Top-Tier VC가 투자하여 빠르게 성장하고 있는
-            검증된 스타트업의 기회만을 선별하여 연결합니다.
+            하퍼는 오직 글로벌 AI 리더십의 중심에서 탄생하고 검증된, 가장 영향력
+            있는 기회만을 선별하여 연결합니다.
           </h2>
           <p className="text-sm text-xgray700 mt-2 md:mt-1">
-            정말 좋은 기회들은 절대 공고로 올라오지 않습니다. 하퍼에서 먼저
-            제안을 받아보세요.
+            숨겨진 최고의 기회는 일반적인 채용 시장에 공개되지 않습니다.하퍼에서
+            누구보다 먼저 핵심 포지션 합류 기회를 선점하세요.
           </p>
         </div>
       </GridSectionLayout>
@@ -475,7 +473,7 @@ const CandidatePage = () => {
         <div className="w-full flex flex-col items-center justify-center bg-black">
           <div className="flex flex-col items-center justify-center w-full lg:w-[94%] border-b border-xgray700 py-48 text-white">
             <div className="text-4xl sm:text-5xl font-light font-hedvig">
-              Join the Waitlist.
+              Get Opportunities.
             </div>
             <div className="text-sm sm:text-base font-light text-white/80 mt-10 leading-6">
               서비스는 아직 오픈 준비 중입니다.
@@ -623,22 +621,22 @@ const FeatureSection = ({ borderSoft }: { borderSoft: string }) => {
       </div>
       <div className="flex flex-col sm:flex-row items-stretch w-full">
         <ImageSection
-          title="1. 간단하게 가입하세요."
-          desc="이력서를 올리고, AI recruiter와 대화하며 어떤 기회를 탐색중이고 어떤 팀을 선호하는지 알려주세요. 언제 어디서든 원할 때 진행 가능하고, 모든 정보는 철저히 보호됩니다."
+          title="1. 커리어 역량 심층 분석 프로필을 만드세요."
+          desc="간단히 가입하고, 기존 이력서와 공개 활동 데이터(블로그, 포트폴리오 등)를 통합하세요. 하퍼가 이를 다각도로 분석하여, 이력서에 담지 못한 당신의 고유한 잠재력과 선호도까지 담아내는 전방위 프로필을 완성하고 보호합니다."
           imageSrc="/images/feat4.png"
           index={0}
           borderSoft={borderSoft}
         />
-        <ImageSection
+        {/* <ImageSection
           title="2. AI 리크루터 하퍼와의 대화."
           desc="다음 커리어 목표를 설정하고, 찾고 있는 기회에 대해 AI 리크루터 하퍼에게 자세히 알려주세요. 모든 정보는 철저히 보호됩니다."
           imageSrc="/images/feat1.png"
           index={1}
           borderSoft={borderSoft}
-        />
+        /> */}
         <ImageSection
-          title="3. 회사에게서 직접 제안 받으세요."
-          desc="완성된 프로필을 기반으로 정규직, 파트타임을 가리지 않고 지원자님께 딱 맞는 좋은 기회를 하퍼가 상시로 선별하여 연결해 드립니다."
+          title="2. 단 한 번의 프로필로 무한한 커리어 기회를 선점하세요."
+          desc="완성된 심층 프로필을 기반으로, 하퍼가 정규직, 파트타임을 가리지 않고 커리어 성장에 딱 맞는 좋은 기회를 쉬지 않고 상시로 선별하여 연결해 드립니다."
           imageSrc="/images/feat3.png"
           index={2}
           borderSoft={borderSoft}
@@ -665,10 +663,10 @@ const ImageSection = ({
     <div
       className={`flex flex-1 w-full max-w-full flex-col ${borderSoft} ${
         index !== 0 ? "border-b sm:border-b-0 sm:border-l" : "sm:border-l-0"
-      } ${index === 1 ? "sm:max-w-[34%]" : "sm:max-w-[33%]"}`}
+      } ${index === 1 ? "sm:max-w-[50%]" : "sm:max-w-[50%]"}`}
     >
       <div
-        className={`h-[18vw] min-h-[220px] w-full overflow-hidden flex justify-end items-center border-y ${borderSoft}`}
+        className={`h-[24vw] min-h-[220px] w-full overflow-hidden flex justify-center items-center border-y ${borderSoft}`}
       >
         <Image
           src={imageSrc}

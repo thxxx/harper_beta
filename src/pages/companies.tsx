@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "../globals.css";
 import { ArrowRight, Building, Inbox, LoaderCircle } from "lucide-react";
 import { showToast } from "@/components/toast/toast";
 import Animate from "@/components/landing/Animate";
-import Header from "@/components/landing/Header";
 import { supabase } from "@/lib/supabase";
 import Head from "next/head";
 import router from "next/router";
 import { v4 } from "uuid";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { FallingTags } from "@/components/landing/FallingTags";
 
 export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -60,39 +60,96 @@ export default function CompanyPage() {
     await navigator.clipboard.writeText("chris@asksonus.com");
     showToast({
       message: "Email copied to clipboard",
-      variant: "white",
     });
   };
 
-  // const handleJoinWaitlist = async (e: React.MouseEvent<HTMLButtonElement>) => {
-  //   e.preventDefault();
-  //   setUploading(true);
-  //   if (!isValidEmail(email)) {
-  //     showToast({
-  //       message: "유효한 회사 이메일을 입력해주세요.",
-  //       variant: "white",
-  //     });
-  //     setUploading(false);
-  //     return;
-  //   }
+  const ref = useRef<HTMLDivElement | null>(null);
 
-  //   const body = {
-  //     email: email,
-  //     type: 1,
-  //     companyName: companyName,
-  //     expect: expect,
-  //   };
-  //   await supabase.from("harper_waitlist").insert(body);
+  // target: 실제 마우스 위치, current: CSS에 쓰는 (느리게 따라가는) 위치
+  const targetPos = useRef({ x: 50, y: 40 });
+  const currentPos = useRef({ x: 50, y: 40 });
+  const frameId = useRef<number | null>(null);
 
-  //   showToast({
-  //     message: "등록이 완료되었습니다. 감사합니다.",
-  //     variant: "white",
-  //   });
-  //   setUploading(false);
-  // };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // 마우스는 즉시 갱신 (타겟만)
+    targetPos.current.x = x;
+    targetPos.current.y = y;
+  };
+
+  useEffect(() => {
+    const animate = () => {
+      const el = ref.current;
+      if (el) {
+        // lerp: current += (target - current) * k
+        const k = 0.08; // 작을수록 더 느리게 따라옴
+        currentPos.current.x +=
+          (targetPos.current.x - currentPos.current.x) * k;
+        currentPos.current.y +=
+          (targetPos.current.y - currentPos.current.y) * k;
+
+        el.style.setProperty("--mouse-x", `${currentPos.current.x}%`);
+        el.style.setProperty("--mouse-y", `${currentPos.current.y}%`);
+      }
+
+      frameId.current = requestAnimationFrame(animate);
+    };
+
+    frameId.current = requestAnimationFrame(animate);
+    return () => {
+      if (frameId.current != null) cancelAnimationFrame(frameId.current);
+    };
+  }, []);
+
+  const interactiveRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const interBubble = interactiveRef.current;
+    if (!interBubble) return;
+
+    let curX = 0;
+    let curY = 0;
+    let tgX = 0;
+    let tgY = 0;
+    let animationId = 0;
+
+    const move = () => {
+      curX += (tgX - curX) / 20;
+      curY += (tgY - curY) / 20;
+      interBubble.style.transform = `translate(${Math.round(
+        curX
+      )}px, ${Math.round(curY)}px)`;
+      animationId = window.requestAnimationFrame(move);
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      tgX = event.clientX;
+      tgY = event.clientY;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    move();
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
 
   return (
-    <main className="min-h-screen text-white font-inter">
+    <main
+      onMouseMove={handleMouseMove}
+      className="
+      min-h-screen text-white font-inter
+      flex flex-col items-center justify-center
+    "
+    >
       <Head>
         <title>Harper | AI Recruiter</title>
         <meta
@@ -101,21 +158,15 @@ export default function CompanyPage() {
         />
       </Head>
       {/* Background image + overlay */}
-      <div
-        className="relative min-h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col"
-        style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('/images/company_back.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <header className="flex items-center justify-between px-4 lg:px-8 py-4 text-sm">
-          <div className="text-lg font-light font-garamond w-[10%]">harper</div>
+      <div className="relative min-h-screen w-full flex flex-col">
+        <header className="z-20 flex items-center justify-between px-4 lg:px-8 py-4 text-sm bg-black/0">
+          <div className="text-lg font-light text-white/50 font-garamond w-[10%]">
+            harper
+          </div>
 
           <nav className="flex items-center justify-end sm:justify-center gap-8 text-sm sm:text-sm w-[60%] sm:w-[40%]"></nav>
           <div className="w-[40%] sm:w-[10%] text-right">
-            <div
+            {/* <div
               className="font-light cursor-pointer opacity-60 hover:opacity-75"
               onClick={() => {
                 const body = {
@@ -128,134 +179,105 @@ export default function CompanyPage() {
               }}
             >
               For candidates
-            </div>
+            </div> */}
           </div>
         </header>
-        <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-8 pb-10 sm:pb-16 pt-12 md:pt-32">
-          <Animate
-            triggerOnce={true}
-            className="flex flex-row items-center justify-between px-1 w-[144px] h-[32px] border border-[#0FA4E8] text-white gap-1.5 rounded-full"
-          >
-            <div className="w-[22px] h-[22px] bg-[#0FA4E8] rounded-full flex items-center justify-center">
-              {/* <Inbox className="w-[13px] text-white" /> */}
-              <Building className="w-[13px] text-white" />
-            </div>
-            <div className="text-[13px] font-normal w-[80%] pl-1">
-              For companies
-            </div>
-          </Animate>
+        <div className="absolute bg-black/80 top-0 left-0 w-full h-full inset-0 z-10"></div>
+        <div className="gradient-bg absolute top-0 left-0 w-full h-full inset-0 z-0">
+          {/* goo 필터 정의용 SVG */}
+          <svg xmlns="http://www.w3.org/2000/svg" className="svgBlur">
+            <defs>
+              <filter id="goo">
+                <feGaussianBlur
+                  in="SourceGraphic"
+                  stdDeviation="10"
+                  result="blur"
+                />
+                <feColorMatrix
+                  in="blur"
+                  mode="matrix"
+                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
+                  result="goo"
+                />
+                <feBlend in="SourceGraphic" in2="goo" />
+              </filter>
+            </defs>
+          </svg>
 
-          <Animate
-            className="mt-4 md:mt-8 max-w-2xl text-center"
-            delay={0.4}
-            triggerOnce={true}
-          >
-            <h1 className="text-3xl md:text-4xl font-normal leading-snug">
-              최고의 기업이 <br className="block sm:hidden" />
-              최정예 인재를 만나는 곳
-            </h1>
-
-            <p className="mt-4 text-sm md:text-base text-white/60 leading-relaxed font-light">
-              Recruiter agent 하퍼가 지원자와 직접 이야기하여 알아낸 정보와
-              이력서, 깃헙, 논문 등 모든 정보를{" "}
-              <br className="hidden sm:block" />
-              사용하여 불필요한 탐색 시간을 최소화하고 회사의 문화와 필요 역량에
-              가장 적합한 인재를 연결해줍니다.
-            </p>
-          </Animate>
-
-          <Animate
-            delay={0.8}
-            triggerOnce={true}
-            className="flex flex-row items-center justify-center gap-4 mt-12 sm:mt-14 "
-          >
-            <div
-              onClick={() => {
-                const body = {
-                  local_id: landingId,
-                  action: "click_join",
-                  is_mobile: isMobile,
-                };
-                supabase.from("landing_logs").insert(body);
-                router.push("/join");
-              }}
-              className="group flex rounded-full px-6 py-3 items-center justify-center font-normal
-            cursor-pointer text-black bg-white transition-all duration-300 gap-2"
-            >
-              <span className="text-center">Join waitlist</span>
-              <ArrowRight
-                strokeWidth={2.2}
-                className="group-hover:w-[16px] w-0 transition-all duration-300"
-              />
-            </div>
-            <div
-              onClick={handleContactUs}
-              className="flex rounded-full px-5 py-3.5 items-center justify-center font-light text-sm
-            cursor-pointer text-white border border-white/15 bg-white/0 transition-all duration-300 gap-2 hover:bg-white/5"
-            >
-              Contact Us
-            </div>
-          </Animate>
-
-          {/* Form card */}
-          {/* <div className="mt-10 sm:mt-14 w-full flex justify-center">
-            <Animate
-              triggerOnce={true}
-              className="w-full max-w-2xl rounded-[20px] bg-white text-black shadow-2xl px-5 py-6"
-              delay={0.8}
-            >
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="flex flex-col text-xs sm:text-sm">
-                    <label className="mb-1 text-xgray700">이메일</label>
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      type="email"
-                      className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col text-xs sm:text-sm">
-                    <label className="mb-1 text-xgray700">회사 명</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col text-xs sm:text-sm">
-                  <label className="mb-1 text-gray-500">
-                    어떤 역할을 찾고 계신가요?
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="border-b border-gray-200 focus:border-black outline-none py-2 text-sm resize-none"
-                    value={expect}
-                    onChange={(e) => setExpect(e.target.value)}
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    onClick={handleJoinWaitlist}
-                    className="flex items-center justify-center w-full rounded-[16px] bg-black text-white py-3 text-base font-normal hover:bg-black/90 transition"
-                  >
-                    {uploading ? (
-                      <LoaderCircle className="w-4 h-4 animate-spin text-white" />
-                    ) : (
-                      "Join waitlist"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </Animate>
-          </div> */}
+          <div className="gradients-container">
+            <div className="g1" />
+            <div className="g2" />
+            <div className="g3" />
+            <div className="g4" />
+            <div className="g5" />
+            <div className="interactive" ref={interactiveRef} />
+          </div>
         </div>
-        <Animate delay={2.2} duration={0.8} isUp={false}>
+        <div className="flex-1 flex flex-col items-center justify-between px-4 sm:px-8 pt-12 md:pt-28 z-20">
+          <div className="flex-1 flex flex-col items-center justify-start">
+            <Animate
+              className="max-w-4xl text-center flex flex-col items-center justify-center"
+              delay={0.4}
+              triggerOnce={true}
+            >
+              <h1 className="text-5xl font-light tracking-tighter leading-tight">
+                Find the best AI Engineer/Researcher.
+              </h1>
+
+              <p className="mt-6 text-[32px] text-white font-extralight tracking-tighter">
+                Find, track, and hire the best researchers.
+              </p>
+
+              <p className="mt-4 text-[18px] text-white/60 leading-relaxed font-extralight max-w-[620px]">
+                Research talent is a competitive advantage, and we{"'"}re here
+                to help you win that advantage.
+              </p>
+            </Animate>
+
+            <Animate
+              delay={0.8}
+              triggerOnce={true}
+              className="flex flex-row items-center justify-center gap-4 mt-12 sm:mt-14 "
+            >
+              <div
+                onClick={() => {
+                  const body = {
+                    local_id: landingId,
+                    action: "click_join",
+                    is_mobile: isMobile,
+                  };
+                  supabase.from("landing_logs").insert(body);
+                  router.push("/invitation");
+                }}
+                className="group flex rounded-full h-16 px-10 items-center justify-center font-medium text-lg
+            cursor-pointer text-black bg-white transition-all duration-300 gap-2 active:scale-95"
+              >
+                <span className="text-center">Get started</span>
+                <ArrowRight
+                  strokeWidth={2.2}
+                  className="group-hover:w-[16px] w-0 transition-all duration-300"
+                />
+              </div>
+              <div
+                onClick={handleContactUs}
+                className="flex rounded-full px-8 h-16 items-center justify-center font-light text-base
+            cursor-pointer text-white border border-white/15 bg-white/0 transition-all duration-300 gap-2 hover:bg-white/5 active:scale-95"
+              >
+                Contact Us
+              </div>
+            </Animate>
+          </div>
+
+          <div className="z-20 w-full bg-red-200/50 mb-32">
+            <FallingTags />
+          </div>
+        </div>
+        {/* <Animate
+          delay={2.2}
+          duration={0.8}
+          isUp={false}
+          className="z-20 absolute bottom-0 left-0 w-full"
+        >
           <div className="flex flex-row items-center justify-between gap-4 pb-2 px-4 w-full text-white/40">
             <div className="font-garamond text-base font-thin">
               Harper is your team{"'"}s
@@ -264,7 +286,7 @@ export default function CompanyPage() {
             </div>
             <div className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"></div>
           </div>
-        </Animate>
+        </Animate> */}
       </div>
     </main>
   );

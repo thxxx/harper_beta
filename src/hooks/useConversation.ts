@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMicRecorder } from "./useMicRecorder";
 import {
   OpenAIRealtimeClient,
@@ -11,25 +11,39 @@ import { callGreeting, makeQuestion } from "@/lib/llm/llm";
 import { useUserProfile } from "@/states/useUserProfile";
 import { splitTextToChunks } from "@/utils/textprocess";
 import { OPENAI_KEY } from "@/utils/constantkeys";
+import { showToast } from "@/components/toast/toast";
 
 type CallStatus = "idle" | "calling" | "ended" | "test";
 
-export const useConversation = () => {
+export const useConversation = (
+  startMicRecording: (
+    sendAudio: (pcm16: any) => void,
+    changeIsRecording?: boolean
+  ) => void,
+  stopMicCompletely: (changeIsRecording?: boolean) => void
+) => {
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [userTranscripts, setUserTranscripts] = useState<string[]>([]);
-  const [userTranscript, setUserTranscript] = useState<string>("");
   const [assistantTexts, setAssistantTexts] = useState<string[]>([]);
+  const [harperSaying, setHarperSaying] = useState<string>("");
+  const [userTranscript, setUserTranscript] = useState<string>("");
   const [isPlayingTts, setIsPlayingTts] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isThinking, setIsThinking] = useState<boolean>(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sayingRef = useRef<string>("");
+
+  const userTranscriptRef = useRef(userTranscript);
+
+  // keep ref in sync with state
+  useEffect(() => {
+    userTranscriptRef.current = userTranscript;
+  }, [userTranscript]);
 
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
   const { data: userProfile } = useUserProfile(userId);
-
-  const { isRecording, setIsRecording, startMicRecording, stopMicCompletely } =
-    useMicRecorder();
 
   const clientRef = useRef<OpenAIRealtimeClient | null>(null);
   const callScriptRef = useRef<string>("");
@@ -39,7 +53,9 @@ export const useConversation = () => {
     if (clientRef.current) return clientRef.current;
 
     const callbacks: OpenAIRealtimeCallbacks = {
-      onDelta: (text) => {},
+      onDelta: (text) => {
+        console.log("onDelta", text);
+      },
       onFinal: (text) => {
         setUserTranscript((prev) => prev + " " + text);
         console.log("onFinal", text);
@@ -65,11 +81,6 @@ export const useConversation = () => {
     }
   };
 
-  const askQuestion = async () => {
-    // llm 요청하고
-    // tts로 오디오 출력까지
-  };
-
   const sendAudio = async (pcm16: any) => {
     // pcm16 is Int16Array
     // openai realtime stt expects base64 encoded audio
@@ -92,18 +103,16 @@ export const useConversation = () => {
   };
 
   const toggleMute = async () => {
-    console.log("toggleMute", isMuted);
-
     if (isMuted) {
       setIsMuted(false);
-      await stopMicAndScripting();
+      await startMicRecording(sendAudio, false);
+      // await startMicAndScripting();
     } else {
       setIsMuted(true);
-      await clientRef.current?.sendAudioStreamEnd(); // 마지막으로 말하던거는 script 따고 종료
       await stopMicCompletely(false);
-      await clientRef.current?.stop();
+      // await clientRef.current?.sendAudioStreamEnd(); // 마지막으로 말하던거는 script 따고 종료
+      // await clientRef.current?.stop();
     }
-    console.log("toggled");
   };
 
   const playTts = useCallback(
@@ -120,21 +129,20 @@ export const useConversation = () => {
       const chunks = splitTextToChunks(cleaned);
       if (!chunks.length) return;
 
-      setIsPlayingTts(true);
-
       try {
-        const concurrencyLimit = 2; // ✨ 동시 생성 개수 제한 (2개)
+        const concurrencyLimit = 1;
         const fetchPromises: Promise<any>[] = []; // 오디오 생성 Promise를 담을 풀
 
-        // 생성된 오디오 데이터를 순서대로 담아둘 배열 (청크 순서 보장)
         const generatedChunks: {
           blob: Blob;
           isLast: boolean;
           index: number;
+          chunk: string;
         }[] = [];
 
         // 1. 모든 청크에 대한 생성 작업을 시작하고, 동시성 2를 유지합니다.
         for (let i = 0; i < chunks.length; i++) {
+          setIsPlayingTts(true);
           const chunk = chunks[i];
           const isLast = i === chunks.length - 1;
 
@@ -156,7 +164,7 @@ export const useConversation = () => {
             const blob = await res.blob();
             console.log(`[Chunk ${index + 1}] 생성 완료`);
 
-            return { blob, isLast, index };
+            return { blob, isLast, index, chunk };
           };
 
           // Promise를 생성 풀(fetchPromises)에 추가
@@ -197,7 +205,8 @@ export const useConversation = () => {
           .filter((c) => c)
           .sort((a, b) => a.index - b.index);
 
-        for (const { blob, isLast, index } of sortedChunks) {
+        for (const { blob, isLast, index, chunk } of sortedChunks) {
+          if (index === 0) setIsThinking(false);
           const url = URL.createObjectURL(blob);
 
           // 이전 오디오 중지 및 URL 해제
@@ -207,17 +216,51 @@ export const useConversation = () => {
           }
 
           console.log(`[Chunk ${index + 1}] 재생 시작`);
+          setHarperSaying((prev) => prev + " " + chunk);
+          sayingRef.current += " " + chunk;
 
           await new Promise<void>((resolve, reject) => {
             const audio = new Audio(url);
             audioRef.current = audio;
 
+            let beforeEndTimeout: number | null = null;
+            let beforeEndCalled = false;
+
+            // helper: call only once
+            const callBeforeEnd = async () => {
+              if (beforeEndCalled) return;
+              beforeEndCalled = true;
+
+              if (isLast) {
+                await startMicAndScripting();
+              }
+            };
+
+            audio.onloadedmetadata = () => {
+              if (!audio.duration || !isFinite(audio.duration)) return;
+
+              const msUntilOneSecondBeforeEnd =
+                (audio.duration - 1 - audio.currentTime) * 1000;
+
+              if (msUntilOneSecondBeforeEnd <= 0) {
+                void callBeforeEnd();
+              } else {
+                beforeEndTimeout = window.setTimeout(() => {
+                  void callBeforeEnd();
+                }, msUntilOneSecondBeforeEnd);
+              }
+            };
+
             audio.onended = async () => {
               URL.revokeObjectURL(url);
+              setIsPlayingTts(false);
 
               if (isLast) {
                 await opts?.onAfterLast?.();
-                await startMicAndScripting();
+                console.log("harperSaying", harperSaying);
+                setAssistantTexts((prev) => [...prev, sayingRef.current]);
+
+                setHarperSaying("");
               }
               resolve();
             };
@@ -244,31 +287,34 @@ export const useConversation = () => {
         setIsPlayingTts(false);
       }
     },
-    [setIsPlayingTts, audioRef, startMicAndScripting]
+    [
+      setIsPlayingTts,
+      audioRef,
+      startMicAndScripting,
+      setHarperSaying,
+      setAssistantTexts,
+      harperSaying,
+    ]
   );
 
   const startCall = async () => {
+    setUserTranscript("");
     setUserTranscripts([]);
     setAssistantTexts([]);
     callStartTimeRef.current = performance.now();
     setCallStatus("calling");
-    // await askQuestion();
     const question = await callGreeting("", "");
-    console.log("지금은 질문 : ", question);
+    // setAssistantTexts((prev) => [...prev, question]);
     await playTts(question);
-
     callScriptRef.current += `Harper: ${question}\n`;
-    setAssistantTexts((prev) => [...prev, question]);
-    // await startMicAndScripting();
+    await startMicRecording(sendAudio);
   };
 
   const startTest = async () => {
-    // setCallStatus("test");
     await startMicAndScripting();
   };
 
   const endTest = async () => {
-    // setCallStatus("idle");
     await stopMicAndScripting();
 
     return userTranscript;
@@ -288,38 +334,52 @@ export const useConversation = () => {
 
   const sendAudioCommit = async () => {
     // 현재까지 유저가 말한걸 보내기.
+    console.log("\nuserTranscriptRef: ", userTranscriptRef.current);
+    console.log("\nuserTranscript: ", userTranscript);
     // audio 끊고
     await stopMicAndScripting();
-    if (userTranscript.trim() === "") {
+    if (
+      userTranscript.trim() === "" &&
+      userTranscriptRef.current.trim() === ""
+    ) {
       console.log("userTranscript is empty");
+      showToast({
+        message: "Nothing recorded",
+        variant: "white",
+      });
       return;
     }
 
-    setUserTranscripts((prev) => [...prev, userTranscript]);
+    const currentUserTranscript = userTranscriptRef.current;
+
+    setUserTranscripts((prev) => [...prev, currentUserTranscript]);
     setUserTranscript("");
-    callScriptRef.current += `User: ${userTranscript}\n`;
+    setIsThinking(true);
+    callScriptRef.current += `User: ${currentUserTranscript}\n`;
     // script는 나와있고
     // llm 요청하고
     const userInfo = `이름: ${userProfile?.name}, 사는 곳 ${userProfile?.location}`;
+    sayingRef.current = "";
     const question = await makeQuestion(
       callScriptRef.current,
       userInfo,
       userProfile?.resumes?.[0]?.resume_text ?? ""
     );
     callScriptRef.current += `Harper: ${question}\n`;
-    setAssistantTexts((prev) => [...prev, question]);
     // tts로 오디오 출력까지
     await playTts(question);
   };
 
   return {
-    isRecording,
+    isPlayingTts,
+    isMuted,
     userTranscripts,
+    isThinking,
     assistantTexts,
     callStatus,
+    harperSaying,
     startCall,
     sendAudioCommit,
-    askQuestion,
     endCall,
     userTranscript,
     toggleMute,

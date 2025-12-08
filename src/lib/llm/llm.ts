@@ -111,14 +111,16 @@ Example Outputs
 사용자가 질문을 한다면 답변한 뒤 꼭 마지막엔 다음 질문을 해야하고, 만약 리크루팅/헤드헌팅과 무관한 질문이나 요구를 하면 저는 지원자님의 커리어를 위한 agent이기 때문에 다른건 할 수 없다고 대답해.
 
 ----
-[대화 기록]
+[이전 대화 기록]
 ${conversationHistory}
 
 [지원자 정보]
 ${userInfo}
+
+[지원자 이력서]
+${resumeText}
 ----
 `;
-  console.log("userPrompt", userPrompt);
 
   return await inference(
     "gpt-4.1-mini",
@@ -159,7 +161,7 @@ export function parseResumeJson(jsonString: string) {
 // 한 번 호출해서 문자열로 답만 받아오는 헬퍼
 export async function extractResumeInfo(resumeText: string): Promise<any> {
   const response = await client.chat.completions.create({
-    model: "gpt-4.1-nano",
+    model: "gpt-4.1-mini",
     messages: [
       { role: "system", content: "You are a helpful assistant." },
       {
@@ -183,24 +185,27 @@ Your task is to read the resume text provided by the user and extract two things
 - If you are not sure about dates, return "".
 - If a person is currently studying or working, set endDate: "default".
 
+우선 education, workExperiences를 각각 가장 최근 값 기준으로 하나씩만 출력해줘.
+education은 전부 한글로, workExperiences는 전부 영어로 출력해줘.
+
 ------------------------------------
 DATA FORMAT
 
 Education = {
-  "school": string,
-  "major": string,
+  "school": string, // 학교명
+  "major": string,  // 전공
   "startDate": string,    // 입학일 (unknown → "")
   "endDate": string,      // 졸업일 (재학중 → "default")
-  "degree": string,
-  "gpa": string
+  "degree": string, // 학사/석사/박사
+  "gpa": string // 학점 (N/4.3)
 }
 
 WorkExperience = {
-  "company": string,
-  "position": string,
+  "company": string, // 회사명
+  "position": string, // 직무
   "startDate": string,
   "endDate": string,      // 재직중이면 "default"
-  "description": string
+  "description": string // 설명, 3줄 요약
 }
 
 ------------------------------------
@@ -208,14 +213,13 @@ RESUME TEXT:
 ${resumeText}
 ------------------------------------
 
-Now extract all information and output JSON only.
+Now extract all information and output JSON only. Do not include \`\`\`json or \`\`\` at the beginning or end.
 `,
       },
     ],
   });
 
-  console.log("response ", response.usage);
-
   const content = response.choices[0]?.message?.content;
+  console.log("extractResumeInfo", content);
   return parseResumeJson(content ?? "");
 }

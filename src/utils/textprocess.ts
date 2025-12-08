@@ -188,7 +188,10 @@ function diffWords(ref: string, hyp: string) {
   return ops.reverse();
 }
 export function highlightDifferences2(originalText: string, newText: string) {
-  const ops = diffWords(originalText.trim(), newText.trim());
+  const ops = diffWords(
+    originalText.replace(/\./g, "").trim(),
+    newText.replace(/\./g, "").trim()
+  );
 
   const result = ops.map((op) => {
     if (op.type === "equal") return op.ref;

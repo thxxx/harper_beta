@@ -83,10 +83,9 @@ const ProfileResume = ({
 
     const data = await response.json();
     console.log("--- Extracted Text (Client Side) ---");
-    console.log(data.text.slice(0, 100), data.length);
+    console.log(data.text.slice(0, 100), data.text.length);
     setResumeText(data.text);
 
-    // educations, workExperiences가 각 값들이 비어있는지 체크
     if (
       educations.every(
         (edu) =>
@@ -106,9 +105,7 @@ const ProfileResume = ({
           exp.description === ""
       )
     ) {
-    } else {
-      setShowConfirmModal(true);
-    }
+    } else setShowConfirmModal(true);
   };
 
   // ----- Work Experience -----
@@ -175,9 +172,18 @@ const ProfileResume = ({
   };
 
   const addContentFromResume = async () => {
+    setShowConfirmModal(false);
     setReadingLoading(true);
     const result = await extractResumeInfo(resumeText);
-    console.log("addContentFromResume", result);
+    try {
+      console.log("addContentFromResume", result);
+      setEducations(result.education);
+      setWorkExperiences(result.workExperiences);
+    } catch (error) {
+      console.error("addContentFromResume", error);
+    } finally {
+      setReadingLoading(false);
+    }
     setReadingLoading(false);
   };
 
@@ -196,7 +202,7 @@ const ProfileResume = ({
       )}
       {/* Resume Upload */}
       <SectionLayout>
-        <button onClick={() => addContentFromResume()}>자동 채우기</button>
+        {/* <button onClick={() => addContentFromResume()}>자동 채우기</button> */}
         <div>
           <input
             onChange={handleChangeFile}

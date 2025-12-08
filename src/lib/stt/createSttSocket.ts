@@ -57,19 +57,17 @@ export class OpenAIRealtimeClient {
           session: {
             input_audio_format: "pcm16",
             input_audio_transcription: {
-              model: "gpt-4o-transcribe",
-              prompt:
-                "Just transcribe the audio to text. Use korean language and English words if necessary.",
-              // "This is a conversation between a recruiter and a candidate. The recruiter is Harper, and the candidate is the user. Use korean language. If the word is specific terms and the word is english, it's okay to use english words.",
+              model: "whisper-1",
+              prompt: "Just transcribe the audio in Korean.",
               language: "ko",
             },
             turn_detection: {
               type: "server_vad",
               threshold: 0.4,
               prefix_padding_ms: 300,
-              silence_duration_ms: 150,
+              silence_duration_ms: 100,
             },
-            input_audio_noise_reduction: { type: "far_field" },
+            input_audio_noise_reduction: { type: "near_field" },
           },
         };
 

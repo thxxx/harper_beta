@@ -84,7 +84,7 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
           ? "border-rose-400/20 bg-rose-400/10 text-rose-100"
           : item.variant === "white"
           ? "border-white/100 bg-white/80 text-black"
-          : "border-xopp/15 bg-xopp/10 text-opp/90",
+          : "border-xopp/15 bg-xopp/10 text-white/90",
         "",
       ].join(" ")}
       aria-live="polite"

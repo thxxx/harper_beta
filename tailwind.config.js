@@ -27,9 +27,15 @@ module.exports = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-3px)" },
+          "40%, 80%": { transform: "translateX(3px)" },
+        },
       },
       animation: {
         upDown: "upDowns 2s ease-in-out infinite",
+        shake: "shake 0.3s ease-in-out",
       },
       fontFamily: {
         inter: ["var(--font-inter)", "sans-serif"],

@@ -5,17 +5,17 @@ import React from "react";
 
 const vcLogos = [
   { key: "yc", src: "/images/logos/yc.svg", width: 136 },
-  { key: "a16z", src: "/images/logos/a16z.svg", width: 72 },
-  { key: "index", src: "/images/logos/index.svg", width: 125 },
+  { key: "google", src: "/images/logos/google.png", width: 112 },
+  { key: "stanford", src: "/images/logos/stanford.png", width: 125 },
   { key: "sequoia", src: "/images/logos/sequoia.png", width: 128 },
 ];
 
 const vcLogosBottom = [
-  { key: "lightspeed", src: "/images/logos/lightspeed.png", width: 125 },
-  { key: "nvidia", src: "/images/logos/nvidia.png", width: 64 },
-  { key: "bessemer", src: "/images/logos/bessemer.png", width: 104 },
-  { key: "general-catalyst", src: "/images/logos/general.png", width: 104 },
-  { key: "founders-fund", src: "/images/logos/foundersfund.svg", width: 180 },
+  { key: "meta", src: "/images/logos/meta.png", width: 125 },
+  { key: "anthropic", src: "/images/logos/anthropic.png", width: 125 },
+  { key: "csail", src: "/images/logos/csail.png", width: 104 },
+  { key: "bair", src: "/images/logos/bair.png", width: 104 },
+  { key: "nvidia", src: "/images/logos/nvidia.png", width: 85 },
 ];
 
 function VCLogos({ borderSoft }: { borderSoft: string }) {
