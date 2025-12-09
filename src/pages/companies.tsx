@@ -129,18 +129,26 @@ export default function CompanyPage() {
       {/* Background image + overlay */}
       <div className="relative min-h-screen w-full flex flex-col">
         <GradientBackground interactiveRef={interactiveRef} />
-        <Header page="company" />
-        <div className="flex-1 flex flex-col items-center justify-between px-4 sm:px-8 pt-12 md:pt-40 z-20">
-          <div className="flex-1 flex flex-col items-center justify-start">
+        <Animate
+          className="w-full"
+          delay={4.0}
+          triggerOnce={true}
+          isUp={false}
+          duration={0.8}
+        >
+          <Header page="company" />
+        </Animate>
+        <div className="flex-1 flex flex-col items-center justify-between px-4 sm:px-8 pt-24 md:pt-40 z-20">
+          <div className="flex-1 flex flex-col items-center justify-start md:mt-0 mt-[4vh]">
             <Animate
               className="max-w-4xl text-center flex flex-col items-center justify-center"
               delay={0.4}
               triggerOnce={true}
             >
-              <h1 className="text-5xl font-light tracking-tighter leading-tight">
+              <h1 className="text-3xl md:text-5xl font-light tracking-tighter leading-tight">
                 {/* Find the best AI Engineer/Researcher. */}
                 최고의 <span className="font-extralight">AI</span>{" "}
-                엔지니어/리서처를 찾아보세요.
+                엔지니어/리서처를 <br className="block md:hidden" /> 찾아보세요.
               </h1>
             </Animate>
             <Animate
@@ -148,12 +156,12 @@ export default function CompanyPage() {
               delay={0.8}
               triggerOnce={true}
             >
-              <p className="mt-6 text-[32px] text-white font-extralight tracking-tighter">
+              <p className="mt-6 text-[20px] md:text-[32px] text-white font-extralight tracking-tighter">
                 {/* Find, track, and hire the best researchers. */}
                 훌륭한 인재가 곧 회사를 정의합니다.
               </p>
 
-              <p className="mt-4 text-[18px] text-white/60 leading-relaxed font-extralight max-w-[620px]">
+              <p className="mt-4 text-sm md:text-[18px] text-white/60 leading-relaxed font-extralight max-w-[620px]">
                 {/* Research talent is a competitive advantage, and we{"'"}re here
                 to help you win that advantage. */}
                 하퍼가 이력, 깃헙, 논문 등 모든 비정형 정보를 사용하여 회사의
@@ -176,7 +184,7 @@ export default function CompanyPage() {
                   supabase.from("landing_logs").insert(body);
                   router.push("/invitation");
                 }}
-                className="group flex rounded-full h-16 px-10 items-center justify-center font-medium text-lg
+                className="group flex rounded-full h-12 md:h-16 px-5 md:px-10 items-center justify-center font-medium text-sm md:text-lg
             cursor-pointer text-black bg-white transition-all duration-300 gap-2 active:scale-95"
               >
                 <span className="text-center">Get started</span>
@@ -187,7 +195,7 @@ export default function CompanyPage() {
               </div>
               <div
                 onClick={handleContactUs}
-                className="flex rounded-full px-8 h-16 items-center justify-center font-light text-base
+                className="flex rounded-full px-5 md:px-8 h-12 md:h-16 items-center justify-center font-light text-sm md:text-lg
             cursor-pointer text-white border border-white/15 bg-white/0 transition-all duration-300 gap-2 hover:bg-white/5 active:scale-95"
               >
                 Contact Us
@@ -195,15 +203,15 @@ export default function CompanyPage() {
             </Animate>
           </div>
 
-          <div className="z-20 w-full bg-red-200/50 mb-32">
+          <div className="z-20 w-full mb-32">
             <FallingTags />
           </div>
         </div>
-        {/* <Animate
-          delay={2.2}
-          duration={0.8}
+        <Animate
+          delay={4.0}
           isUp={false}
-          className="z-20 absolute bottom-0 left-0 w-full"
+          duration={0.8}
+          className="z-20 absolute bottom-0 left-0 w-full hidden md:flex"
         >
           <div className="flex flex-row items-center justify-between gap-4 pb-2 px-4 w-full text-white/40">
             <div className="font-garamond text-base font-thin">
@@ -213,7 +221,7 @@ export default function CompanyPage() {
             </div>
             <div className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"></div>
           </div>
-        </Animate> */}
+        </Animate>
       </div>
     </main>
   );

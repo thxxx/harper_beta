@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type Tag = {
   label: string;
@@ -66,64 +67,72 @@ const TAGS: Tag[] = [
 
 export const FallingTags: React.FC = () => {
   const [start, setStart] = useState(false);
+  const isMobile = useIsMobile();
 
-  // ⏱️ 1.5초 뒤에 애니메이션 시작
   useEffect(() => {
-    const t = setTimeout(() => setStart(true), 2400);
+    const t = setTimeout(() => setStart(true), 2000);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <div className="relative flex w-full justify-center overflow-visible">
-      {TAGS.map((tag, index) => (
-        <motion.div
-          key={tag.label}
-          className="absolute"
-          initial={{
-            y: -220,
-            x: 0,
-            rotate: 0,
-            opacity: 0,
-            scale: 0.8,
-          }}
-          animate={
-            start
-              ? {
-                  x: tag.x,
-                  y: tag.y,
-                  rotate: tag.rotate,
-                  opacity: 1,
-                  scale: 1,
-                }
-              : {
-                  // 시작 전 상태 그대로 유지
-                  y: -220,
-                  opacity: 0,
-                }
-          }
-          transition={{
-            type: "spring",
-            stiffness: 260,
-            damping: 22,
-            mass: 0.8,
-            delay: index * 0.12,
-          }}
-        >
+    <div className="md:relative absolute bottom-28 left-0 md:bottom-auto md:left-auto flex w-full justify-center overflow-visible">
+      {TAGS.map((tag, index) => {
+        if (isMobile && index === TAGS.length - 1) {
+          return null;
+        }
+
+        return (
           <motion.div
-            className={
-              "select-none rounded-lg pl-2 pr-4 py-2 text-xs font-medium shadow-xl flex flex-row items-center justify-start gap-1.5 cursor-grab active:cursor-grabbing border bg-gray-500/10 border-white/10 backdrop-blur-sm"
+            key={tag.label}
+            className="absolute"
+            initial={{
+              y: -220,
+              x: 0,
+              rotate: 0,
+              opacity: 0,
+              scale: 0.8,
+            }}
+            animate={
+              start
+                ? {
+                    x: tag.x,
+                    y: tag.y,
+                    rotate: tag.rotate,
+                    opacity: 1,
+                    scale: 1,
+                  }
+                : {
+                    // 시작 전 상태 그대로 유지
+                    y: -220,
+                    opacity: 0,
+                  }
             }
-            drag
-            dragElastic={0.25}
-            dragMomentum
-            dragSnapToOrigin
-            whileDrag={{ scale: 1.05, zIndex: 50 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 22,
+              mass: 0.8,
+              delay: index * 0.12,
+            }}
           >
-            <Search size={12} />
-            <span>{tag.label}</span>
+            <motion.div
+              className={
+                "select-none rounded-lg pl-2 pr-4 py-2 text-[10px] md:text-xs font-medium shadow-xl \
+                flex flex-row items-center justify-start gap-1.5 cursor-grab \
+                active:cursor-grabbing border bg-gray-500/10 border-white/10 backdrop-blur-sm"
+              }
+              drag
+              dragElastic={0.25}
+              dragMomentum
+              dragSnapToOrigin
+              whileDrag={{ scale: 1.05, zIndex: 50 }}
+            >
+              <Search size={12} />
+              <span>{tag.label}</span>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      ))}
+        );
+      })}
     </div>
   );
 };

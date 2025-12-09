@@ -80,7 +80,7 @@ export default function LoginSuccess() {
         {/* Card */}
         <div className="w-full max-w-lg">
           <div
-            className={`rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-xl px-6 py-8 md:px-8 md:py-8 ${
+            className={`rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 shadow-xl px-6 py-6 md:px-8 md:py-8 ${
               isShake ? "animate-shake" : ""
             }`}
           >
@@ -140,7 +140,7 @@ export default function LoginSuccess() {
             {/* Logout */}
             <button
               onClick={handleContactUs}
-              className="mt-8 w-full text-xs md:text-sm text-neutral-500 hover:text-neutral-400 mb-4 transition-all duration-200"
+              className="mt-8 w-full text-xs md:text-sm text-neutral-500 hover:text-neutral-400 mb-2 md:mb-4 transition-all duration-200"
             >
               문의하기
             </button>

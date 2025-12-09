@@ -267,9 +267,15 @@ const Onboard: React.FC = () => {
 
       {step === steps.length ? (
         <>
-          <div className="flex flex-col gap-4 items-center justify-center pb-28 h-full w-full text-center">
-            <div className="text-2xl font-normal">
-              등록해 주셔서 감사합니다!
+          <div className="flex flex-1 flex-col gap-4 items-center justify-center pb-0 md:pb-28 h-full w-full text-center px-6">
+            <Image
+              src="/images/logo.png"
+              alt="Harper Logo"
+              width={32}
+              height={32}
+            />
+            <div className="text-2xl font-normal mt-2">
+              등록이 완료되었습니다.
             </div>
             <div className="text-lg font-normal text-xgray700">
               Harper는 여러분의 팀에 가장 적합한 지원자를 소개하기 위해 준비
@@ -281,7 +287,7 @@ const Onboard: React.FC = () => {
               onClick={() => {
                 router.push("/companies");
               }}
-              className="bg-brightnavy text-white px-4 h-11 rounded-[4px] text-lg font-medium hover:opacity-90"
+              className="bg-brightnavy text-white mt-4 px-4 h-11 rounded-[4px] text-lg font-medium hover:opacity-90"
             >
               돌아가기
             </button>
@@ -579,7 +585,7 @@ const TextInput = ({
       {rows ? (
         <textarea
           placeholder={placeholder}
-          className="transition-colors duration-200 leading-8 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-xl font-normal focus:outline-none outline-none"
+          className="transition-colors duration-200 leading-8 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-lg md:text-xl font-normal focus:outline-none outline-none"
           value={value}
           onChange={onChange}
           rows={rows}
@@ -588,7 +594,7 @@ const TextInput = ({
       ) : (
         <input
           placeholder={placeholder}
-          className="transition-colors duration-200 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-xl font-normal leading-5 focus:outline-none outline-none"
+          className="transition-colors duration-200 focus:border-b focus:border-brightnavy w-full px-0.5 py-2 border-b border-xgray400 text-lg md:text-xl font-normal leading-5 focus:outline-none outline-none"
           value={value}
           onChange={onChange}
           autoFocus={autoFocus}
