@@ -150,7 +150,7 @@ export const FallingTags = ({
   theme = "transparent",
   startDelay = 2000,
 }: {
-  theme: string;
+  theme?: string;
   startDelay?: number;
 }) => {
   const [start, setStart] = useState(false);
