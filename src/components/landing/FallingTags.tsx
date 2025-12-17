@@ -146,11 +146,11 @@ const CANDIDATE_MOBILE_TAGS: Tag[] = [
   },
 ];
 
-export const FallingTags: React.FC = ({
+export const FallingTags = ({
   theme = "transparent",
   startDelay = 2000,
 }: {
-  theme?: "transparent" | "white";
+  theme: string;
   startDelay?: number;
 }) => {
   const [start, setStart] = useState(false);
