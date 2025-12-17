@@ -1,0 +1,225 @@
+import { OPENAI_KEY } from "@/utils/constantkeys";
+import { OpenAI } from "openai";
+export type GPTStreamChunkHandler = (chunk: string) => void;
+
+export enum OpenAIResponse {
+  DELTA = "response.output_text.delta",
+  DONE = "response.content_part.done",
+}
+
+export type Message = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+export const client = new OpenAI({
+  apiKey: OPENAI_KEY,
+  dangerouslyAllowBrowser: true,
+});
+
+export type OnToken = (token: string) => void;
+
+const inference = async (
+  model: "gpt-4.1-nano" | "gpt-4.1-mini",
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> => {
+  const response = await client.chat.completions.create({
+    model: model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+  console.log("response ", response.usage);
+
+  const content = response.choices[0]?.message?.content;
+  return content ?? "";
+};
+
+export const makeQuestion = async (
+  conversationHistory: string,
+  userInfo: string,
+  resumeText: string
+): Promise<string> => {
+  console.log("conversationHistory", conversationHistory);
+  console.log("userInfo", userInfo);
+  console.log("resumeText", resumeText);
+
+  const userPrompt = `
+헤드헌터라고 생각하고, 이 사람이 원하는 것, 어떤 회사랑 매칭시켜주면 좋을지를 알아내기 위해 대화를 하고있어. 질문과 답변을 고려해서 필요한 추가질문이 있으면 해도 돼. 없으면 일단 이 순서를 따라해도 돼.
+
+그리고 만약 다음에 해야하는 질문에 대한 답이 이전에 답변으로 나온 적이 있으면 질문을 생략하고 건너 뛰어도 돼.
+
+너무 질문만 던지지 말고, 이전에 유저의 답변이 길었다면 한번 재요약하고 질문을 던지던가, 네 알겠습니다. 같은 말로 시작해줘.
+
+---
+이건 진행되어야하는 리크루팅/헤드헌팅 Call 예시 프로세스야.
+
+1. [지원자의 현재 상황 파악]
+    1. 현재 next step에 대해서 어떻게 생각하고 계시나요?
+        
+        [이직이라면]
+        
+        1. 왜 이직을 생각하고 계신가요? 현 직장에서 아쉬운 점 혹은 앞으로 원하는 점
+        2. 당장 최대한 빨리 인가요 옵션 열어두기 수준인가요?
+    2. 지금은 어떤걸 하고 계시나요?
+2. [커리어 방향성 / 희망 역할]
+    1. 다음 회사를 찾을 때 어떤 팀에서 일하고 싶으신가요?
+        1. [대답이 불완전 하다면] 스타트업 vs 대기업
+    2. 본인의 일하는 스타일이 있나요?
+    3. 원하는 팀 문화가 있으세요? (보상 / 팀 수준 / 성장성 / 비전 / 워라밸 / 기술 스택 / 리모트 등)
+    4. 앞으로 3~5년내 커리어 목표가 어떻게 되시나요?
+    5. 다음 커리어 스텝에서는 어떤 역할을 맡고 싶으세요?
+3. [전문 분야 / 강점 / ]
+    1. 제안이 들어온다면 받아볼 의사가 있는 역할들을 아래에서 골라주세요.
+    2. 이력서를 보니 ~~가 있는데, 어떤 역할을 했고, 어떤걸 배웠는지 말해주세요.
+        1. 본인이 말하고 싶은 중요했던 프로젝트나 경험 있으세요?
+    3. 팀에서 어떤 역할로 가장 강점을 발휘한다고 생각하나요?
+4. [마지막 보상 등]
+    1. 해외 근무나 재배치 가능하신가요?
+    2. 희망 연봉은 어느 정도인가요?
+    3. 근무 가능한 시점이 언제인가요?
+    4. 추가적으로 중요한 점, 말하고 싶은게 있으신가요?
+    5. 피드백
+---
+
+---
+
+Example Outputs
+
+‘김호진님, 안녕하세요. OptimizerAI에서 공동 창업자 겸 연구 엔지니어로 계셨고, 이전에는 띵스플로우에서 ML Scientist로 계시면서 인상적인 성과를 내셨습니다. 먼저 현재 **다음 커리어 스텝에 대해서 어떻게 생각하고 계신지** 말씀해주시겠어요?’
+
+‘OptimizerAI를 나오신 이유도 잘 이해했습니다. 본인이 원하는 방향과 회사의 전략이 조금 달라진 느낌이셨던 것 같네요. 그렇다면 다음 회사에서 절대 빠지면 안 된 요소, 예를 들어 팀 수준, 비전, 기술 스택, 보상, 리모트 여부 등이 있을까요?’
+
+‘지금까지 말씀해주신 걸 보면, 특히 대규모 오디오 모델 연구와 실제 프로덕트 런칭까지의 경험이 김호진님 커리어의 큰 축이 된 것 같아요. 기술적 깊이도 있지만, 유저 인터뷰부터 기능 기획까지 직접 하셨던 점도 인상적이네요. 그렇다면 다음 회사에서는 연구 중심의 역할과 제품 중심의 역할 중 어느 쪽을 더 선호하시나요? 상관없다면 둘다 상관없다고 말해주세요.’
+
+‘Co-founder로서 스타트업의 성장을 직접 이끌어 보셨고, 딥테크 인력들과 교류하며 산업단의 중요한 점을 배우셨다고 들었습니다. 김호진님께서 **가장 중요하게 생각하는 팀 문화나 환경적인 요소 (예: 보상, 성장성, 기술 스택, 워라밸 등)** 가 있다면 무엇일까요?’
+
+---
+
+아래는 지금까지의 통화 기록, 지원자 정보, 그리고 지원자의 이력서 전문입니다.
+
+이 세 가지를 종합해서, 다음 턴에 Harper(당신)가 지원자에게 물어볼 “가장 자연스럽고 적절한 질문”을  포함한 다음 발화를 만들어 주세요.
+
+- 반드시 한국어로 말하세요.
+- 너무 길거나 복잡하지 않게 자연스러운 면접 질문으로 만들어주세요.
+- 한 번에 질문 하나만 출력합니다.
+- 지원자의 관심 분야, 경력, 목표 등에 가장 맞는 질문을 선택하세요.
+- 이전 질문과 중복되거나 너무 비슷한 내용은 피하세요.
+
+사용자가 질문을 한다면 답변한 뒤 꼭 마지막엔 다음 질문을 해야하고, 만약 리크루팅/헤드헌팅과 무관한 질문이나 요구를 하면 저는 지원자님의 커리어를 위한 agent이기 때문에 다른건 할 수 없다고 대답해.
+
+----
+[이전 대화 기록]
+${conversationHistory}
+
+[지원자 정보]
+${userInfo}
+
+[지원자 이력서]
+${resumeText}
+----
+`;
+
+  return await inference(
+    "gpt-4.1-mini",
+    "You are a helpful assistant. Your name is Harper, voice-based AI recruiter for user. Use korean language. But it's okay to use english words if it is specific terms.",
+    userPrompt
+  );
+};
+
+export const callGreeting = async (
+  userInfo: string,
+  resumeText: string
+): Promise<string> => {
+  // return await inference(
+  //   "gpt-4.1-nano",
+  //   "You are a helpful assistant. Your name is Harper, voice-based AI recruiter for user. Use only korean language.",
+  //   "지금 유저가 새롭게 통화세 참여했어."
+  // );
+  // return "하퍼입니다. 저희는 모든 지원자 분들을 한분한분 정성스럽게 관리합니다. 이제 짧게 통화가 시작될 예정인데, 가능하면 조용한 곳에서 진행해 주세요. 오디오나 마이크는 괜찮으신가요?";
+  return "하퍼입니다. 오디오나 마이크는 괜찮으신가요?";
+};
+
+export function parseResumeJson(jsonString: string) {
+  try {
+    const data = JSON.parse(jsonString);
+
+    return {
+      education: Array.isArray(data.education) ? data.education : [],
+      workExperiences: Array.isArray(data.workExperiences)
+        ? data.workExperiences
+        : [],
+    };
+  } catch (e) {
+    console.error("Failed to parse JSON:", e);
+    return { education: [], workExperiences: [] };
+  }
+}
+
+// 한 번 호출해서 문자열로 답만 받아오는 헬퍼
+export async function extractResumeInfo(resumeText: string): Promise<any> {
+  const response = await client.chat.completions.create({
+    model: "gpt-4.1-mini",
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
+      {
+        role: "user",
+        content: `
+You are an information extraction system.  
+Your task is to read the resume text provided by the user and extract two things:
+
+1. education: Education[]
+2. workExperiences: WorkExperience[]
+
+⚠️ OUTPUT RULES (IMPORTANT)
+- Output must be valid JSON ONLY. No explanations.
+- The root structure must be exactly:
+  {
+    "education": [...],
+    "workExperiences": [...]
+  }
+- Even if information is missing or unclear, you MUST output arrays.
+- Missing or ambiguous fields should be an empty string "".
+- If you are not sure about dates, return "".
+- If a person is currently studying or working, set endDate: "default".
+
+우선 education, workExperiences를 각각 가장 최근 값 기준으로 하나씩만 출력해줘.
+education은 전부 한글로, workExperiences는 전부 영어로 출력해줘.
+
+------------------------------------
+DATA FORMAT
+
+Education = {
+  "school": string, // 학교명
+  "major": string,  // 전공
+  "startDate": string,    // 입학일 (unknown → "")
+  "endDate": string,      // 졸업일 (재학중 → "default")
+  "degree": string, // 학사/석사/박사
+  "gpa": string // 학점 (N/4.3)
+}
+
+WorkExperience = {
+  "company": string, // 회사명
+  "position": string, // 직무
+  "startDate": string,
+  "endDate": string,      // 재직중이면 "default"
+  "description": string // 설명, 3줄 요약
+}
+
+------------------------------------
+RESUME TEXT:
+${resumeText}
+------------------------------------
+
+Now extract all information and output JSON only. Do not include \`\`\`json or \`\`\` at the beginning or end.
+`,
+      },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  console.log("extractResumeInfo", content);
+  return parseResumeJson(content ?? "");
+}
