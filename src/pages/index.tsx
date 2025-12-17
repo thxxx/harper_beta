@@ -387,7 +387,9 @@ const CandidatePage = () => {
         <BaseSectionLayout>
           <div className="w-full flex flex-col items-center justify-center bg-black">
             <div className="flex flex-col items-center justify-center w-full lg:w-[94%] py-40 text-white">
-              <Head1 className="text-[42px]">Get Opportunities.</Head1>
+              <Head1 className="text-3xl md:text-[42px]">
+                Get Opportunities.
+              </Head1>
               <div className="text-lg font-light text-white/90 mt-8 leading-7">
                 하퍼는 구직 서비스가 아닙니다.
                 <br />
@@ -660,7 +662,7 @@ const WhyImageSection = ({
             alt={title}
             width={400}
             height={320}
-            className=""
+            className="max-w-[80%]"
           />
         )}
       </div>
