@@ -5,10 +5,10 @@ import Image from "next/image";
 import { LoaderCircle } from "lucide-react";
 import GradientBackground from "@/components/landing/GradientBackground";
 import Header from "@/components/landing/Header";
-import { showToast } from "@/components/toast/toast";
 import { handleContactUs } from "@/utils/info";
 import router from "next/router";
 import { supabase } from "@/lib/supabase";
+import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 
 export default function LoginSuccess() {
   const [code, setCode] = useState("");
@@ -17,6 +17,14 @@ export default function LoginSuccess() {
   const [isShake, setIsShake] = useState(false);
 
   const interactiveRef = useRef<HTMLDivElement>(null);
+
+  const companyUser = useCompanyUserStore((s) => s.companyUser);
+
+  useEffect(() => {
+    if (companyUser?.is_authenticated) {
+      router.push("/app");
+    }
+  }, [companyUser]);
 
   useEffect(() => {
     if (isShake) {
@@ -28,6 +36,7 @@ export default function LoginSuccess() {
 
   const checkCode = async () => {
     setIsLoading(true);
+
     if (!code) {
       setIsShake(true);
       setInvalidMessage("초대 코드를 입력해주세요.");
@@ -35,14 +44,22 @@ export default function LoginSuccess() {
       return;
     }
 
+    const domain = companyUser?.email?.split("@")[1];
     supabase
       .from("company_code")
       .select("*")
       .eq("code", code)
+      .eq("domain", domain)
       .single()
-      .then((res) => {
+      .then(async (res) => {
         if (res.data) {
-          router.push("/");
+          await supabase
+            .from("company_users")
+            .update({
+              is_authenticated: true,
+            })
+            .eq("user_id", companyUser?.user_id);
+          router.push("/my");
         } else {
           setIsShake(true);
           setInvalidMessage("초대 코드가 일치하지 않습니다.");

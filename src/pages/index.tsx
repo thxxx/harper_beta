@@ -3,6 +3,7 @@
 import { BaseSectionLayout } from "@/components/landing/GridSectionLayout";
 import {
   ArrowRight,
+  Building,
   ChevronDown,
   ChevronRight,
   LoaderCircle,
@@ -181,17 +182,10 @@ const CandidatePage = () => {
           <div className="text-[26px] font-garamond font-semibold w-[40%] md:w-[15%]">
             Harper
           </div>
-          <nav className="hidden font-normal text-white bg-[#444444aa] rounded-full md:flex items-center justify-center gap-4 text-xs sm:text-sm px-4 py-2">
+          <nav className="hidden font-normal text-white bg-[#444444aa] backdrop-blur rounded-full md:flex items-center justify-center gap-4 text-xs sm:text-sm px-4 py-2">
             <div
               className="cursor-pointer hover:opacity-95 px-4 py-2 hover:bg-white/5 rounded-full transition-colors duration-200"
               onClick={() => {
-                const body = {
-                  local_id: landingId,
-                  action: "click_company",
-                  abtest: "2025_12_" + abtest.toString(),
-                  is_mobile: isMobile,
-                };
-                supabase.from("landing_logs").insert(body);
                 router.push("companies");
               }}
             >
@@ -233,7 +227,15 @@ const CandidatePage = () => {
 
       <div className="flex flex-col items-center justify-center px-0 md:px-20 w-full bg-black text-white h-screen">
         <div className="flex flex-col items-center justify-start md:justify-center pt-40 md:pt-0 w-full h-full text-center px-4">
-          <div className="md:text-[44px] text-[28px] font-normal leading-snug">
+          {/* <div className="mb-4 flex flex-row items-center justify-center pl-[2px] py-[2px] pr-[12px] bg-white/50 text-black gap-1.5 rounded-full">
+            <div className="w-[24px] h-[24px] bg-black rounded-full flex items-center justify-center">
+              <Building className="w-[14px] text-white" />
+            </div>
+            <div className="text-[12px] font-normal">
+              현재 미국의 회사들과의 연결에 집중하고 있습니다.
+            </div>
+          </div> */}
+          <div className="md:text-[44px] text-[28px] font-normal leading-snug mt-2">
             세계 최고 <span className="hidden md:inline">AI/ML</span> 엔지니어의
             <br /> 다음 커리어가 시작되는 곳
           </div>
@@ -249,7 +251,7 @@ const CandidatePage = () => {
             joinWaitlist={joinWaitlist}
           />
 
-          <div className="flex items-center flex-row gap-2 mt-14">
+          <div className="flex items-center flex-row gap-2 mt-16">
             <div className="relative items-baseline gap-1 text-caption font-normal flex">
               <div>500+ in the waitlist </div>
             </div>
@@ -296,9 +298,11 @@ const CandidatePage = () => {
             </h2>
             <p className="text-base font-light md:text-lg mt-6 text-caption">
               {/* 하퍼는 최고의 회사와 인재에 집중하고 있습니다. */}
-              하퍼는 오직 글로벌 AI 리더십의 중심의
+              {/* 하퍼는 오직 글로벌 AI 리더십의 중심의 */}
+              하퍼는 현재 해외 회사들과의 연결에 집중하고 있습니다.
               <br />
-              가장 영향력 있는 기회만을 선별하여 연결합니다.
+              오직 하퍼에서만, 미국의 팀에게서 이직 제안을 받을 수 있습니다.
+              {/* 가장 영향력 있는 기회만을 선별하여 연결합니다. */}
             </p>
           </div>
         </BaseSectionLayout>
@@ -576,9 +580,10 @@ const FeatureSection = () => {
             title={
               isMobile
                 ? "빠르게 성장하는 글로벌 <br/>스타트업으로부터의 제안"
-                : "빠르게 성장하는<br />글로벌 스타트업으로부터의 제안"
+                : "한국에서, 해외 스타트업<br />오퍼를 받는 가장 빠른 방법"
+              // : "빠르게 성장하는<br />글로벌 스타트업으로부터의 제안"
             }
-            desc="하퍼에는 현재 미국에 진출하여 빠르게 성장하는 스타트업들이 참여하고 있습니다.<br />최고 퀄리티의 제안을 받고 세계로 진출하세요."
+            desc="하퍼에서는 현재 일본, 미국 등 해외의 스타트업들도 한국의 인재를 찾고 있습니다.<br />최고 퀄리티의 제안을 받고 세계로 진출하세요."
             imageSrc="/images/why1.png"
             opposite
           />

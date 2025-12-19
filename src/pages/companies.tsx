@@ -111,6 +111,19 @@ export default function CompanyPage() {
 
   const interactiveRef = useRef<HTMLDivElement | null>(null);
 
+  const login = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    console.log(data);
+
+    if (error) throw error;
+    return data;
+  };
+
   return (
     <main
       onMouseMove={handleMouseMove}
@@ -176,13 +189,14 @@ export default function CompanyPage() {
             >
               <div
                 onClick={() => {
-                  const body = {
-                    local_id: landingId,
-                    action: "click_join",
-                    is_mobile: isMobile,
-                  };
-                  supabase.from("landing_logs").insert(body);
-                  router.push("/invitation");
+                  login();
+                  // const body = {
+                  //   local_id: landingId,
+                  //   action: "click_join",
+                  //   is_mobile: isMobile,
+                  // };
+                  // supabase.from("landing_logs").insert(body);
+                  // router.push("/invitation");
                 }}
                 className="group flex rounded-full h-12 md:h-16 px-5 md:px-10 items-center justify-center font-medium text-sm md:text-lg
             cursor-pointer text-black bg-white transition-all duration-300 gap-2 active:scale-95"
