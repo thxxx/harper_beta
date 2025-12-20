@@ -169,6 +169,7 @@ export type Database = {
           id: number;
           is_mobile: boolean | null;
           local_id: string | null;
+          name: string | null;
           text: string | null;
           type: number | null;
           url: string | null;
@@ -180,6 +181,7 @@ export type Database = {
           id?: number;
           is_mobile?: boolean | null;
           local_id?: string | null;
+          name?: string | null;
           text?: string | null;
           type?: number | null;
           url?: string | null;
@@ -191,6 +193,7 @@ export type Database = {
           id?: number;
           is_mobile?: boolean | null;
           local_id?: string | null;
+          name?: string | null;
           text?: string | null;
           type?: number | null;
           url?: string | null;
@@ -239,6 +242,30 @@ export type Database = {
           role?: string | null;
           salary?: string | null;
           size?: string | null;
+        };
+        Relationships: [];
+      };
+      landing_logs: {
+        Row: {
+          action: string | null;
+          created_at: string;
+          id: number;
+          is_mobile: boolean | null;
+          local_id: string | null;
+        };
+        Insert: {
+          action?: string | null;
+          created_at?: string;
+          id?: number;
+          is_mobile?: boolean | null;
+          local_id?: string | null;
+        };
+        Update: {
+          action?: string | null;
+          created_at?: string;
+          id?: number;
+          is_mobile?: boolean | null;
+          local_id?: string | null;
         };
         Relationships: [];
       };
