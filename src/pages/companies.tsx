@@ -112,10 +112,16 @@ export default function CompanyPage() {
   const interactiveRef = useRef<HTMLDivElement | null>(null);
 
   const login = async () => {
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : undefined;
+
+    console.log("redirectTo : ", redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectTo,
       },
     });
     console.log(data);
