@@ -136,14 +136,14 @@ const Onboard: React.FC = () => {
       const res = await supabase.from("harper_waitlist_company").upsert({
         name: name,
         email,
-        role: roles,
+        role: roles.length > 0 ? roles.join(", ") : null,
         company: company,
         company_link: companyLink,
         size: size,
-        needs: needs,
+        needs: needs ? [needs] : null,
         salary: salary,
         additional: additional,
-        expect: value,
+        expect: value.length > 0 ? value.join(", ") : null,
       });
       console.log("res", res);
       setIsDirty(false);
