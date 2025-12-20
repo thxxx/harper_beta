@@ -260,7 +260,7 @@ export default function CompanyPage() {
             <div className="font-garamond text-base font-thin">
               Harper is your team{"'"}s
               <br className="block sm:hidden" />
-              dedicated AI recruiter.
+              dedicated AI recruiter
             </div>
             <div className="cursor-pointer font-inter text-xs md:text-sm font-light hover:text-white/75"></div>
           </div>
