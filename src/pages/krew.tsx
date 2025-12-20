@@ -14,6 +14,7 @@ type LeadRow = {
   email: string;
   url: string | null;
   text: string | null;
+  type: number;
 };
 
 function getOrCreateLocalId() {
@@ -104,6 +105,7 @@ export default function HomePage() {
         email: payload.email,
         url: payload.url,
         text: payload.text,
+        type: 1,
       };
       setRecent((prev) => [optimistic, ...prev].slice(0, 10));
 

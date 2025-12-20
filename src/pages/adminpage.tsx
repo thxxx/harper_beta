@@ -78,8 +78,8 @@ const AdminPage = () => {
       return;
     }
 
-    setWaitlist(waitlistRes.data || []);
-    setCompanies(companiesRes.data || []);
+    setWaitlist((waitlistRes.data as WaitlistEntry[]) || []);
+    setCompanies((companiesRes.data as CompanyWaitlistEntry[]) || []);
     setCounts({
       waitlist: waitlistRes.count || 0,
       companies: companiesRes.count || 0,
