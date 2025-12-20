@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { CandidateType } from "@/types/database.types";
+import { CandidateTypeWithConnection } from "./useSearchCandidates";
 
 export type ConnectionTyped = 0 | 1 | 2;
 
@@ -22,7 +23,11 @@ export function useCandidatesByConnectionTyped(
     enabled: !!userId,
     queryFn: async () => {
       if (!userId)
-        return { items: [] as CandidateType[], hasNext: false, total: 0 };
+        return {
+          items: [] as CandidateTypeWithConnection[],
+          hasNext: false,
+          total: 0,
+        };
 
       const from = pageIdx * pageSize;
       const to = from + pageSize - 1;
@@ -48,7 +53,7 @@ export function useCandidatesByConnectionTyped(
 
       if (ids.length === 0) {
         return {
-          items: [] as CandidateType[],
+          items: [] as CandidateTypeWithConnection[],
           hasNext: false,
           total: count ?? 0,
         };
@@ -81,7 +86,7 @@ connection (
       const map = new Map((cands ?? []).map((c: any) => [c.id, c]));
       const items = ids
         .map((id) => map.get(id))
-        .filter(Boolean) as CandidateType[];
+        .filter(Boolean) as CandidateTypeWithConnection[];
 
       const total = count ?? 0;
       const hasNext = to + 1 < total;
