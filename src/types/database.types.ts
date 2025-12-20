@@ -31,7 +31,6 @@ export type Database = {
           profile_picture: string | null;
           publications: Json | null;
           search_text: string | null;
-          search_tsv: unknown;
           total_exp_months: number | null;
         };
         Insert: {
@@ -50,7 +49,6 @@ export type Database = {
           profile_picture?: string | null;
           publications?: Json | null;
           search_text?: string | null;
-          search_tsv?: unknown;
           total_exp_months?: number | null;
         };
         Update: {
@@ -69,7 +67,6 @@ export type Database = {
           profile_picture?: string | null;
           publications?: Json | null;
           search_text?: string | null;
-          search_tsv?: unknown;
           total_exp_months?: number | null;
         };
         Relationships: [];
@@ -163,6 +160,42 @@ export type Database = {
             referencedColumns: ["user_id"];
           }
         ];
+      };
+      harper_waitlist: {
+        Row: {
+          abtest: string | null;
+          created_at: string;
+          email: string | null;
+          id: number;
+          is_mobile: boolean | null;
+          local_id: string | null;
+          text: string | null;
+          type: number | null;
+          url: string | null;
+        };
+        Insert: {
+          abtest?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: number;
+          is_mobile?: boolean | null;
+          local_id?: string | null;
+          text?: string | null;
+          type?: number | null;
+          url?: string | null;
+        };
+        Update: {
+          abtest?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: number;
+          is_mobile?: boolean | null;
+          local_id?: string | null;
+          text?: string | null;
+          type?: number | null;
+          url?: string | null;
+        };
+        Relationships: [];
       };
       harper_waitlist_company: {
         Row: {

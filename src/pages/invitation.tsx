@@ -22,7 +22,7 @@ export default function LoginSuccess() {
 
   useEffect(() => {
     if (companyUser?.is_authenticated) {
-      router.push("/app");
+      router.push("/my");
     }
   }, [companyUser]);
 

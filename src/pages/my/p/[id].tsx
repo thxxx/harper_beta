@@ -1,6 +1,5 @@
 import AppLayout from "@/components/layout/app";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useCandidateDetail } from "@/hooks/useCandidateDetail";
 import { ExternalLink, MapPin, Mail, Link as LinkIcon } from "lucide-react";

@@ -20,7 +20,6 @@ export function useCandidatesByConnectionTyped(
   return useQuery({
     queryKey: connectionsKey(userId, typed, pageIdx, pageSize),
     enabled: !!userId,
-    keepPreviousData: true,
     queryFn: async () => {
       if (!userId)
         return { items: [] as CandidateType[], hasNext: false, total: 0 };
