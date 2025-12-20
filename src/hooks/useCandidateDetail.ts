@@ -26,9 +26,10 @@ async function fetchCandidateDetail(id: string, userId?: string) {
     .maybeSingle();
 
   // userId가 있으면 connection을 해당 user로만 필터
-  const { data, error } = userId
-    ? await q.eq("connection.user_id", userId)
-    : await q;
+  const { data, error } = await q;
+  // const { data, error } = userId
+  // ? await q.eq("connection.user_id", userId)
+  // : await q;
 
   if (error) throw error;
   return data as CandidateDetail | null;

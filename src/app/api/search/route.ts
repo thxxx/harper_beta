@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: "",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 type ParsedQuery = {
@@ -47,7 +47,6 @@ async function parseQueryWithLLM(queryText: string): Promise<ParsedQuery> {
 - must_not: 제외하고 싶은 조건(인턴, 학생 등)이 있으면 0~10개
 - 가능한 한 "검색 가능한 문자열"로 쪼개라 (예: "LLM 서빙", "vLLM", "Triton", "Kubernetes")
 - 너무 긴 문장은 금지. 키워드/짧은 구절 단위로만.
-- return only in english
 
 입력:
 ${queryText}
@@ -161,7 +160,7 @@ export async function POST(req: NextRequest) {
             {
               role: "system",
               content:
-                "You are a helpful assistant. Given a search query and a candidate profile, generate a relevance-focused summary explaining why this candidate matches the query. Use exactly three sentences. Highlight especially important skills, experiences, or keywords by wrapping them with <strong> tags.",
+                "You are a helpful assistant. Given a search query and a candidate profile, generate a relevance-focused summary explaining why this candidate matches the query. Use exactly three sentences. Highlight especially important skills, experiences, or keywords by wrapping them with <strong> tags. 영어 단어가 들어가는건 상관없는데, 한글로 대답해줘.",
             },
             {
               role: "user",

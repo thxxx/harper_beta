@@ -358,12 +358,14 @@ export const useConversation = (
     callScriptRef.current += `User: ${currentUserTranscript}\n`;
     // script는 나와있고
     // llm 요청하고
-    const userInfo = `이름: ${userProfile?.name}, 사는 곳 ${userProfile?.location}`;
+    // const userInfo = `이름: ${userProfile?.resumes?[0].[0].}, 사는 곳 ${userProfile?.resumes?.[0]?.location}`;
     sayingRef.current = "";
     const question = await makeQuestion(
       callScriptRef.current,
-      userInfo,
-      userProfile?.resumes?.[0]?.resume_text ?? ""
+      "",
+      ""
+      // userInfo,
+      // userProfile?.resumes?.[0]?.resume_text ?? ""
     );
     callScriptRef.current += `Harper: ${question}\n`;
     // tts로 오디오 출력까지
