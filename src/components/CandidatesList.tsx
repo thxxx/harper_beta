@@ -197,7 +197,7 @@ export default function CandidateCard({
                   <div className="flex flex-row items-center justify-between">
                     <div
                       className="text-xgray700 hover:text-black hover:underline cursor-pointer"
-                      onClick={() => window.open(school.school_url, "_blank")}
+                      // onClick={() => window.open(school.school_url, "_blank")}
                     >
                       {school}
                     </div>
