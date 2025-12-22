@@ -15,6 +15,7 @@ type LeadRow = {
   url: string | null;
   text: string | null;
   type: number;
+  name: string | null;
 };
 
 function getOrCreateLocalId() {
@@ -34,6 +35,7 @@ export default function HomePage() {
   const [contact, setContact] = useState("");
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
+  const [name, setName] = useState("");
 
   const [recent, setRecent] = useState<LeadRow[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
@@ -56,7 +58,7 @@ export default function HomePage() {
     setLoadingRecent(true);
     const { data, error } = await supabase
       .from("harper_waitlist")
-      .select("local_id, email, url, text, id")
+      .select("local_id, email, url, text, id, name")
       .eq("local_id", lid)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -89,6 +91,7 @@ export default function HomePage() {
         email: contact.trim(),
         url: url.trim() ? url.trim() : null,
         text: note.trim() ? note.trim() : null,
+        name: name.trim() ? name.trim() : null,
       };
 
       // 3) "기다리지 말고 바로 다음 사람"
@@ -96,6 +99,7 @@ export default function HomePage() {
       setContact("");
       setUrl("");
       setNote("");
+      setName("");
       requestAnimationFrame(() => contactRef.current?.focus());
 
       // 4) Optimistic: 화면에 먼저 추가(임시 id)
@@ -106,6 +110,7 @@ export default function HomePage() {
         url: payload.url,
         text: payload.text,
         type: 1,
+        name: payload.name,
       };
       setRecent((prev) => [optimistic, ...prev].slice(0, 10));
 
@@ -124,7 +129,7 @@ export default function HomePage() {
           fetchRecent(localId);
         });
     },
-    [canSubmit, contact, url, note, localId, fetchRecent]
+    [canSubmit, contact, url, note, localId, fetchRecent, name]
   );
 
   const deleteRow = useCallback(
@@ -159,10 +164,24 @@ export default function HomePage() {
           <div className="grid gap-3">
             <div>
               <label className="mb-1 block text-sm font-medium text-neutral-800">
-                Email or Phone
+                이름
               </label>
               <input
                 ref={contactRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 text-sm outline-none focus:border-neutral-400 px-4 py-4"
+                placeholder=""
+                inputMode="text"
+                autoComplete="off"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-800">
+                Email or Phone
+              </label>
+              <input
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
                 className="w-full rounded-xl border border-neutral-200 text-sm outline-none focus:border-neutral-400 px-4 py-4"
@@ -232,8 +251,8 @@ export default function HomePage() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex flex-row w-full justify-between items-center">
                       <div className="flex flex-col gap-1">
-                        <div className="truncate text-sm font-medium text-neutral-900">
-                          {r.email}
+                        <div className="truncate text-sm font-medium text-black">
+                          {r.name} - {r.email}
                         </div>
                         <div className="mt-1 truncate text-xs text-neutral-600">
                           {r.url ? (

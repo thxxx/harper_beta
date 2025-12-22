@@ -1,11 +1,15 @@
 import { CandidateTypeWithConnection } from "@/hooks/useSearchCandidates";
 import { useToggleBookmark } from "@/hooks/useToggleBookmark";
-import { CandidateType } from "@/types/database.types";
 import { Bookmark } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { showToast } from "./toast/toast";
 import { useRouter } from "next/router";
 import ConnectionModal from "./Modal/ConnectionModal";
+import {
+  koreaUniversityEnToKo,
+  locationEnToKo,
+  toKoreanMonth,
+} from "@/utils/language_map";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -72,7 +76,12 @@ export default function CandidateCard({
 
   const firstCompany = exps[exps.length - 1];
   const latestCompany = exps[0];
-  const school = pickSchool(edus);
+  const school = useMemo(() => {
+    const school = pickSchool(edus);
+    console.log(school, edus);
+    if (!school) return null;
+    return koreaUniversityEnToKo(school);
+  }, [edus]);
 
   let isOnlyOneCompany = false;
   if (exps.length === 1) {
@@ -144,7 +153,9 @@ export default function CandidateCard({
                 </div>
               )}
               {c.location && (
-                <div className="mt-1 text-xs text-xgray500">{c.location}</div>
+                <div className="mt-1 text-xs text-xgray500">
+                  {locationEnToKo(c.location)}
+                </div>
               )}
             </div>
 
@@ -221,6 +232,7 @@ type CompanyType = {
   start_date: string;
   end_date: string;
 };
+
 const CompanyCard = ({
   company,
   text,
@@ -228,6 +240,13 @@ const CompanyCard = ({
   company: CompanyType;
   text: string;
 }) => {
+  const startDate = useMemo(() => {
+    return toKoreanMonth(company.start_date);
+  }, [company.start_date]);
+  const endDate = useMemo(() => {
+    return toKoreanMonth(company.end_date);
+  }, [company.end_date]);
+
   return (
     <div className="flex flex-row items-start justify-start">
       <div className="text-neutral-500 text-xs min-w-14 pt-0.5">{text}</div>
@@ -240,7 +259,7 @@ const CompanyCard = ({
             {company.company}
           </div>
           <div className="text-neutral-500 text-xs">
-            {company.start_date} - {company.end_date}
+            {startDate} - {endDate}
           </div>
         </div>
         <div className="flex flex-row items-center justify-between">
