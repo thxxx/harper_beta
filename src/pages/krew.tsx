@@ -61,7 +61,7 @@ export default function HomePage() {
       .select("local_id, email, url, text, id, name")
       .eq("local_id", lid)
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(50);
 
     setLoadingRecent(false);
     if (error) {
@@ -112,7 +112,7 @@ export default function HomePage() {
         type: 1,
         name: payload.name,
       };
-      setRecent((prev) => [optimistic, ...prev].slice(0, 10));
+      setRecent((prev) => [optimistic, ...prev].slice(0, 50));
 
       // 5) 실제 insert는 await 안 함 (fire-and-forget)
       //    완료되면 recent를 다시 당겨와서 tmp 정리
@@ -239,7 +239,7 @@ export default function HomePage() {
 
         <div className="mt-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">최근 입력</h2>
+            <h2 className="text-base font-semibold">최근 입력 (50개)</h2>
           </div>
 
           <div className="mt-3 divide-y divide-neutral-200 rounded-2xl border border-neutral-200">
