@@ -354,7 +354,7 @@ Educations: ${educations}
 Publications: ${publications}`;
     };
 
-    data[0]?.forEach(async (doc: any, index: number) => {
+    (data[0] as Array<any>)?.forEach(async (doc: any, index: number) => {
       const res_check = await supabase
         .from("synthesized_summary")
         .select("*")
@@ -398,7 +398,7 @@ Publications: ${publications}`;
       // }
     });
 
-    const candidateIds = data[0]?.map((r: any) => r.id) ?? [];
+    const candidateIds = (data[0] as Array<any>)?.map((r: any) => r.id) ?? [];
     console.log("검색 결과 candidateIds ", candidateIds);
 
     const { error: insErr } = await supabase.from("query_pages").insert({
