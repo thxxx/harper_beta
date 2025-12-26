@@ -592,12 +592,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      execute_raw_sql:
-        | { Args: { sql_query: string }; Returns: Json[] }
-        | {
-            Args: { limit_num: number; page_idx: number; sql_query: string }
-            Returns: Json[]
-          }
+      execute_raw_sql: {
+        Args: { limit_num: number; page_idx: number; sql_query: string }
+        Returns: Json[]
+      }
+      set_timeout_and_execute_raw_sql: {
+        Args: { limit_num: number; page_idx: number; sql_query: string }
+        Returns: Json[]
+      }
     }
     Enums: {
       [_ in never]: never

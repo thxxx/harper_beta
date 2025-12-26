@@ -310,6 +310,11 @@ GROUP BY
     );
 
     console.log("그래서 검색한게 뭔데? data ", data, error);
+    if (!data)
+      return NextResponse.json(
+        { page_idx: pageIdx, results: [] },
+        { status: 500 }
+      );
 
     const buildSummary = (doc: any) => {
       const exps = doc.experiences?.map((exp: any) => {
@@ -357,7 +362,7 @@ Publications: ${publications}`;
         .eq("query_id", queryId)
         .maybeSingle();
 
-      console.log("res_check ", res_check, doc);
+      console.log("res_check ", res_check);
 
       if (!res_check.data) {
         const information = buildSummary(doc);
@@ -389,8 +394,8 @@ Publications: ${publications}`;
       } else {
       }
 
-      if (index === data[0].length - 1) {
-      }
+      // if (index === data[0].length - 1) {
+      // }
     });
 
     const candidateIds = data[0]?.map((r: any) => r.id) ?? [];
