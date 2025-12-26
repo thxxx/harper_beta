@@ -2,14 +2,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Avatar } from "../CandidatesList";
 import { useToggleRequest } from "@/hooks/useToggleRequest";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { supabase } from "@/lib/supabase";
+import NameProfile from "../NameProfile";
 
 interface ConnectionModalProps {
   open: boolean;
   name?: string;
+  headline?: string;
+  location?: string;
   profilePicture?: string;
   onClose: () => void;
   candidId: string;
@@ -20,6 +22,8 @@ interface ConnectionModalProps {
 const ConnectionModal: React.FC<ConnectionModalProps> = ({
   open,
   name,
+  headline,
+  location,
   profilePicture,
   onClose,
   candidId,
@@ -93,18 +97,24 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 w-full">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
 
-      <div className="relative z-50 w-full max-w-[680px] rounded-md bg-white p-6 shadow-sm">
-        <div className="flex flex-row items-center justify-start gap-2">
-          <Avatar url={profilePicture} name={name} size="sm" />
-          <div className="text-sm font-medium text-gray-600">{name}</div>
-        </div>
+      <div className="relative z-50 w-full max-w-[640px] rounded-[28px] bg-bgDark400 p-6 shadow-sm border border-white/10">
+        <NameProfile
+          id={candidId}
+          profile_picture={profilePicture ?? ""}
+          name={name ?? ""}
+          headline={headline ?? ""}
+          location={location ?? ""}
+        />
 
-        <div className="flex flex-col items-start justify-start mt-8">
+        <div className="flex flex-col items-start justify-start mt-8 gap-1">
           <div className="text-sm">Message</div>
           {isRequested ? (
-            <div className="w-full mt-2 rounded-md border border-xgray300 px-4 py-3 text-sm bg-xlightgray text-gray-700 focus:outline-none focus:ring-2 focus:ring-brightnavy">
+            <div className="w-full mt-2 rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brightnavy">
               {requestText}
             </div>
           ) : (
@@ -113,20 +123,20 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={6}
-              className="w-full mt-2 rounded-lg border border-xgray300 p-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brightnavy"
+              className="w-full text-white mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
             />
           )}
         </div>
 
         <div className="w-full mt-8 flex flex-row items-end justify-end gap-2">
           <button
-            className="inline-flex items-center justify-center rounded-md border border-xgray300 px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-medium text-white hover:bg-white/5"
             onClick={onClose}
           >
             닫기
           </button>
           <button
-            className="inline-flex items-center justify-center rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center justify-center rounded-lg bg-accenta1 px-6 py-3 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-70"
             onClick={onConfirmHandler}
           >
             {isRequested ? "연결 요청 취소" : "연결 요청"}

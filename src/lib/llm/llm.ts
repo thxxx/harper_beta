@@ -13,7 +13,7 @@ export type Message = {
 };
 
 export const client = new OpenAI({
-  apiKey: OPENAI_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
 });
 
@@ -222,4 +222,27 @@ Now extract all information and output JSON only. Do not include \`\`\`json or \
   const content = response.choices[0]?.message?.content;
   console.log("extractResumeInfo", content);
   return parseResumeJson(content ?? "");
+}
+
+// 한 번 호출해서 문자열로 답만 받아오는 헬퍼
+export async function queryKeyword(input_query: string): Promise<any> {
+  const response = await client.chat.completions.create({
+    model: "gpt-4.1-nano",
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
+      {
+        role: "user",
+        content: `
+Below is the input query of a user. 나중에 검색 목록에서 무엇을 검색했었는지 다시 기억하고 찾기 쉽게, 2-3 단어의 키워드로 만들어줘.
+
+Input Query: ${input_query}
+
+Output:
+`,
+      },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  return content ?? "";
 }

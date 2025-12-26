@@ -3,12 +3,20 @@ import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import CandidateCard from "@/components/CandidatesList";
-import { QueryType } from "@/types/database.types";
+import { QueryType } from "@/types/type";
 import { supabase } from "@/lib/supabase";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // ✅ infiniteQuery 버전 훅으로 바꿔서 import
 import { useSearchCandidates } from "@/hooks/useSearchCandidates";
+import { useQueryDetail } from "@/hooks/useQueryDetail";
+
+type QueryTypeWithCompanyUser = QueryType & {
+  company_users: {
+    user_id: string;
+    name: string;
+  };
+};
 
 export default function Result() {
   const router = useRouter();
@@ -17,40 +25,20 @@ export default function Result() {
   const { companyUser } = useCompanyUserStore();
   const userId = companyUser?.user_id;
   const queryId = typeof id === "string" ? id : undefined;
-
-  const [queryItem, setQueryItem] = useState<QueryType | null>(null);
   const [pageIdx, setPageIdx] = useState(0);
 
-  useEffect(() => {
-    // queryId 바뀌면 페이지 초기화
-    setPageIdx(0);
-  }, [queryId]);
-
-  useEffect(() => {
-    if (!queryId) return;
-    supabase
-      .from("queries")
-      .select("*")
-      .eq("query_id", queryId)
-      .single()
-      .then((res) => setQueryItem(res.data ?? null));
-  }, [queryId]);
+  const { data: queryItem, isLoading: isQueryDetailLoading } =
+    useQueryDetail(queryId);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSearchCandidates(userId, queryId);
 
   if (!userId) return <AppLayout>Loading...</AppLayout>;
   if (!queryId) return <AppLayout>Loading...</AppLayout>;
-  if (isLoading) return <AppLayout>Loading...</AppLayout>;
 
   const pages = data?.pages ?? [];
   const current = pages[pageIdx];
   const items = current?.items ?? [];
-
-  // useEnsureSynthesizedSummaries({
-  //   queryId,
-  //   pages: current ? [current] : [],
-  // });
 
   const canPrev = pageIdx > 0;
 
@@ -87,27 +75,53 @@ export default function Result() {
 
   return (
     <AppLayout>
-      <div className="w-full px-4 py-10">
-        <div className="text-2xl font-semibold">{queryItem?.query}</div>
-        <div className="text-sm text-xgray500 mt-2">
-          {queryItem?.created_at
-            ? new Date(queryItem.created_at).toLocaleDateString()
-            : ""}
+      {queryItem && (
+        <div className="w-full px-4 py-10">
+          <div className="text-2xl font-normal">{queryItem.query_keyword}</div>
+          <div className="text-lg font-normal text-xgray600">
+            {queryItem.raw_input_text}
+          </div>
+          <div className="text-sm text-xgray500 mt-2">
+            <span>
+              {queryItem.company_users ? (
+                <>
+                  by {queryItem.company_users.name}
+                  <span> - </span>
+                </>
+              ) : (
+                ""
+              )}
+            </span>
+            <span>
+              {queryItem.created_at
+                ? new Date(queryItem.created_at).toLocaleDateString()
+                : ""}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="w-full px-4 space-y-2">
-        <div className="space-y-3">
-          {items.map((c) => (
-            <CandidateCard key={c.id} c={c} userId={userId} queryId={queryId} />
-          ))}
+      {!isLoading ? (
+        <div className="w-full px-4 space-y-2">
+          <div className="space-y-4">
+            {items.map((c) => (
+              <CandidateCard
+                key={c.id}
+                c={c}
+                userId={userId}
+                queryId={queryId}
+              />
+            ))}
+          </div>
+
+          {/* (선택) 페이지가 비어있을 때 */}
+          {items.length === 0 && (
+            <div className="py-10 text-sm text-xgray600">No results.</div>
+          )}
         </div>
-
-        {/* (선택) 페이지가 비어있을 때 */}
-        {items.length === 0 && (
-          <div className="py-10 text-sm text-xgray600">No results.</div>
-        )}
-      </div>
+      ) : (
+        <div>Loading...</div>
+      )}
 
       <div className="flex items-center justify-center w-full py-16 flex-col">
         <div className="text-sm text-xgray700">

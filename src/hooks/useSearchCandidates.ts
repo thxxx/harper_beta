@@ -2,10 +2,24 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
   CandidateType,
+  EduUserType,
+  ExpUserType,
   SynthesizedSummaryType,
-} from "@/types/database.types";
+} from "@/types/type";
+
+export type ExperienceUserType = ExpUserType & {
+  company_db: {
+    name: string;
+    logo: string;
+    linkedin_url: string;
+  };
+};
 
 export type CandidateTypeWithConnection = CandidateType & {
+  edu_user: EduUserType[];
+} & {
+  experience_user: ExperienceUserType[];
+} & {
   connection: { user_id: string; typed: number }[];
 } & {
   synthesized_summary: SynthesizedSummaryType[];
@@ -32,14 +46,30 @@ async function fetchCandidatesByIds(
     .from("candid")
     .select(
       `
-        educations,
-        experiences,
-        headline,
         id,
+        headline,
         linkedin_url,
         location,
         name,
         profile_picture,
+        edu_user (
+          school,
+          degree,
+          field,
+          start_date,
+          end_date
+        ),
+        experience_user (
+          role,
+          start_date,
+          end_date,
+          company_id,
+          company_db (
+            name,
+            logo,
+            linkedin_url
+          )
+        ),
         connection (
           user_id,
           typed
@@ -49,7 +79,7 @@ async function fetchCandidatesByIds(
     .in("id", ids)
     .eq("connection.user_id", userId);
 
-  console.log("fetchCandidatesByIds ", data);
+  console.log("fetchCandidatesByIds ", data, error);
 
   if (error) throw error;
 

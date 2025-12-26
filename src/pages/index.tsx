@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronRight,
   LoaderCircle,
+  Menu,
 } from "lucide-react";
 import router from "next/router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -208,7 +209,7 @@ const CandidatePage = () => {
           </div>
           <div className="block md:hidden">
             <DropdownMenu
-              buttonLabel="Menu"
+              buttonLabel={<Menu className="w-4 h-4" />}
               items={[
                 {
                   label: "Join Waitlist",

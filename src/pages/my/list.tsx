@@ -32,13 +32,13 @@ export default function MyPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen w-full bg-white">
+      <div className="min-h-screen w-full">
         {/* Header */}
-        <div className="sticky top-0 z-20 w-full border-b border-neutral-200 bg-white/80 backdrop-blur">
+        <div className="sticky top-0 z-20 w-full bg-bgDark600 backdrop-blur">
           <div className="mx-auto w-full px-4 py-6">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <div className="text-xl font-semibold tracking-tight text-xgray700">
+                <div className="text-2xl font-light tracking-tight text-white">
                   {title}
                 </div>
               </div>
@@ -51,7 +51,8 @@ export default function MyPage() {
 
             {/* Tabs */}
             <div className="mt-5">
-              <div className="inline-flex rounded-2xl border border-neutral-200 bg-neutral-50 p-1">
+              {/* <div className="inline-flex rounded-2xl border border-bgDark400 bg-bgDark500 p-1"> */}
+              <div className="inline-flex rounded-2xl p-1">
                 {TABS.map((t) => {
                   const active = t.key === currentPage;
                   return (
@@ -60,11 +61,11 @@ export default function MyPage() {
                       type="button"
                       onClick={() => setCurrentPage(t.key)}
                       className={[
-                        "relative rounded-2xl px-4 py-2 text-sm font-medium transition",
+                        "relative rounded-2xl px-5 py-3 text-sm font-medium transition",
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20",
                         active
-                          ? "bg-white text-neutral-900 shadow-sm"
-                          : "text-neutral-500 hover:text-neutral-800",
+                          ? "bg-white/10 text-white shadow-sm"
+                          : "text-xgray800 hover:text-white",
                       ].join(" ")}
                     >
                       {t.label}
@@ -78,7 +79,7 @@ export default function MyPage() {
 
         {/* Content */}
         <div className="mx-auto w-full px-4 py-8">
-          <div className="p-4 sm:p-6">{page}</div>
+          <div className="">{page}</div>
         </div>
       </div>
     </AppLayout>

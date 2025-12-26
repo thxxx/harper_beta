@@ -1,3 +1,4 @@
+import { queryKeyword } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,11 +17,15 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
 
+  const keyword = await queryKeyword(queryText.trim());
+  console.log("keyword ", keyword);
+
   const { data, error } = await supabase
     .from("queries")
     .insert({
       user_id: userId,
-      query: queryText.trim(),
+      raw_input_text: queryText.trim(),
+      query_keyword: keyword,
     })
     .select("query_id")
     .single();

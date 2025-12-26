@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { CandidateType } from "@/types/database.types";
+import type { CandidateType } from "@/types/type";
 import { CandidateTypeWithConnection } from "./useSearchCandidates";
 
 export type ConnectionTyped = 0 | 1 | 2;
@@ -64,18 +64,34 @@ export function useCandidatesByConnectionTyped(
         .from("candid")
         .select(
           `
-educations,
-experiences,
-headline,
-id,
-linkedin_url,
-location,
-name,
-profile_picture,
-connection (
-  user_id,
-  typed
-)`
+        id,
+        headline,
+        linkedin_url,
+        location,
+        name,
+        profile_picture,
+        edu_user (
+          school,
+          degree,
+          field,
+          start_date,
+          end_date
+        ),
+        experience_user (
+          role,
+          start_date,
+          end_date,
+          company_id,
+          company_db (
+            name,
+            logo,
+            linkedin_url
+          )
+        ),
+        connection (
+          user_id,
+          typed
+        )`
         )
         .in("id", ids)
         .eq("connection.user_id", userId);

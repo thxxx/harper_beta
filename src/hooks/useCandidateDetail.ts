@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { CandidateType } from "@/types/database.types";
+import type { CandidateType } from "@/types/type";
 
 export type CandidateDetail = CandidateType & {
   connection?: { user_id: string; typed: number }[];
@@ -15,6 +15,26 @@ async function fetchCandidateDetail(id: string, userId?: string) {
     .select(
       `
       *,
+      edu_user (
+        school,
+        degree,
+        field,
+        start_date,
+        end_date
+      ),
+      experience_user (
+        role,
+        start_date,
+        end_date,
+        description,
+        months,
+        company_id,
+        company_db (
+          name,
+          logo,
+          linkedin_url
+        )
+      ),
       connection (
         user_id,
         typed

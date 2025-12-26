@@ -10,7 +10,7 @@ type MenuItem = {
 };
 
 type DropdownMenuProps = {
-  buttonLabel: string;
+  buttonLabel: string | React.ReactNode;
   items: MenuItem[];
 };
 
@@ -41,11 +41,11 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 rounded-md border border-xgray500/40
+        className="inline-flex items-center gap-1 rounded-md
                   px-1.5 py-1.5 text-sm shadow-sm
-                   hover:bg-xgray500/20 focus:outline-none focus:ring-2 focus:ring-xgray700/50"
+                   hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-xgray700/50"
       >
-        {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        {open ? <X className="w-4 h-4" /> : <>{buttonLabel}</>}
       </button>
 
       <AnimatePresence>

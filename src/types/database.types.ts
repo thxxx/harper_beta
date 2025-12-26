@@ -4,562 +4,729 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5";
-  };
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
       candid: {
         Row: {
-          bio: string | null;
-          created_at: string;
-          educations: Json | null;
-          email: string | null;
-          experiences: Json | null;
-          headline: string | null;
-          id: string;
-          last_updated_at: string | null;
-          linkedin_url: string | null;
-          links: string[] | null;
-          location: string | null;
-          name: string | null;
-          profile_picture: string | null;
-          publications: Json | null;
-          search_text: string | null;
-          total_exp_months: number | null;
-        };
+          bio: string | null
+          created_at: string
+          email: string | null
+          headline: string | null
+          id: string
+          last_updated_at: string | null
+          linkedin_url: string | null
+          links: string[] | null
+          location: string | null
+          name: string | null
+          profile_picture: string | null
+          publications: Json | null
+          search_text: string | null
+          total_exp_months: number | null
+        }
         Insert: {
-          bio?: string | null;
-          created_at?: string;
-          educations?: Json | null;
-          email?: string | null;
-          experiences?: Json | null;
-          headline?: string | null;
-          id?: string;
-          last_updated_at?: string | null;
-          linkedin_url?: string | null;
-          links?: string[] | null;
-          location?: string | null;
-          name?: string | null;
-          profile_picture?: string | null;
-          publications?: Json | null;
-          search_text?: string | null;
-          total_exp_months?: number | null;
-        };
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          headline?: string | null
+          id?: string
+          last_updated_at?: string | null
+          linkedin_url?: string | null
+          links?: string[] | null
+          location?: string | null
+          name?: string | null
+          profile_picture?: string | null
+          publications?: Json | null
+          search_text?: string | null
+          total_exp_months?: number | null
+        }
         Update: {
-          bio?: string | null;
-          created_at?: string;
-          educations?: Json | null;
-          email?: string | null;
-          experiences?: Json | null;
-          headline?: string | null;
-          id?: string;
-          last_updated_at?: string | null;
-          linkedin_url?: string | null;
-          links?: string[] | null;
-          location?: string | null;
-          name?: string | null;
-          profile_picture?: string | null;
-          publications?: Json | null;
-          search_text?: string | null;
-          total_exp_months?: number | null;
-        };
-        Relationships: [];
-      };
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          headline?: string | null
+          id?: string
+          last_updated_at?: string | null
+          linkedin_url?: string | null
+          links?: string[] | null
+          location?: string | null
+          name?: string | null
+          profile_picture?: string | null
+          publications?: Json | null
+          search_text?: string | null
+          total_exp_months?: number | null
+        }
+        Relationships: []
+      }
+      candid_id_map: {
+        Row: {
+          candid_id: string
+          identifier: string | null
+        }
+        Insert: {
+          candid_id?: string
+          identifier?: string | null
+        }
+        Update: {
+          candid_id?: string
+          identifier?: string | null
+        }
+        Relationships: []
+      }
       company_code: {
         Row: {
-          code: string | null;
-          company: string | null;
-          created_at: string;
-          domain: string | null;
-          id: string;
-        };
+          code: string | null
+          company: string | null
+          created_at: string
+          domain: string | null
+          id: string
+        }
         Insert: {
-          code?: string | null;
-          company?: string | null;
-          created_at?: string;
-          domain?: string | null;
-          id?: string;
-        };
+          code?: string | null
+          company?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+        }
         Update: {
-          code?: string | null;
-          company?: string | null;
-          created_at?: string;
-          domain?: string | null;
-          id?: string;
-        };
-        Relationships: [];
-      };
+          code?: string | null
+          company?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      company_db: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_count_range: Json | null
+          founded_year: number | null
+          funding_url: string | null
+          id: number
+          linkedin_url: string | null
+          location: string | null
+          logo: string | null
+          name: string | null
+          specialities: string[]
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_count_range?: Json | null
+          founded_year?: number | null
+          funding_url?: string | null
+          id?: number
+          linkedin_url?: string | null
+          location?: string | null
+          logo?: string | null
+          name?: string | null
+          specialities: string[]
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_count_range?: Json | null
+          founded_year?: number | null
+          funding_url?: string | null
+          id?: number
+          linkedin_url?: string | null
+          location?: string | null
+          logo?: string | null
+          name?: string | null
+          specialities?: string[]
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       company_users: {
         Row: {
-          created_at: string;
-          email: string | null;
-          is_authenticated: boolean;
-          name: string | null;
-          profile_picture: string | null;
-          user_id: string;
-        };
+          created_at: string
+          email: string | null
+          is_authenticated: boolean
+          name: string | null
+          profile_picture: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          email?: string | null;
-          is_authenticated?: boolean;
-          name?: string | null;
-          profile_picture?: string | null;
-          user_id?: string;
-        };
+          created_at?: string
+          email?: string | null
+          is_authenticated?: boolean
+          name?: string | null
+          profile_picture?: string | null
+          user_id?: string
+        }
         Update: {
-          created_at?: string;
-          email?: string | null;
-          is_authenticated?: boolean;
-          name?: string | null;
-          profile_picture?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          email?: string | null
+          is_authenticated?: boolean
+          name?: string | null
+          profile_picture?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       connection: {
         Row: {
-          candid_id: string | null;
-          created_at: string;
-          id: number;
-          typed: number | null;
-          user_id: string | null;
-        };
+          candid_id: string | null
+          created_at: string
+          id: number
+          typed: number | null
+          user_id: string | null
+        }
         Insert: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          typed?: number | null;
-          user_id?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          typed?: number | null
+          user_id?: string | null
+        }
         Update: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          typed?: number | null;
-          user_id?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          typed?: number | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "connection_candid_id_fkey";
-            columns: ["candid_id"];
-            isOneToOne: false;
-            referencedRelation: "candid";
-            referencedColumns: ["id"];
+            foreignKeyName: "connection_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "connection_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "company_users";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
+            foreignKeyName: "connection_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      edu_user: {
+        Row: {
+          candid_id: string | null
+          degree: string | null
+          end_date: string | null
+          field: string | null
+          id: string
+          school: string | null
+          start_date: string | null
+          url: string | null
+        }
+        Insert: {
+          candid_id?: string | null
+          degree?: string | null
+          end_date?: string | null
+          field?: string | null
+          id?: string
+          school?: string | null
+          start_date?: string | null
+          url?: string | null
+        }
+        Update: {
+          candid_id?: string | null
+          degree?: string | null
+          end_date?: string | null
+          field?: string | null
+          id?: string
+          school?: string | null
+          start_date?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edu_user_user_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      educations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      experience_user: {
+        Row: {
+          candid_id: string | null
+          company_id: number | null
+          description: string | null
+          end_date: string | null
+          id: number
+          months: number | null
+          role: string | null
+          start_date: string | null
+        }
+        Insert: {
+          candid_id?: string | null
+          company_id?: number | null
+          description?: string | null
+          end_date?: string | null
+          id?: number
+          months?: number | null
+          role?: string | null
+          start_date?: string | null
+        }
+        Update: {
+          candid_id?: string | null
+          company_id?: number | null
+          description?: string | null
+          end_date?: string | null
+          id?: number
+          months?: number | null
+          role?: string | null
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_user_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_user_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_db"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       harper_waitlist: {
         Row: {
-          abtest: string | null;
-          created_at: string;
-          email: string | null;
-          id: number;
-          is_mobile: boolean | null;
-          local_id: string | null;
-          name: string | null;
-          text: string | null;
-          type: number | null;
-          url: string | null;
-        };
+          abtest: string | null
+          created_at: string
+          email: string | null
+          id: number
+          is_mobile: boolean | null
+          local_id: string | null
+          name: string | null
+          text: string | null
+          type: number | null
+          url: string | null
+        }
         Insert: {
-          abtest?: string | null;
-          created_at?: string;
-          email?: string | null;
-          id?: number;
-          is_mobile?: boolean | null;
-          local_id?: string | null;
-          name?: string | null;
-          text?: string | null;
-          type?: number | null;
-          url?: string | null;
-        };
+          abtest?: string | null
+          created_at?: string
+          email?: string | null
+          id?: number
+          is_mobile?: boolean | null
+          local_id?: string | null
+          name?: string | null
+          text?: string | null
+          type?: number | null
+          url?: string | null
+        }
         Update: {
-          abtest?: string | null;
-          created_at?: string;
-          email?: string | null;
-          id?: number;
-          is_mobile?: boolean | null;
-          local_id?: string | null;
-          name?: string | null;
-          text?: string | null;
-          type?: number | null;
-          url?: string | null;
-        };
-        Relationships: [];
-      };
+          abtest?: string | null
+          created_at?: string
+          email?: string | null
+          id?: number
+          is_mobile?: boolean | null
+          local_id?: string | null
+          name?: string | null
+          text?: string | null
+          type?: number | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       harper_waitlist_company: {
         Row: {
-          additional: string | null;
-          company: string | null;
-          company_link: string | null;
-          created_at: string;
-          email: string;
-          expect: string | null;
-          is_mobile: boolean | null;
-          name: string | null;
-          needs: string[] | null;
-          role: string | null;
-          salary: string | null;
-          size: string | null;
-        };
+          additional: string | null
+          company: string | null
+          company_link: string | null
+          created_at: string
+          email: string
+          expect: string | null
+          is_mobile: boolean | null
+          name: string | null
+          needs: string[] | null
+          role: string | null
+          salary: string | null
+          size: string | null
+        }
         Insert: {
-          additional?: string | null;
-          company?: string | null;
-          company_link?: string | null;
-          created_at?: string;
-          email: string;
-          expect?: string | null;
-          is_mobile?: boolean | null;
-          name?: string | null;
-          needs?: string[] | null;
-          role?: string | null;
-          salary?: string | null;
-          size?: string | null;
-        };
+          additional?: string | null
+          company?: string | null
+          company_link?: string | null
+          created_at?: string
+          email: string
+          expect?: string | null
+          is_mobile?: boolean | null
+          name?: string | null
+          needs?: string[] | null
+          role?: string | null
+          salary?: string | null
+          size?: string | null
+        }
         Update: {
-          additional?: string | null;
-          company?: string | null;
-          company_link?: string | null;
-          created_at?: string;
-          email?: string;
-          expect?: string | null;
-          is_mobile?: boolean | null;
-          name?: string | null;
-          needs?: string[] | null;
-          role?: string | null;
-          salary?: string | null;
-          size?: string | null;
-        };
-        Relationships: [];
-      };
+          additional?: string | null
+          company?: string | null
+          company_link?: string | null
+          created_at?: string
+          email?: string
+          expect?: string | null
+          is_mobile?: boolean | null
+          name?: string | null
+          needs?: string[] | null
+          role?: string | null
+          salary?: string | null
+          size?: string | null
+        }
+        Relationships: []
+      }
       landing_logs: {
         Row: {
-          action: string | null;
-          created_at: string;
-          id: number;
-          is_mobile: boolean | null;
-          local_id: string | null;
-        };
+          action: string | null
+          created_at: string
+          id: number
+          is_mobile: boolean | null
+          local_id: string | null
+        }
         Insert: {
-          action?: string | null;
-          created_at?: string;
-          id?: number;
-          is_mobile?: boolean | null;
-          local_id?: string | null;
-        };
+          action?: string | null
+          created_at?: string
+          id?: number
+          is_mobile?: boolean | null
+          local_id?: string | null
+        }
         Update: {
-          action?: string | null;
-          created_at?: string;
-          id?: number;
-          is_mobile?: boolean | null;
-          local_id?: string | null;
-        };
-        Relationships: [];
-      };
+          action?: string | null
+          created_at?: string
+          id?: number
+          is_mobile?: boolean | null
+          local_id?: string | null
+        }
+        Relationships: []
+      }
       queries: {
         Row: {
-          created_at: string;
-          query: string | null;
-          query_id: string;
-          user_id: string;
-        };
+          created_at: string
+          query: string | null
+          query_id: string
+          query_keyword: string | null
+          raw_input_text: string | null
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          query?: string | null;
-          query_id?: string;
-          user_id: string;
-        };
+          created_at?: string
+          query?: string | null
+          query_id?: string
+          query_keyword?: string | null
+          raw_input_text?: string | null
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          query?: string | null;
-          query_id?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          query?: string | null
+          query_id?: string
+          query_keyword?: string | null
+          raw_input_text?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       query_pages: {
         Row: {
-          candidate_ids: string[] | null;
-          created_at: string;
-          id: number;
-          next_cursor: string | null;
-          page_idx: number | null;
-          query_id: string | null;
-          synthesized_summary: Json | null;
-        };
+          candidate_ids: string[] | null
+          created_at: string
+          id: number
+          next_cursor: string | null
+          page_idx: number | null
+          query_id: string | null
+          synthesized_summary: Json | null
+        }
         Insert: {
-          candidate_ids?: string[] | null;
-          created_at?: string;
-          id?: number;
-          next_cursor?: string | null;
-          page_idx?: number | null;
-          query_id?: string | null;
-          synthesized_summary?: Json | null;
-        };
+          candidate_ids?: string[] | null
+          created_at?: string
+          id?: number
+          next_cursor?: string | null
+          page_idx?: number | null
+          query_id?: string | null
+          synthesized_summary?: Json | null
+        }
         Update: {
-          candidate_ids?: string[] | null;
-          created_at?: string;
-          id?: number;
-          next_cursor?: string | null;
-          page_idx?: number | null;
-          query_id?: string | null;
-          synthesized_summary?: Json | null;
-        };
+          candidate_ids?: string[] | null
+          created_at?: string
+          id?: number
+          next_cursor?: string | null
+          page_idx?: number | null
+          query_id?: string | null
+          synthesized_summary?: Json | null
+        }
         Relationships: [
           {
-            foreignKeyName: "query_pages_query_id_fkey";
-            columns: ["query_id"];
-            isOneToOne: false;
-            referencedRelation: "queries";
-            referencedColumns: ["query_id"];
-          }
-        ];
-      };
+            foreignKeyName: "query_pages_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "queries"
+            referencedColumns: ["query_id"]
+          },
+        ]
+      }
       request: {
         Row: {
-          candid_id: string | null;
-          created_at: string;
-          id: number;
-          text: string | null;
-          user_id: string | null;
-        };
+          candid_id: string | null
+          created_at: string
+          id: number
+          text: string | null
+          user_id: string | null
+        }
         Insert: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          text?: string | null;
-          user_id?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          text?: string | null
+          user_id?: string | null
+        }
         Update: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          text?: string | null;
-          user_id?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          text?: string | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "request_candid_id_fkey";
-            columns: ["candid_id"];
-            isOneToOne: false;
-            referencedRelation: "candid";
-            referencedColumns: ["id"];
+            foreignKeyName: "request_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "request_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "company_users";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
+            foreignKeyName: "request_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       synthesized_summary: {
         Row: {
-          candid_id: string | null;
-          created_at: string;
-          id: number;
-          query_id: string | null;
-          text: string | null;
-        };
+          candid_id: string | null
+          created_at: string
+          id: number
+          query_id: string | null
+          text: string | null
+        }
         Insert: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          query_id?: string | null;
-          text?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          query_id?: string | null
+          text?: string | null
+        }
         Update: {
-          candid_id?: string | null;
-          created_at?: string;
-          id?: number;
-          query_id?: string | null;
-          text?: string | null;
-        };
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          query_id?: string | null
+          text?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "synthesized_summary_candid_id_fkey";
-            columns: ["candid_id"];
-            isOneToOne: false;
-            referencedRelation: "candid";
-            referencedColumns: ["id"];
+            foreignKeyName: "synthesized_summary_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "synthesized_summary_query_id_fkey";
-            columns: ["query_id"];
-            isOneToOne: false;
-            referencedRelation: "queries";
-            referencedColumns: ["query_id"];
-          }
-        ];
-      };
-    };
+            foreignKeyName: "synthesized_summary_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "queries"
+            referencedColumns: ["query_id"]
+          },
+        ]
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      search_candid_ids_v2: {
-        Args: {
-          lim?: number;
-          must?: string[];
-          must_not?: string[];
-          off?: number;
-          should?: string[];
-        };
-        Returns: {
-          id: string;
-        }[];
-      };
-    };
+      execute_raw_sql:
+        | { Args: { sql_query: string }; Returns: Json[] }
+        | {
+            Args: { limit_num: number; page_idx: number; sql_query: string }
+            Returns: Json[]
+          }
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R;
-    }
-    ? R
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I;
-    }
-    ? I
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U;
-    }
-    ? U
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never;
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never;
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const;
-
-export type CandidateType = Database["public"]["Tables"]["candid"]["Row"];
-export type QueryType = Database["public"]["Tables"]["queries"]["Row"];
-export type SynthesizedSummaryType =
-  Database["public"]["Tables"]["synthesized_summary"]["Row"];
+} as const

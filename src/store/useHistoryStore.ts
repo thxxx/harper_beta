@@ -1,4 +1,4 @@
-import { QueryType } from "@/types/database.types";
+import { QueryType } from "@/types/type";
 import { create } from "zustand";
 
 // Profile Store State
