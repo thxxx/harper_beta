@@ -37,7 +37,7 @@ export default function CompanyModalRoot() {
         <div className="text-sm">{company.name}</div>
         <div className="text-sm">{company.description}</div>
         <div className="text-sm">{company.location}</div>
-        <div className="text-sm">{company.specialities.join(", ")}</div>
+        <div className="text-sm">{company.specialities?.join(", ")}</div>
         <div className="text-sm">{company.website_url}</div>
         <div className="text-sm">{company.linkedin_url}</div>
         <div className="text-sm">{company.founded_year}</div>
