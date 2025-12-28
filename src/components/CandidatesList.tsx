@@ -39,24 +39,29 @@ export default function CandidateCard({
     }[]
   >([]);
 
+  const summaryToObject = (summary: string) => {
+    const temp = JSON.parse(summary);
+    return temp.map((item: any) => {
+      const score = item.split(",")[0];
+      const reason = item.split(",").slice(1).join(",");
+      return { score, reason };
+    });
+  };
+
   useEffect(() => {
     console.log("c.synthesized_summary ", c.synthesized_summary);
     if (c.synthesized_summary && c.synthesized_summary[0]?.text) {
-      const temp = JSON.parse(c.synthesized_summary[0]?.text);
-      console.log("temp ", temp);
-      const summaries = temp.map((item: any) => {
-        const score = item.split(",")[0];
-        const reason = item.split(",").slice(1).join(",");
-        return { score, reason };
-      });
-      console.log("summaries ", summaries);
+      const summaries = summaryToObject(c.synthesized_summary[0]?.text);
       setSynthesizedSummary(summaries);
     }
   }, [c.synthesized_summary]);
 
   useEffect(() => {
+    console.log("queryItem ", queryItem);
     if (
       queryItem &&
+      queryItem.criteria &&
+      queryItem.criteria.length > 0 &&
       c.synthesized_summary &&
       c.synthesized_summary.length === 0
     ) {
@@ -75,12 +80,12 @@ export default function CandidateCard({
         if (!res.ok) throw new Error("Make synthesized_summary api failed");
         const data = await res.json();
         console.log("data ", data);
-        setSynthesizedSummary(data?.result ?? []);
+        setSynthesizedSummary(summaryToObject(data?.result ?? "[]"));
         setIsLoadingSummary(false);
       };
       fetchSummary();
     }
-  }, []);
+  }, [queryItem, c.synthesized_summary]);
 
   const exps = asArr(c.experience_user ?? []);
   const edus = asArr(c.edu_user ?? []);

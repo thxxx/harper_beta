@@ -28,7 +28,7 @@ Highlight especially important skills, experiences, or keywords by wrapping them
 List of string의 형태로 criteria의 순서에 맞게, 검색된 사람이 각 조건을 만족하는지/안하는지 이유를 대답해줘.`;
 
   const userPrompt = `
-## 필수 : 출력은 criteria와 길이가 같고, 순서도 일치하는 List of string의 형태여야해.
+## 필수 : 출력은 criteria와 길이가 같고, 순서도 일치하는 List of string 이어야 한다.
 리스트의 각 string은 항상 만족/모호/불만족 중 하나로 시작하고 뒤에 이유 혹은 추측을 붙여줘.
 
 ### 예시

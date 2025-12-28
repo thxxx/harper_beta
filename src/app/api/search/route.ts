@@ -135,7 +135,7 @@ c. "sql_query": 반드시 WHERE 로 시작하는 SQL 조건문만 반환한다. 
 
 ### sql_query 전략 가이드 (매우 중요)
 - criteria와 무관하게, Natural Language Query에 기반하여 sql_query를 작성하라
-- 조건을 **한두 개만 쓰지 말고**, 반드시 **여러 개의 확장된 키워드**를 사용하라
+- 조건을 **한두 개만 쓰지 말고**, 여러 개의 확장된, 정확한 키워드를 사용하라. 대신 의도와 다른 결과가 잡힐 수 있는 키워드까지 확장하면 안된다.
 - 가능하면 다음을 적극 활용하라:
   - 직무 유사어 (engineer / scientist / researcher / developer 등)
   - 전공 유사어 (computer science / software / AI / ML / data 등)
@@ -243,7 +243,7 @@ OR T1.bio ILIKE '%worked at kakao%'
 
 ---
 
-❌ sql_query의 잘못된 예 (직접적으로 관련 없는 너무 많은 사람이 나올 수 있음. AND를 더 많이 섞어야 함)
+❌ sql_query의 잘못된 예 (직접적으로 관련 없는 너무 많은 사람이 나올 수 있음. AND를 더 많이 섞어야 함. bio에 "거래" 라고 넣으면 마켓플레이스 전문가가 아니더라도 다른 이유로 우연히 사람이 검색될 수 있으니 쓰면 안된다.)
 
 자연어 입력:
 > e-commerce 관련 경험이 있는 마켓플레이스 전문가
@@ -254,25 +254,20 @@ T2.role ILIKE '%marketplace%'
 OR T2.role ILIKE '%platform%'
 OR T2.role ILIKE '%commerce%'
 OR T2.role ILIKE '%e-commerce%'
-OR T2.description ILIKE '%marketplace%'
-OR T2.description ILIKE '%플랫폼%'
-OR T2.description ILIKE '%커머스%'
+OR T2.description ILIKE '%플랫폼%' # 지나치게 포괄적인 키워드는 쓰면 안된다.
 OR T2.description ILIKE '%거래%' 
 OR T2.description ILIKE '%payment%'
 OR T2.description ILIKE '%transaction%'
-OR T2.description ILIKE '%seller%'
 OR T2.description ILIKE '%buyer%'
 OR T1.headline ILIKE '%marketplace%'
 OR T1.headline ILIKE '%e-commerce%'
 OR T1.headline ILIKE '%플랫폼%'
 OR T1.bio ILIKE '%marketplace%'
-OR T1.bio ILIKE '%commerce%'
 OR T1.bio ILIKE '%platform%'
 OR T1.bio ILIKE '%trade%'
 OR T1.bio ILIKE '%거래%'
 OR T3.name ILIKE '%eBay%'
 OR T3.name ILIKE '%Amazon%'
-OR T3.name ILIKE '%Alibaba%'
 )
 
 ---
