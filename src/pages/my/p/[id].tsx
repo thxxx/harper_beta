@@ -5,6 +5,8 @@ import { useCandidateDetail } from "@/hooks/useCandidateDetail";
 import { Bookmark, ExternalLink, Link as LinkIcon } from "lucide-react";
 import Bookmarkbutton from "@/components/ui/bookmarkbutton";
 import Requestbutton from "@/components/ui/requestbutton";
+import ItemBox from "./components/ItemBox";
+import PublicationBox from "./components/PublicationBox";
 
 const ExperienceCal = (months: number) => {
   const years = Math.floor(months / 12);
@@ -159,25 +161,14 @@ export default function ProfileDetailPage() {
         <Box
           title={`Publications (${(c.publications?.length ?? 0) as number})`}
         >
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {(c.publications ?? []).map((p: any, idx: number) => (
-              <div key={idx} className="rounded-2xl border border-xgray200 p-4">
-                <div className="text-sm font-semibold">{p.title}</div>
-                <div className="text-xs text-xgray500 mt-1">{p.date}</div>
-                {p.link ? (
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 text-sm text-xgray700 hover:underline"
-                  >
-                    <ExternalLink size={16} />
-                    Open
-                  </a>
-                ) : (
-                  <div className="mt-2 text-sm text-xgray500">No link</div>
-                )}
-              </div>
+              <PublicationBox
+                key={idx}
+                title={p.title}
+                published_at={p.published_at}
+                link={p.link}
+              />
             ))}
           </div>
         </Box>
@@ -189,7 +180,7 @@ export default function ProfileDetailPage() {
   );
 }
 
-function Box({
+const Box = ({
   title,
   icon,
   children,
@@ -197,7 +188,7 @@ function Box({
   title: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <div className="rounded-xl shadow-sm w-full">
       <div className="flex items-center gap-2 text-lg font-normal text-white">
@@ -205,71 +196,6 @@ function Box({
         {title}
       </div>
       <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
-const ItemBox = ({
-  title,
-  name,
-  months,
-  start_date,
-  end_date,
-  link,
-  description,
-  logo_url,
-}: {
-  title: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  link: string;
-  description: string;
-  logo_url?: string;
-  months?: string;
-}) => {
-  return (
-    <div className="rounded-2xl bg-bgDark500 px-6 py-4">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-row items-start justify-start gap-2">
-          {/* <div>
-            {logo_url ? (
-              <img
-                src={logo_url}
-                alt={name}
-                className="w-6 h-6 object-cover rounded-lg border border-white/5"
-              />
-            ) : (
-              <div>{title.slice(0, 1).toUpperCase()}</div>
-            )}
-          </div> */}
-          <div className="flex flex-col items-start justify-start gap-1 font-normal">
-            <div className="text-base">{title}</div>
-            <div className="cursor-pointer hover:underline text-base text-xgray800 flex flex-row gap-2 items-center font-light">
-              {name}{" "}
-              <ExternalLink
-                size={14}
-                onClick={() => window.open(link, "_blank")}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="text-sm text-xgray800">
-          {start_date}
-          <span className="px-1"> - </span>
-          {!end_date ? (
-            <span className="text-accenta1">Present</span>
-          ) : (
-            end_date
-          )}
-          {typeof months === "number" ? ` (${months}개월) ` : ""}
-        </div>
-      </div>
-      {description && (
-        <div className="mt-3 text-sm text-xgray500 font-light whitespace-pre-wrap">
-          {description}
-        </div>
-      )}
     </div>
   );
 };

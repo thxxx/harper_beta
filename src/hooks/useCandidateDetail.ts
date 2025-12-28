@@ -35,6 +35,11 @@ async function fetchCandidateDetail(id: string, userId?: string) {
           linkedin_url
         )
       ),
+      publications (
+        title,
+        link,
+        published_at
+      ),
       connection (
         user_id,
         typed

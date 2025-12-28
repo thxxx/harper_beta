@@ -22,7 +22,9 @@ export type CandidateTypeWithConnection = CandidateType & {
 } & {
   connection: { user_id: string; typed: number }[];
 } & {
-  synthesized_summary: SynthesizedSummaryType[];
+  publications?: { title: string; published_at: string }[];
+} & {
+  synthesized_summary?: { text: string }[];
 };
 
 async function fetchSearchIds(queryId: string, pageIdx: number) {
@@ -48,6 +50,7 @@ async function fetchCandidatesByIds(
       `
         id,
         headline,
+        bio,
         linkedin_url,
         location,
         name,
@@ -70,52 +73,53 @@ async function fetchCandidatesByIds(
             linkedin_url
           )
         ),
+        publications (
+          title,
+          published_at
+        ),
         connection (
           user_id,
           typed
-        )
+        ),
+        synthesized_summary ( text )
       `
     )
     .in("id", ids)
-    .eq("connection.user_id", userId);
+    .eq("connection.user_id", userId)
+    .eq("synthesized_summary.query_id", queryId);
 
   console.log("fetchCandidatesByIds ", data, error);
 
   if (error) throw error;
 
-  // 2) synthesized_summary (queryId + ids)
-  const { data: sums, error: e2 } = await supabase
-    .from("synthesized_summary")
-    .select("query_id, candid_id, text")
-    .eq("query_id", queryId)
-    .in("candid_id", ids);
+  // // 2) synthesized_summary (queryId + ids)
+  // const { data: sums, error: e2 } = await supabase
+  //   .from("synthesized_summary")
+  //   .select("query_id, candid_id, text")
+  //   .eq("query_id", queryId)
+  //   .in("candid_id", ids);
 
-  if (e2) throw e2;
+  // if (e2) throw e2;
 
-  // 3) candid_id -> summary[]
-  const sumMap = new Map<string, any[]>();
-  for (const s of sums ?? []) {
-    const arr = sumMap.get(s.candid_id ?? "") ?? [];
-    arr.push(s);
-    sumMap.set(s.candid_id ?? "", arr);
-  }
+  // // 3) candid_id -> summary[]
+  // const sumMap = new Map<string, any[]>();
+  // for (const s of sums ?? []) {
+  //   const arr = sumMap.get(s.candid_id ?? "") ?? [];
+  //   arr.push(s);
+  //   sumMap.set(s.candid_id ?? "", arr);
+  // }
 
-  // 4) attach + keep ids order
-  const candMap = new Map((data ?? []).map((c: any) => [c.id, c]));
-  return ids
-    .map((id) => {
-      const c: any = candMap.get(id);
-      if (!c) return null;
-      return { ...c, synthesized_summary: sumMap.get(id) ?? [] };
-    })
-    .filter(Boolean);
+  // // 4) attach + keep ids order
+  // const candMap = new Map((data ?? []).map((c: any) => [c.id, c]));
+  // return ids
+  //   .map((id) => {
+  //     const c: any = candMap.get(id);
+  //     if (!c) return null;
+  //     return { ...c, synthesized_summary: sumMap.get(id) ?? [] };
+  //   })
+  //   .filter(Boolean);
 
-  // ids 순서 유지
   return data ?? [];
-  // const map = new Map((data ?? []).map((r: any) => [r.id, r]));
-  //
-  //   .map((id) => map.get(id))
-  //   .filter(Boolean) as CandidateTypeWithConnection[];
 }
 
 export function useSearchCandidates(userId?: string, queryId?: string) {
@@ -127,7 +131,7 @@ export function useSearchCandidates(userId?: string, queryId?: string) {
       const pageIdx = pageParam as number;
       const ids = await fetchSearchIds(queryId!, pageIdx);
       const items = await fetchCandidatesByIds(ids, userId!, queryId!);
-      console.log("items ", items);
+
       return { pageIdx, ids, items };
     },
     getNextPageParam: (lastPage) => {

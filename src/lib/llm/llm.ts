@@ -1,4 +1,3 @@
-import { OPENAI_KEY } from "@/utils/constantkeys";
 import { OpenAI } from "openai";
 export type GPTStreamChunkHandler = (chunk: string) => void;
 
@@ -17,7 +16,30 @@ export const client = new OpenAI({
   dangerouslyAllowBrowser: true,
 });
 
+export const xaiClient = new OpenAI({
+  apiKey: process.env.GROK_API_KEY,
+  dangerouslyAllowBrowser: true,
+  baseURL: "https://api.x.ai/v1",
+});
+
 export type OnToken = (token: string) => void;
+
+export const xaiInference = async (
+  model: "grok-4-fast-reasoning" | "grok-4-fast-non-reasoning",
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> => {
+  const response = await xaiClient.chat.completions.create({
+    model: model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  return content ?? "";
+};
 
 const inference = async (
   model: "gpt-4.1-nano" | "gpt-4.1-mini",

@@ -27,8 +27,6 @@ export type Database = {
           location: string | null
           name: string | null
           profile_picture: string | null
-          publications: Json | null
-          search_text: string | null
           total_exp_months: number | null
         }
         Insert: {
@@ -43,8 +41,6 @@ export type Database = {
           location?: string | null
           name?: string | null
           profile_picture?: string | null
-          publications?: Json | null
-          search_text?: string | null
           total_exp_months?: number | null
         }
         Update: {
@@ -59,8 +55,6 @@ export type Database = {
           location?: string | null
           name?: string | null
           profile_picture?: string | null
-          publications?: Json | null
-          search_text?: string | null
           total_exp_months?: number | null
         }
         Relationships: []
@@ -116,7 +110,7 @@ export type Database = {
           location: string | null
           logo: string | null
           name: string | null
-          specialities: string[]
+          specialities: string[] | null
           website_url: string | null
         }
         Insert: {
@@ -130,7 +124,7 @@ export type Database = {
           location?: string | null
           logo?: string | null
           name?: string | null
-          specialities: string[]
+          specialities?: string[] | null
           website_url?: string | null
         }
         Update: {
@@ -144,7 +138,7 @@ export type Database = {
           location?: string | null
           logo?: string | null
           name?: string | null
-          specialities?: string[]
+          specialities?: string[] | null
           website_url?: string | null
         }
         Relationships: []
@@ -436,9 +430,48 @@ export type Database = {
         }
         Relationships: []
       }
+      publications: {
+        Row: {
+          abstract: string | null
+          candid_id: string | null
+          created_at: string
+          id: number
+          link: string | null
+          published_at: string | null
+          title: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          published_at?: string | null
+          title?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          published_at?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publications_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       queries: {
         Row: {
           created_at: string
+          criteria: string[] | null
           query: string | null
           query_id: string
           query_keyword: string | null
@@ -447,6 +480,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          criteria?: string[] | null
           query?: string | null
           query_id?: string
           query_keyword?: string | null
@@ -455,6 +489,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          criteria?: string[] | null
           query?: string | null
           query_id?: string
           query_keyword?: string | null

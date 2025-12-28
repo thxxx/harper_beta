@@ -8,7 +8,10 @@ import { supabase } from "@/lib/supabase";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // ✅ infiniteQuery 버전 훅으로 바꿔서 import
-import { useSearchCandidates } from "@/hooks/useSearchCandidates";
+import {
+  CandidateTypeWithConnection,
+  useSearchCandidates,
+} from "@/hooks/useSearchCandidates";
 import { useQueryDetail } from "@/hooks/useQueryDetail";
 
 type QueryTypeWithCompanyUser = QueryType & {
@@ -107,9 +110,9 @@ export default function Result() {
             {items.map((c) => (
               <CandidateCard
                 key={c.id}
-                c={c}
+                c={c as CandidateTypeWithConnection}
                 userId={userId}
-                queryId={queryId}
+                queryItem={queryItem}
               />
             ))}
           </div>

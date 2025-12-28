@@ -66,6 +66,7 @@ export function useCandidatesByConnectionTyped(
           `
         id,
         headline,
+        bio,
         linkedin_url,
         location,
         name,
@@ -91,7 +92,8 @@ export function useCandidatesByConnectionTyped(
         connection (
           user_id,
           typed
-        )`
+        )
+          `
         )
         .in("id", ids)
         .eq("connection.user_id", userId);

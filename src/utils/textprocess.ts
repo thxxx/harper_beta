@@ -206,3 +206,42 @@ export function highlightDifferences2(originalText: string, newText: string) {
 
   return result.join(" ");
 }
+
+export const buildSummary = (doc: any) => {
+  const exps = doc.experience_user?.map((exp: any) => {
+    let expText = `Role: ${exp.role}, Company: ${exp.company_db.name}`;
+    if (exp.start_date) {
+      expText += `, Start Date: ${exp.start_date}`;
+    }
+    if (exp.end_date) {
+      expText += `, End Date: ${exp.end_date}`;
+    }
+
+    return expText;
+  });
+
+  const educations = doc.edu_user?.map((edu: any) => {
+    let eduText = `School: ${edu.school}, Degree: ${edu.degree}, Field: ${edu.field}`;
+    if (edu.start_date) {
+      eduText += `, Start Date: ${edu.start_date}`;
+    }
+    if (edu.end_date) {
+      eduText += `, End Date: ${edu.end_date}`;
+    }
+    return eduText;
+  });
+
+  const publications = doc.publications?.slice(0, 10).map((pub: any) => {
+    return `Title: ${pub.title}, Published At: ${pub.published_at}`;
+  });
+
+  const bio = doc.bio ?? "";
+
+  return `
+${doc.name} is a ${doc.location} based.
+About: ${bio}
+Headline: ${doc.headline}
+Experiences: ${exps}
+Educations: ${educations}
+Publications: ${publications}`;
+};

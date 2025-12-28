@@ -2,37 +2,86 @@ import {
   CandidateTypeWithConnection,
   ExperienceUserType,
 } from "@/hooks/useSearchCandidates";
-import { useToggleBookmark } from "@/hooks/useToggleBookmark";
-import { Bookmark } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { showToast } from "./toast/toast";
-import { useRouter } from "next/router";
-import ConnectionModal from "./Modal/ConnectionModal";
-import {
-  koreaUniversityEnToKo,
-  locationEnToKo,
-  toKoreanMonth,
-} from "@/utils/language_map";
+import { koreaUniversityEnToKo, toKoreanMonth } from "@/utils/language_map";
 import { supabase } from "@/lib/supabase";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile from "./NameProfile";
 import Bookmarkbutton from "./ui/bookmarkbutton";
 import Requestbutton from "./ui/requestbutton";
+import { QueryType } from "@/types/type";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
+
+enum SummaryScore {
+  SATISFIED = "만족",
+  AMBIGUOUS = "모호",
+  UNSATISFIED = "불만족",
+}
 
 export default function CandidateCard({
   c,
   userId,
-  queryId = "",
   isMyList = false,
+  queryItem = null,
 }: {
   c: CandidateTypeWithConnection;
   userId: string;
-  queryId?: string;
   isMyList?: boolean;
+  queryItem?: QueryType | null;
 }) {
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [synthesizedSummary, setSynthesizedSummary] = useState<
+    {
+      score: string;
+      reason: string;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    console.log("c.synthesized_summary ", c.synthesized_summary);
+    if (c.synthesized_summary && c.synthesized_summary[0]?.text) {
+      const temp = JSON.parse(c.synthesized_summary[0]?.text);
+      console.log("temp ", temp);
+      const summaries = temp.map((item: any) => {
+        const score = item.split(",")[0];
+        const reason = item.split(",").slice(1).join(",");
+        return { score, reason };
+      });
+      console.log("summaries ", summaries);
+      setSynthesizedSummary(summaries);
+    }
+  }, [c.synthesized_summary]);
+
+  useEffect(() => {
+    if (
+      queryItem &&
+      c.synthesized_summary &&
+      c.synthesized_summary.length === 0
+    ) {
+      setIsLoadingSummary(true);
+      const fetchSummary = async () => {
+        const res = await fetch("/api/search/criteria_summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            doc: c,
+            queryId: queryItem.query_id,
+            criteria: queryItem.criteria,
+            raw_input_text: queryItem.raw_input_text,
+          }),
+        });
+        if (!res.ok) throw new Error("Make synthesized_summary api failed");
+        const data = await res.json();
+        console.log("data ", data);
+        setSynthesizedSummary(data?.result ?? []);
+        setIsLoadingSummary(false);
+      };
+      fetchSummary();
+    }
+  }, []);
+
   const exps = asArr(c.experience_user ?? []);
   const edus = asArr(c.edu_user ?? []);
 
@@ -100,13 +149,34 @@ export default function CandidateCard({
         </div>
       </div>
       <div className="mt-4 text-white leading-relaxed font-light">
-        {c.synthesized_summary?.map((s) => (
-          <div
-            key={s.id}
-            className="text-[15px]"
-            dangerouslySetInnerHTML={{ __html: s.text ?? "" }}
-          />
-        ))}
+        {isLoadingSummary ? (
+          <div className="text-[15px]">Generating summary...</div>
+        ) : (
+          <div>
+            {synthesizedSummary.map((item, index) => (
+              <div key={index}>
+                <span
+                  className={`
+                  py-1 px-2 rounded-sm text-[15px] border
+                  ${
+                    item.score === SummaryScore.SATISFIED
+                      ? "border-green-500"
+                      : item.score === SummaryScore.AMBIGUOUS
+                      ? "border-yellow-500"
+                      : "border-red-500"
+                  }
+                  `}
+                >
+                  {queryItem?.criteria?.[index]} : {item.score}
+                </span>
+                <div
+                  className="mt-1 text-[15px]"
+                  dangerouslySetInnerHTML={{ __html: item.reason }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-row items-center justify-start mt-4 gap-2 w-full">

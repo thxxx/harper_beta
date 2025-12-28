@@ -60,8 +60,7 @@ export default function HomePage() {
       .from("harper_waitlist")
       .select("local_id, email, url, text, id, name")
       .eq("local_id", lid)
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
 
     setLoadingRecent(false);
     if (error) {
@@ -112,7 +111,7 @@ export default function HomePage() {
         type: 1,
         name: payload.name,
       };
-      setRecent((prev) => [optimistic, ...prev].slice(0, 50));
+      setRecent((prev) => [optimistic, ...prev]);
 
       // 5) 실제 insert는 await 안 함 (fire-and-forget)
       //    완료되면 recent를 다시 당겨와서 tmp 정리
