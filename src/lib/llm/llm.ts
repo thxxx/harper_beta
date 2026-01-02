@@ -1,5 +1,8 @@
 import { OpenAI } from "openai";
-export type GPTStreamChunkHandler = (chunk: string) => void;
+
+if (typeof window !== "undefined") {
+  throw new Error("llm.ts was bundled into the client!");
+}
 
 export enum OpenAIResponse {
   DELTA = "response.output_text.delta",
@@ -24,22 +27,99 @@ export const xaiClient = new OpenAI({
 
 export type OnToken = (token: string) => void;
 
+const pricingTable = {
+  "grok-4-fast-reasoning": {
+    input: 0.2 / 1_000_000,
+    output: 0.5 / 1_000_000,
+  },
+  "grok-4-fast-non-reasoning": {
+    input: 0.2 / 1_000_000,
+    output: 0.5 / 1_000_000,
+  },
+  "gpt-5-mini": {
+    input: 0.25 / 1_000_000,
+    output: 2 / 1_000_000,
+  },
+  "gemini-3-flash-preview": {
+    input: 0.5 / 1_000_000,
+    output: 3 / 1_000_000,
+  },
+};
+
 export const xaiInference = async (
-  model: "grok-4-fast-reasoning" | "grok-4-fast-non-reasoning",
+  model: "grok-4-fast-reasoning" | "grok-4-fast-non-reasoning" | "gpt-5-mini",
   systemPrompt: string,
-  userPrompt: string
-): Promise<string> => {
+  userPrompt: string,
+  temperature: number = 0.7,
+  max_retries: number = 1,
+  is_json: boolean = false,
+  prompt_cache_key: string = ""
+): Promise<string | Object | JSON> => {
   const response = await xaiClient.chat.completions.create({
     model: model,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
+    temperature: temperature,
+    prompt_cache_key: prompt_cache_key,
   });
 
   const content = response.choices[0]?.message?.content;
+
+  const usage = response.usage ?? {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+  };
+
+  // grok-4-fast pricing (USD)
+  const inputTokenPrice = pricingTable[model].input;
+  const outputTokenPrice = pricingTable[model].output;
+
+  const cost =
+    usage.prompt_tokens * inputTokenPrice +
+    usage.completion_tokens * outputTokenPrice +
+    (usage.completion_tokens_details?.reasoning_tokens ?? 0) * outputTokenPrice;
+
+  console.log("cost ", cost * 1450, "원");
+
   return content ?? "";
 };
+
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+const gemini = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
+export async function geminiInference(
+  model: "gemini-3-flash-preview",
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number = 0.7
+): Promise<string | object> {
+  const response = await gemini.models.generateContent({
+    model: model,
+    contents: systemPrompt + "\n\n" + userPrompt,
+    config: {
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.LOW,
+      },
+      temperature: temperature,
+    },
+  });
+  console.log("response ", response);
+  console.log("response ", response.usageMetadata?.promptTokensDetails);
+
+  const cost =
+    (response.usageMetadata?.promptTokenCount ?? 0) *
+      pricingTable[model].input +
+    (response.usageMetadata?.candidatesTokenCount ?? 0) *
+      pricingTable[model].output;
+  console.log("[GEMINI] cost ", cost * 1450, "원");
+
+  return response?.text ?? "";
+}
 
 const inference = async (
   model: "gpt-4.1-nano" | "gpt-4.1-mini",

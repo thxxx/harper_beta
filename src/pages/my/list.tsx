@@ -7,9 +7,9 @@ import RequestedPage from "./requestedPage";
 type PageKey = "bookmark" | "request" | "connected";
 
 const TABS: { key: PageKey; label: string }[] = [
-  { key: "bookmark", label: "북마크" },
-  { key: "request", label: "연결 요청" },
-  { key: "connected", label: "연결 완료" },
+  { key: "bookmark", label: "Activity" },
+  { key: "request", label: "Requests" },
+  { key: "connected", label: "Connections" },
 ];
 
 export default function MyPage() {
@@ -34,13 +34,11 @@ export default function MyPage() {
     <AppLayout>
       <div className="min-h-screen w-full">
         {/* Header */}
-        <div className="sticky top-0 z-20 w-full bg-bgDark600 backdrop-blur">
+        <div className="sticky top-0 z-20 w-full backdrop-blur">
           <div className="mx-auto w-full px-4 py-6">
             <div className="flex items-end justify-between gap-4">
-              <div>
-                <div className="text-2xl font-light tracking-tight text-white">
-                  {title}
-                </div>
+              <div className="text-3xl font-hedvig font-light tracking-tight text-white">
+                {title}
               </div>
 
               {/* (Optional) Right side action slot */}
@@ -61,7 +59,7 @@ export default function MyPage() {
                       type="button"
                       onClick={() => setCurrentPage(t.key)}
                       className={[
-                        "relative rounded-2xl px-5 py-3 text-sm font-medium transition",
+                        "relative rounded-3xl px-5 py-3 text-sm font-light transition",
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20",
                         active
                           ? "bg-white/10 text-white shadow-sm"

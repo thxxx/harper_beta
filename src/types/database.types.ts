@@ -19,6 +19,7 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string | null
+          fts: unknown
           headline: string | null
           id: string
           last_updated_at: string | null
@@ -27,12 +28,14 @@ export type Database = {
           location: string | null
           name: string | null
           profile_picture: string | null
+          summary: string | null
           total_exp_months: number | null
         }
         Insert: {
           bio?: string | null
           created_at?: string
           email?: string | null
+          fts?: unknown
           headline?: string | null
           id?: string
           last_updated_at?: string | null
@@ -41,12 +44,14 @@ export type Database = {
           location?: string | null
           name?: string | null
           profile_picture?: string | null
+          summary?: string | null
           total_exp_months?: number | null
         }
         Update: {
           bio?: string | null
           created_at?: string
           email?: string | null
+          fts?: unknown
           headline?: string | null
           id?: string
           last_updated_at?: string | null
@@ -55,6 +60,7 @@ export type Database = {
           location?: string | null
           name?: string | null
           profile_picture?: string | null
+          summary?: string | null
           total_exp_months?: number | null
         }
         Relationships: []
@@ -62,14 +68,17 @@ export type Database = {
       candid_id_map: {
         Row: {
           candid_id: string
+          created_at: string
           identifier: string | null
         }
         Insert: {
           candid_id?: string
+          created_at?: string
           identifier?: string | null
         }
         Update: {
           candid_id?: string
+          created_at?: string
           identifier?: string | null
         }
         Relationships: []
@@ -100,45 +109,57 @@ export type Database = {
       }
       company_db: {
         Row: {
-          created_at: string
           description: string | null
           employee_count_range: Json | null
           founded_year: number | null
+          funding: Json | null
           funding_url: string | null
           id: number
+          investors: string | null
+          last_updated_at: string
           linkedin_url: string | null
+          links: Json | null
           location: string | null
           logo: string | null
           name: string | null
-          specialities: string[] | null
+          related_links: string[] | null
+          specialities: string
           website_url: string | null
         }
         Insert: {
-          created_at?: string
           description?: string | null
           employee_count_range?: Json | null
           founded_year?: number | null
+          funding?: Json | null
           funding_url?: string | null
           id?: number
+          investors?: string | null
+          last_updated_at?: string
           linkedin_url?: string | null
+          links?: Json | null
           location?: string | null
           logo?: string | null
           name?: string | null
-          specialities?: string[] | null
+          related_links?: string[] | null
+          specialities?: string
           website_url?: string | null
         }
         Update: {
-          created_at?: string
           description?: string | null
           employee_count_range?: Json | null
           founded_year?: number | null
+          funding?: Json | null
           funding_url?: string | null
           id?: number
+          investors?: string | null
+          last_updated_at?: string
           linkedin_url?: string | null
+          links?: Json | null
           location?: string | null
           logo?: string | null
           name?: string | null
-          specialities?: string[] | null
+          related_links?: string[] | null
+          specialities?: string
           website_url?: string | null
         }
         Relationships: []
@@ -209,6 +230,73 @@ export type Database = {
           },
         ]
       }
+      credit_request: {
+        Row: {
+          created_at: string
+          credit_num: number | null
+          id: number
+          is_done: boolean
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          credit_num?: number | null
+          id?: number
+          is_done?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          credit_num?: number | null
+          id?: number
+          is_done?: boolean
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_request_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      credits: {
+        Row: {
+          charged_credit: number | null
+          created_at: string
+          id: number
+          remain_credit: number | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          charged_credit?: number | null
+          created_at?: string
+          id?: number
+          remain_credit?: number | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          charged_credit?: number | null
+          created_at?: string
+          id?: number
+          remain_credit?: number | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       edu_user: {
         Row: {
           candid_id: string | null
@@ -242,37 +330,13 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "edu_user_user_id_fkey"
+            foreignKeyName: "edu_user_candid_id_fkey"
             columns: ["candid_id"]
             isOneToOne: false
             referencedRelation: "candid"
             referencedColumns: ["id"]
           },
         ]
-      }
-      educations: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string | null
-          url: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string | null
-          url?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string | null
-          url?: string | null
-        }
-        Relationships: []
       }
       experience_user: {
         Row: {
@@ -430,10 +494,35 @@ export type Database = {
         }
         Relationships: []
       }
+      new_people: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: number
+          linkedin_id: string | null
+          name: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          linkedin_id?: string | null
+          name?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          linkedin_id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
       publications: {
         Row: {
           abstract: string | null
           candid_id: string | null
+          citation_num: number | null
           created_at: string
           id: number
           link: string | null
@@ -443,6 +532,7 @@ export type Database = {
         Insert: {
           abstract?: string | null
           candid_id?: string | null
+          citation_num?: number | null
           created_at?: string
           id?: number
           link?: string | null
@@ -452,6 +542,7 @@ export type Database = {
         Update: {
           abstract?: string | null
           candid_id?: string | null
+          citation_num?: number | null
           created_at?: string
           id?: number
           link?: string | null
@@ -472,28 +563,34 @@ export type Database = {
         Row: {
           created_at: string
           criteria: string[] | null
+          is_deleted: boolean
           query: string | null
           query_id: string
           query_keyword: string | null
           raw_input_text: string | null
+          thinking: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           criteria?: string[] | null
+          is_deleted?: boolean
           query?: string | null
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          thinking?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           criteria?: string[] | null
+          is_deleted?: boolean
           query?: string | null
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          thinking?: string | null
           user_id?: string
         }
         Relationships: [
@@ -627,6 +724,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_user_credits: {
+        Args: { amount_to_deduct: number }
+        Returns: number
+      }
       execute_raw_sql: {
         Args: { limit_num: number; page_idx: number; sql_query: string }
         Returns: Json[]

@@ -7,16 +7,15 @@ import {
 import { supabase } from "@/lib/supabase";
 
 // 쿼리 키
-export const queriesHistoryKey = (userId?: string) =>
-  ["queriesHistory", userId] as const;
+export const creditRequestHistoryKey = (userId?: string) =>
+  ["creditRequestHistory", userId] as const;
 
 // fetcher
-export async function fetchQueriesHistory(userId: string, limit = 10) {
+export async function fetchCreditRequestHistory(userId: string, limit = 10) {
   const { data, error } = await supabase
-    .from("queries")
+    .from("credit_request")
     .select("*")
     .eq("user_id", userId)
-    .eq("is_deleted", false)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -25,31 +24,31 @@ export async function fetchQueriesHistory(userId: string, limit = 10) {
 }
 
 // useQuery 훅
-export function useQueriesHistory(userId?: string, limit = 10) {
+export function useCreditRequestHistory(userId?: string, limit = 10) {
   return useQuery({
-    queryKey: queriesHistoryKey(userId),
-    queryFn: () => fetchQueriesHistory(userId!, limit),
+    queryKey: creditRequestHistoryKey(userId),
+    queryFn: () => fetchCreditRequestHistory(userId!, limit),
     enabled: !!userId,
     staleTime: 30_000,
   });
 }
 
 // ✅ "외부에서 업데이트 콜" (invalidate -> 다음 렌더/포커스/요청에 refetch or 즉시 refetch)
-export function refreshQueriesHistory(
+export function refreshCreditRequestHistory(
   queryClient: QueryClient,
   userId: string
 ) {
   return queryClient.invalidateQueries({
-    queryKey: queriesHistoryKey(userId),
+    queryKey: creditRequestHistoryKey(userId),
   });
 }
 
 // (원하면 즉시 당장 가져오게)
-export function refetchQueriesHistory(
+export function refetchCreditRequestHistory(
   queryClient: QueryClient,
   userId: string
 ) {
   return queryClient.refetchQueries({
-    queryKey: queriesHistoryKey(userId),
+    queryKey: creditRequestHistoryKey(userId),
   });
 }

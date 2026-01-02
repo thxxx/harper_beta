@@ -12,23 +12,20 @@ import {
   ChevronDown,
   PanelLeft,
   PanelLeftOpen,
+  DatabaseBackup,
+  Database,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useQueriesHistory } from "@/hooks/useSearchHistory";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "../ui/button";
 import { supabase } from "@/lib/supabase";
+import { useCredits } from "@/hooks/useCredit";
+import HistoryItem, { NavItem } from "./HistoryItem";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [openHistory, setOpenHistory] = useState(true);
+  const { credits, isLoading: isLoadingCredits } = useCredits();
 
   const { companyUser } = useCompanyUserStore();
   const router = useRouter();
@@ -41,18 +38,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: queryItems = [], refetch } = useQueriesHistory(userId);
 
   const deleteQueryItem = async (queryId: string) => {
-    console.log("delete queryItem", queryId);
-
     const { data, error } = await supabase
       .from("queries")
-      .delete()
-      .eq("query_id", queryId);
+      .update({ is_deleted: true })
+      .eq("query_id", queryId)
+      .select();
     if (error) {
       console.error("Failed to delete queryItem", error);
-    } else {
-      refetch();
-      console.log("queryItem deleted");
+      return;
     }
+    refetch();
   };
 
   return (
@@ -113,7 +108,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
             <div
               onClick={() => setOpenHistory((v) => !v)}
-              className={`mt-2 flex-row items-center justify-between px-2 my-2 py-1 text-[12px] text-xgray800 cursor-pointer ${
+              className={`mt-2 flex-row items-center justify-between px-2 my-2 py-1 text-[13px] text-hgray600 cursor-pointer ${
                 collapsed ? "hidden" : "flex"
               }`}
             >
@@ -131,64 +126,46 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 className={`flex-col gap-2 ${collapsed ? "hidden" : "flex"}`}
               >
                 {queryItems.map((queryItem) => (
-                  <div
-                    className="group relative flex flex-row items-center justify-between px-2.5 py-1.5 text-white font-normal cursor-pointer rounded-lg gap-1 hover:bg-white/5"
+                  <HistoryItem
                     key={queryItem.query_id}
-                    onClick={() => router.push(`/my/c/${queryItem.query_id}`)}
-                  >
-                    <div className="flex flex-col items-start w-full">
-                      <div className="truncate text-[15px]">
-                        {queryItem.query_keyword ?? queryItem.raw_input_text}
-                      </div>
-                      {!collapsed && (
-                        <div className="mt-0.5 text-[13px] text-xgray800">
-                          {new Date(queryItem.created_at).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 rounded-sm hover:bg-bgDark500 h-7 w-7 flex items-center justify-center focus:outline-white/5 focus:ring-white/10"
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-40 bg-bgDark400 border-none"
-                        align="start"
-                      >
-                        {/* <DropdownMenuGroup>
-                          <DropdownMenuItem>
-                            Profile
-                            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                          </DropdownMenuItem> */}
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            className="text-red-500 cursor-pointer p-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log("delete queryItem", queryItem);
-                              deleteQueryItem(queryItem.query_id);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                    queryItem={queryItem}
+                    onDelete={deleteQueryItem}
+                    collapsed={collapsed}
+                  />
                 ))}
               </div>
             )}
           </div>
 
           {/* Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-3">
+          <div className="absolute bottom-0 left-0 right-0 p-3 gap-2 flex flex-col">
+            <div
+              className="cursor-pointer"
+              onClick={() => router.push("/my/billing")}
+            >
+              <div className="rounded-xl p-4 pt-3 flex flex-col gap-2 bg-white/5 border border-white/10 transition-color duration-300 ease-out cursor-pointer hover:bg-[#FFFFFF12]">
+                <div className="w-full flex flex-row items-center justify-between text-[15px]">
+                  <Database size={14} />
+                  <div className="w-[65%]">Credits</div>
+                  <div className="w-[20%] text-right text-xs text-accenta1/80">
+                    {credits?.remain_credit ?? 0}
+                  </div>
+                </div>
+                <div className="w-full flex relative rounded-full h-1 bg-white/10">
+                  <div
+                    className="w-full flex absolute left-0 top-0 rounded-full h-1 bg-accenta1 transition-all duration-500 ease-out"
+                    style={{
+                      width: `${Math.min(
+                        ((credits?.remain_credit ?? 0) /
+                          (credits?.charged_credit ?? 1)) *
+                          100,
+                        100
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
             <NavItem
               collapsed={collapsed}
               label="Settings"
@@ -198,8 +175,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </aside>
 
-        <div className="flex flex-col flex-1 px-4 overflow-y-auto overflow-scroll items-center justify-start min-h-screen bg-bgDark600 text-white">
-          {children}
+        <div className="flex flex-col flex-1 px-4 overflow-y-auto overflow-scroll items-center justify-start min-h-screen bg-hgray200 text-white">
+          {!isLoadingCredits && children}
         </div>
       </div>
     </div>
@@ -207,32 +184,3 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default React.memo(AppLayout);
-
-function NavItem({
-  collapsed,
-  active = false,
-  label,
-  icon,
-  onClick,
-}: {
-  collapsed: boolean;
-  active?: boolean;
-  label: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "w-full flex text-base font-extralight items-center gap-3 rounded-[6px] px-3 py-2",
-        "transition text-white",
-        active ? "bg-bgDark500  shadow-sm" : "bg-transparent hover:bg-white/5",
-      ].join(" ")}
-    >
-      <div className="shrink-0">{icon}</div>
-      {!collapsed && <div className="truncate">{label}</div>}
-    </button>
-  );
-}

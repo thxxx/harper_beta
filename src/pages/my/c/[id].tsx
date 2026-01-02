@@ -3,9 +3,6 @@ import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import CandidateCard from "@/components/CandidatesList";
-import { QueryType } from "@/types/type";
-import { supabase } from "@/lib/supabase";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // ✅ infiniteQuery 버전 훅으로 바꿔서 import
 import {
@@ -13,13 +10,8 @@ import {
   useSearchCandidates,
 } from "@/hooks/useSearchCandidates";
 import { useQueryDetail } from "@/hooks/useQueryDetail";
-
-type QueryTypeWithCompanyUser = QueryType & {
-  company_users: {
-    user_id: string;
-    name: string;
-  };
-};
+import NotExistingPage from "@/components/layout/NotExistingPage";
+import TypewriterText from "@/components/TypeWriterText";
 
 export default function Result() {
   const router = useRouter();
@@ -29,12 +21,29 @@ export default function Result() {
   const userId = companyUser?.user_id;
   const queryId = typeof id === "string" ? id : undefined;
   const [pageIdx, setPageIdx] = useState(0);
+  const [isFirst, setIsFirst] = useState(false);
 
   const { data: queryItem, isLoading: isQueryDetailLoading } =
     useQueryDetail(queryId);
 
+  const ready = !!userId && !!queryId && !!queryItem?.query_id;
+  console.log("ready ", ready);
+
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useSearchCandidates(userId, queryId);
+    useSearchCandidates(userId, queryId, ready ?? false);
+
+  useEffect(() => {
+    if (queryItem && queryItem.raw_input_text && !queryItem.thinking) {
+      setIsFirst(true);
+    }
+  }, [queryItem]);
+
+  if (!queryItem && !isQueryDetailLoading)
+    return (
+      <AppLayout>
+        <NotExistingPage />
+      </AppLayout>
+    );
 
   if (!userId) return <AppLayout>Loading...</AppLayout>;
   if (!queryId) return <AppLayout>Loading...</AppLayout>;
@@ -101,6 +110,27 @@ export default function Result() {
                 : ""}
             </span>
           </div>
+          <TypewriterText
+            animate={isFirst}
+            className="font-light text-base mt-4"
+            text={queryItem.thinking}
+          />
+          {/* <div className="font-light text-base mt-4">{queryItem.thinking}</div> */}
+          <div className="text-sm text-xgray500 mt-2 mb-2 flex flex-col gap-2">
+            <div className="font-hedvig">criteria</div>
+            <div className="flex flex-row gap-1">
+              {queryItem.criteria?.map((item) => {
+                return (
+                  <span
+                    key={item}
+                    className=" px-2 py-1 rounded-sm bg-white/80 text-black"
+                  >
+                    {item}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
@@ -127,7 +157,7 @@ export default function Result() {
       )}
 
       <div className="flex items-center justify-center w-full py-16 flex-col">
-        <div className="text-sm text-xgray700">
+        <div className="text-sm text-white">
           Page {pageIdx + 1}
           {isFetchingNextPage ? " (loading...)" : ""}
         </div>
@@ -137,24 +167,25 @@ export default function Result() {
             type="button"
             onClick={prevPage}
             disabled={!canPrev}
-            className={`p-1 rounded-sm border border-xgray400 hover:bg-xlightgray ${
+            className={`flex items-center justify-center px-8 minw-16 h-16 rounded-sm border border-xgray400 hover:opacity-90 ${
               canPrev ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
             }`}
           >
-            <ChevronLeft size={20} className="text-xgray600" />
+            Previous
           </button>
 
           <button
             type="button"
             onClick={nextPage}
             disabled={!canNext || isFetchingNextPage}
-            className={`p-1 rounded-sm border border-xgray400 hover:bg-xlightgray ${
+            className={`flex items-center justify-center px-8 minw-16 h-16 bg-accenta1 text-black rounded-sm hover:opacity-90 ${
               canNext && !isFetchingNextPage
                 ? "cursor-pointer"
                 : "opacity-40 cursor-not-allowed"
             }`}
           >
-            <ChevronRight size={20} className="text-xgray600" />
+            <div>Search next 10 more </div>
+            <div></div>
           </button>
         </div>
       </div>

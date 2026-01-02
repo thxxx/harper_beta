@@ -245,3 +245,191 @@ Experiences: ${exps}
 Educations: ${educations}
 Publications: ${publications}`;
 };
+
+export const dateToFormat = (dateStr: string) => {
+  if (dateStr === "Present" || dateStr === "") return "";
+
+  const d = new Date(dateStr);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+};
+
+export const dateToFormatLong = (dateStr: string) => {
+  if (dateStr === "Present" || dateStr === "") return "";
+
+  const d = new Date(dateStr);
+  return d.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const CLAUSE = [
+  " group by ",
+  " order by ",
+  " limit ",
+  " offset ",
+  " having ",
+  " union ",
+  " intersect ",
+  " except ",
+];
+
+export function fixUnbalancedParens(sql: string) {
+  const applied: string[] = [];
+  let s = sql;
+
+  // 1) 문자열/주석을 무시하며 괄호 balance 스캔하기 위한 아주 간단한 상태머신
+  const scanBalance = (text: string) => {
+    let bal = 0;
+    let inS = false; // '
+    let inD = false; // "
+    let inLine = false; // --
+    let inBlock = false; // /* */
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const n = text[i + 1];
+
+      if (inLine) {
+        if (c === "\n") inLine = false;
+        continue;
+      }
+      if (inBlock) {
+        if (c === "*" && n === "/") {
+          inBlock = false;
+          i++;
+        }
+        continue;
+      }
+
+      if (!inS && !inD) {
+        if (c === "-" && n === "-") {
+          inLine = true;
+          i++;
+          continue;
+        }
+        if (c === "/" && n === "*") {
+          inBlock = true;
+          i++;
+          continue;
+        }
+      }
+
+      if (!inD && c === "'" && !inLine && !inBlock) {
+        // SQL 표준: '' escape
+        if (inS && n === "'") {
+          i++;
+          continue;
+        }
+        inS = !inS;
+        continue;
+      }
+      if (!inS && c === '"' && !inLine && !inBlock) {
+        inD = !inD;
+        continue;
+      }
+
+      if (inS || inD) continue;
+
+      if (c === "(") bal++;
+      else if (c === ")") bal--;
+    }
+    return bal;
+  };
+
+  // 2) 절 경계 키워드 앞에 닫는 괄호 삽입 시도
+  // balance > 0이면 아직 열려있는 괄호가 있다는 뜻
+  let bal = scanBalance(s);
+  if (bal > 0) {
+    const lower = s.toLowerCase();
+    let bestIdx = -1;
+
+    for (const kw of CLAUSE) {
+      const idx = lower.indexOf(kw);
+      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) bestIdx = idx;
+    }
+
+    if (bestIdx !== -1) {
+      // GROUP/ORDER/LIMIT 앞에 가능한 만큼 닫기
+      const close = ")".repeat(bal);
+      s = s.slice(0, bestIdx) + close + s.slice(bestIdx);
+      applied.push(`inserted ${bal} ')' before clause boundary`);
+      bal = scanBalance(s);
+    }
+  }
+
+  // 3) 그래도 남아있으면 끝에 닫기
+  if (bal > 0) {
+    s = s + ")".repeat(bal);
+    applied.push(`appended ${bal} ')' at end`);
+  }
+
+  return s;
+}
+function topLevelIndexOf(sql: string, needle: RegExp): number {
+  let depth = 0;
+  let inStr = false;
+
+  for (let i = 0; i < sql.length; i++) {
+    const c = sql[i];
+    const next = sql[i + 1];
+
+    // single-quoted string: handle escaped ''
+    if (c === "'") {
+      if (inStr && next === "'") {
+        i++; // skip escaped quote
+      } else {
+        inStr = !inStr;
+      }
+      continue;
+    }
+
+    if (inStr) continue;
+
+    if (c === "(") depth++;
+    else if (c === ")") depth = Math.max(0, depth - 1);
+
+    if (depth === 0) {
+      const m = needle.exec(sql.slice(i));
+      if (m && m.index === 0) return i;
+    }
+  }
+
+  return -1;
+}
+
+export function ensureGroupBy(sql: string, groupByClause: string): string {
+  let s = sql.trim();
+  const hasSemi = s.endsWith(";");
+  if (hasSemi) s = s.slice(0, -1).trimEnd();
+
+  s = fixUnbalancedParens(s);
+
+  if (topLevelIndexOf(s.toLowerCase(), /group\s+by\b/) !== -1) {
+    return hasSemi ? `${s};` : s;
+  }
+
+  const cut = topLevelIndexOf(s.toLowerCase(), /order\s+by\b/) ?? -1;
+
+  const cut2 = topLevelIndexOf(
+    s.toLowerCase(),
+    /\blimit\b|\boffset\b|\bfetch\b|\bfor\b/
+  );
+  const insertAt = cut === -1 ? cut2 : cut2 === -1 ? cut : Math.min(cut, cut2);
+
+  const out =
+    insertAt === -1
+      ? `${s}\n${groupByClause}`
+      : `${s.slice(0, insertAt).trimEnd()}\n${groupByClause}\n${s
+          .slice(insertAt)
+          .trimStart()}`;
+
+  return out;
+}
+
+export const replaceName = (text: string, name: string) => {
+  return text.replace(/<name>/g, name);
+};

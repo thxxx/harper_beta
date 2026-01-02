@@ -1,5 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useCompanyModalStore } from "@/store/useModalStore";
+import LinkChips from "@/pages/my/p/components/LinkChips";
+import { XIcon } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function CompanyModalRoot() {
   const { isOpen, payload, close } = useCompanyModalStore();
@@ -16,42 +19,206 @@ export default function CompanyModalRoot() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, close]);
 
-  if (!isOpen || !payload || !company) return null;
+  const tags = useMemo(() => {
+    const raw = company?.specialities ?? "";
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean).map(String);
+    return String(raw)
+      .split(/[,/·|]+/g)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  }, [company?.specialities]);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center font-inter">
-      {/* Backdrop */}
-      <button
-        type="button"
-        aria-label="Close modal backdrop"
-        className="absolute inset-0 bg-black/40"
-        onClick={() => {
-          if (closeOnBackdrop) close();
-        }}
-      />
+    <AnimatePresence>
+      {isOpen && payload && company ? (
+        <motion.div
+          className="fixed inset-0 z-[9999] font-inter"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {/* Backdrop */}
+          <motion.button
+            type="button"
+            aria-label="Close modal backdrop"
+            className="absolute inset-0 bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => {
+              if (closeOnBackdrop) close();
+            }}
+          />
 
-      {/* Panel */}
-      <div className="relative z-10 w-[min(520px,92vw)] rounded-2xl bg-white p-5 shadow-xl">
-        <div className="mb-3 text-lg font-semibold">{company.name}</div>
-
-        <div className="text-sm">{company.name}</div>
-        <div className="text-sm">{company.description}</div>
-        <div className="text-sm">{company.location}</div>
-        <div className="text-sm">{company.specialities?.join(", ")}</div>
-        <div className="text-sm">{company.website_url}</div>
-        <div className="text-sm">{company.linkedin_url}</div>
-        <div className="text-sm">{company.founded_year}</div>
-        <div className="text-sm">{company.funding_url}</div>
-
-        <div className="mt-5 flex justify-end">
-          <button
-            className="rounded-lg px-3 py-2 text-sm hover:bg-zinc-100"
-            onClick={close}
+          {/* Right drawer */}
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            className={[
+              "absolute right-0 top-0 h-full px-8 overflow-y-auto",
+              "w-[min(560px,92vw)]",
+              "bg-hgray200 text-hgray900",
+              "shadow-2xl",
+              "border-l border-hgray200",
+            ].join(" ")}
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", ease: "easeOut", duration: 0.22 }}
           >
-            Close
-          </button>
-        </div>
+            <div className="absolute top-4 right-4">
+              <button
+                type="button"
+                onClick={close}
+                className="rounded-sm bg-white/0 px-1 py-1 text-sm hover:bg-white/5 cursor-pointer"
+              >
+                <XIcon className="w-6 h-6" strokeWidth={1} />
+              </button>
+            </div>
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 px-5 py-4 pt-20">
+              <div className="flex flex-row gap-6 items-start justify-start">
+                <div>
+                  <img
+                    src={company.logo ?? ""}
+                    alt={company.name ?? ""}
+                    className="w-20 h-20 rounded-md object-cover"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-3xl font-medium leading-6">
+                    {company.name ?? "Company"}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <LinkChips
+                      links={[
+                        company.linkedin_url ?? "",
+                        company.website_url ?? "",
+                        company.funding_url ?? "",
+                      ]}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-12">
+              <Section title="Company Information">
+                <div className="mt-3 space-y-2 text-sm">
+                  <Row label="HQ" value={company.location} />
+                  {company.founded_year && (
+                    <Row label="Established" value={company.founded_year} />
+                  )}
+                  {company.website_url && (
+                    <Row label="Website" value={company.website_url} isLink />
+                  )}
+                  <Row label="LinkedIn" value={company.linkedin_url} isLink />
+                </div>
+              </Section>
+
+              {company.description ? (
+                <Section title="Company Information">
+                  <p className="mt-2 text-sm leading-6 whitespace-pre-wrap font-light">
+                    {company.description}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-md bg-white/10 px-3 py-2 text-xs"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </Section>
+              ) : null}
+
+              {company.investors && (
+                <Section title="Investors">
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {company.investors.split(",").map((i) => (
+                      <span
+                        key={i}
+                        className="rounded-md bg-white/10 px-3 py-2 text-xs"
+                      >
+                        {i}
+                      </span>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {company.related_links && (
+                <Section title="Important News">
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {company.related_links.map((l) => (
+                      <a key={l} href={l} target="_blank" rel="noreferrer">
+                        {l}
+                      </a>
+                    ))}
+                  </div>
+                </Section>
+              )}
+            </div>
+          </motion.aside>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function Row({
+  label,
+  value,
+  isLink,
+}: {
+  label: string;
+  value: any;
+  isLink?: boolean;
+}) {
+  const v = value ? String(value) : "—";
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="">{label}</div>
+      <div className="text-right break-all max-w-[70%]">
+        {isLink && v !== "—" ? (
+          <a
+            href={v}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline"
+          >
+            {v}
+          </a>
+        ) : (
+          v
+        )}
       </div>
     </div>
   );
 }
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="flex flex-col gap-4 w-full max-w-full">
+      <div className="text-lg text-hgray900 font-normal">{title}</div>
+      <div className="text-hgray900 max-w-full overflow-x-hidden">
+        {children}
+      </div>
+    </div>
+  );
+};

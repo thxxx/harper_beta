@@ -30,12 +30,12 @@ const NameProfile = ({
           </div>
 
           {headline && (
-            <div className="mt-1 font-light text-base text-xgray200">
+            <div className="mt-1 font-light text-base text-hgray800">
               {headline}
             </div>
           )}
           {location && (
-            <div className="mt-1 text-sm text-xgray800">
+            <div className="mt-1 text-sm text-hgray600 font-light">
               {locationEnToKo(location)}
             </div>
           )}
@@ -56,9 +56,9 @@ const initials = (name?: string | null) =>
     .join("") || "U";
 
 const SIZE_CLASS = {
-  sm: "w-8 h-8 text-xs",
-  md: "w-10 h-10 text-sm",
-  lg: "w-20 h-20 text-base",
+  sm: "w-8 h-8 min-w-8 text-xs",
+  md: "w-10 h-10 min-w-10 text-sm",
+  lg: "w-20 h-20 min-w-20 text-base",
 } as const;
 
 export function Avatar({

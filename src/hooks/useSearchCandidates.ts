@@ -1,11 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type {
-  CandidateType,
-  EduUserType,
-  ExpUserType,
-  SynthesizedSummaryType,
-} from "@/types/type";
+import type { CandidateType, EduUserType, ExpUserType } from "@/types/type";
+import { useCredits } from "./useCredit";
+import { useState } from "react";
 
 export type ExperienceUserType = ExpUserType & {
   company_db: {
@@ -35,7 +32,12 @@ async function fetchSearchIds(queryId: string, pageIdx: number) {
   });
   if (!res.ok) throw new Error("search api failed");
   const data = await res.json();
-  return (data?.results ?? []) as string[];
+  console.log("fetchSearchIds ", data);
+
+  return {
+    ids: (data?.results ?? []) as string[],
+    isNewSearch: data?.isNewSearch ?? false,
+  };
 }
 
 async function fetchCandidatesByIds(
@@ -122,17 +124,31 @@ async function fetchCandidatesByIds(
   return data ?? [];
 }
 
-export function useSearchCandidates(userId?: string, queryId?: string) {
+export function useSearchCandidates(
+  userId?: string,
+  queryId?: string,
+  enabled: boolean = true
+) {
+  const { deduct } = useCredits();
+  const [isLoading, setIsLoading] = useState(false);
+
   return useInfiniteQuery({
     queryKey: ["searchCandidates", queryId, userId],
-    enabled: !!userId && !!queryId,
+    enabled: enabled && !isLoading,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
+      setIsLoading(true);
       const pageIdx = pageParam as number;
-      const ids = await fetchSearchIds(queryId!, pageIdx);
-      const items = await fetchCandidatesByIds(ids, userId!, queryId!);
-
-      return { pageIdx, ids, items };
+      const { ids, isNewSearch } = await fetchSearchIds(queryId!, pageIdx);
+      if (ids && ids.length > 0) {
+        if (isNewSearch) {
+          await deduct(ids.length);
+        }
+        const items = await fetchCandidatesByIds(ids, userId!, queryId!);
+        setIsLoading(false);
+        return { pageIdx, ids, items };
+      }
+      return { pageIdx, ids: [], items: [] };
     },
     getNextPageParam: (lastPage) => {
       // 다음 페이지가 더 있는지 판단:
@@ -147,6 +163,11 @@ export function useSearchCandidates(userId?: string, queryId?: string) {
       return lastPage.pageIdx + 1;
     },
     // 기존 페이지 유지하면서 계속 append
-    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 30_000, // 30초 정도
+    gcTime: 5 * 60_000,
+    retry: false,
   });
 }

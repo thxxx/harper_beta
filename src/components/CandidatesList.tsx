@@ -2,15 +2,16 @@ import {
   CandidateTypeWithConnection,
   ExperienceUserType,
 } from "@/hooks/useSearchCandidates";
-import React, { useEffect, useMemo, useState } from "react";
-import { koreaUniversityEnToKo, toKoreanMonth } from "@/utils/language_map";
-import { supabase } from "@/lib/supabase";
+import React, { useMemo } from "react";
+import { koreaUniversityEnToKo } from "@/utils/language_map";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile from "./NameProfile";
 import Bookmarkbutton from "./ui/bookmarkbutton";
 import Requestbutton from "./ui/requestbutton";
 import { QueryType } from "@/types/type";
+import { dateToFormat } from "@/utils/textprocess";
+import { useSynthesizedSummary } from "@/hooks/useSynthesizedSummary";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -18,6 +19,27 @@ enum SummaryScore {
   SATISFIED = "만족",
   AMBIGUOUS = "모호",
   UNSATISFIED = "불만족",
+}
+
+type ParsedSummary = { score: string; reason: string };
+
+function parseSummaryText(
+  summaryText: string | null | undefined
+): ParsedSummary[] {
+  if (!summaryText) return [];
+  try {
+    const temp = JSON.parse(summaryText);
+    if (!Array.isArray(temp)) return [];
+    return temp.map((item: any) => {
+      // 기존: "만족,이유..." 형태의 string이라고 가정
+      const str = String(item ?? "");
+      const score = str.split(",")[0] ?? "";
+      const reason = str.split(",").slice(1).join(",") ?? "";
+      return { score, reason };
+    });
+  } catch {
+    return [];
+  }
 }
 
 export default function CandidateCard({
@@ -31,84 +53,35 @@ export default function CandidateCard({
   isMyList?: boolean;
   queryItem?: QueryType | null;
 }) {
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [synthesizedSummary, setSynthesizedSummary] = useState<
-    {
-      score: string;
-      reason: string;
-    }[]
-  >([]);
+  const queryId = queryItem?.query_id;
+  const candidId = c.id;
 
-  const summaryToObject = (summary: string) => {
-    const temp = JSON.parse(summary);
-    return temp.map((item: any) => {
-      const score = item.split(",")[0];
-      const reason = item.split(",").slice(1).join(",");
-      return { score, reason };
+  const { data: summaryRow, isLoading: isLoadingSummary } =
+    useSynthesizedSummary({
+      queryId,
+      candidId,
+      doc: c,
+      criteria: queryItem?.criteria ?? [],
+      raw_input_text: queryItem?.raw_input_text ?? null,
+      enabled: !!queryItem && !!queryItem.criteria?.length,
+      text: c.synthesized_summary?.[0]?.text ?? null,
     });
-  };
 
-  useEffect(() => {
-    console.log("c.synthesized_summary ", c.synthesized_summary);
-    if (c.synthesized_summary && c.synthesized_summary[0]?.text) {
-      const summaries = summaryToObject(c.synthesized_summary[0]?.text);
-      setSynthesizedSummary(summaries);
-    }
-  }, [c.synthesized_summary]);
-
-  useEffect(() => {
-    console.log("queryItem ", queryItem);
-    if (
-      queryItem &&
-      queryItem.criteria &&
-      queryItem.criteria.length > 0 &&
-      c.synthesized_summary &&
-      c.synthesized_summary.length === 0
-    ) {
-      setIsLoadingSummary(true);
-      const fetchSummary = async () => {
-        const res = await fetch("/api/search/criteria_summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            doc: c,
-            queryId: queryItem.query_id,
-            criteria: queryItem.criteria,
-            raw_input_text: queryItem.raw_input_text,
-          }),
-        });
-        if (!res.ok) throw new Error("Make synthesized_summary api failed");
-        const data = await res.json();
-        console.log("data ", data);
-        setSynthesizedSummary(summaryToObject(data?.result ?? "[]"));
-        setIsLoadingSummary(false);
-      };
-      fetchSummary();
-    }
-  }, [queryItem, c.synthesized_summary]);
+  const synthesizedSummary = useMemo(() => {
+    if (summaryRow) return parseSummaryText(summaryRow);
+  }, [summaryRow]);
 
   const exps = asArr(c.experience_user ?? []);
   const edus = asArr(c.edu_user ?? []);
 
   const firstCompany = exps[exps.length - 1];
   const latestCompany = exps[0];
-  const school = useMemo(() => {
-    return edus[0];
-    // const school = pickSchool(edus);
-    // if (!school) return null;
-    // return koreaUniversityEnToKo(school);
-  }, [edus]);
+  const school = useMemo(() => edus[0], [edus]);
 
-  let isOnlyOneCompany = false;
-  if (exps.length === 1) {
-    isOnlyOneCompany = true;
-  }
+  const isOnlyOneCompany = exps.length === 1;
 
   return (
-    <div
-      key={c.id}
-      className="w-full rounded-[28px] text-white bg-bgDark500 p-6"
-    >
+    <div key={c.id} className="w-full rounded-[28px] text-white bg-white/5 p-6">
       <div className="flex flex-row flex-1 items-start gap-4">
         <div className="w-[40%]">
           <NameProfile
@@ -122,26 +95,25 @@ export default function CandidateCard({
 
         <div className="mt-0 flex flex-col gap-3 w-[70%]">
           {!isOnlyOneCompany && latestCompany && (
-            <CompanyCard company={latestCompany} text="최근 경력" />
+            <CompanyCard company={latestCompany} text="Prior Experience" />
           )}
           {firstCompany && (
             <CompanyCard
               company={firstCompany}
-              text={isOnlyOneCompany ? "경력 1개" : "첫 경력"}
+              text={isOnlyOneCompany ? "Single Experience" : "First Career"}
             />
           )}
           {school && (
-            <div className="flex flex-row items-start justify-start font-normal">
-              <div className="text-xgray800 text-sm min-w-24 pt-0.5">학교</div>
+            <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
+              <div className="text-hgray600 text-sm min-w-24 pt-0.5 font-light">
+                Education
+              </div>
               <div className="flex flex-col gap-0.5 text-sm w-full">
                 <div className="flex flex-row items-center justify-between">
-                  <div
-                    className="text-white hover:underline cursor-pointer"
-                    // onClick={() => window.open(school.school_url, "_blank")}
-                  >
+                  <div className="text-white hover:underline cursor-pointer">
                     {koreaUniversityEnToKo(school.school)}
                     {school.degree && (
-                      <span className="text-xgray800">
+                      <span className="text-hgray600 font-light">
                         {" "}
                         &nbsp; {school.degree}
                       </span>
@@ -153,30 +125,36 @@ export default function CandidateCard({
           )}
         </div>
       </div>
-      <div className="mt-4 text-white leading-relaxed font-light">
+
+      <div className="mt-8 text-hgray700 leading-relaxed font-light">
         {isLoadingSummary ? (
           <div className="text-[15px]">Generating summary...</div>
         ) : (
           <div>
-            {synthesizedSummary.map((item, index) => (
-              <div key={index}>
+            {synthesizedSummary?.map((item, index) => (
+              <div className="mt-2" key={index}>
                 <span
                   className={`
-                  py-1 px-2 rounded-sm text-[15px] border
-                  ${
-                    item.score === SummaryScore.SATISFIED
-                      ? "border-green-500"
-                      : item.score === SummaryScore.AMBIGUOUS
-                      ? "border-yellow-500"
-                      : "border-red-500"
-                  }
+                    py-1.5 px-3 rounded-lg text-[14px] border
+                    ${
+                      item.score === SummaryScore.SATISFIED
+                        ? "border-accenta1/80 text-accenta1"
+                        : item.score === SummaryScore.AMBIGUOUS
+                        ? "border-orange-500/80 text-orange-500"
+                        : "border-red-500/80 text-red-500"
+                    }
                   `}
                 >
-                  {queryItem?.criteria?.[index]} : {item.score}
+                  {queryItem?.criteria?.[index]}
                 </span>
                 <div
-                  className="mt-1 text-[15px]"
-                  dangerouslySetInnerHTML={{ __html: item.reason }}
+                  className="mt-2 text-[15px]"
+                  dangerouslySetInnerHTML={{
+                    __html: item.reason.replace(
+                      /strong>/g,
+                      'span class="text-white font-normal">'
+                    ),
+                  }}
                 />
               </div>
             ))}
@@ -197,19 +175,6 @@ export default function CandidateCard({
   );
 }
 
-export async function fetchCompanyDb(companyId: number) {
-  console.log("fetchCompanyDb", companyId);
-
-  const { data, error } = await supabase
-    .from("company_db")
-    .select("*")
-    .eq("id", companyId)
-    .maybeSingle(); // 없으면 null
-
-  if (error) throw error;
-  return data ?? null;
-}
-
 const CompanyCard = ({
   company,
   text,
@@ -217,63 +182,45 @@ const CompanyCard = ({
   company: ExperienceUserType;
   text: string;
 }) => {
-  const startDate = useMemo(() => {
-    return toKoreanMonth(company.start_date ?? "");
-  }, [company.start_date]);
-  const endDate = useMemo(() => {
-    return toKoreanMonth(company.end_date ?? "");
-  }, [company.end_date]);
+  const startDate = useMemo(
+    () => dateToFormat(company.start_date ?? ""),
+    [company.start_date]
+  );
+  const endDate = useMemo(
+    () => dateToFormat(company.end_date ?? ""),
+    [company.end_date]
+  );
 
-  const open = useCompanyModalStore((s) => s.open);
-
+  const handleOpenCompany = useCompanyModalStore((s) => s.handleOpenCompany);
   const qc = useQueryClient();
 
-  const openCompany = async () => {
-    const companyId = Number(company.company_id);
-    console.log("companyId", companyId);
-    const queryKey = ["company_db", companyId];
-
-    const state = qc.getQueryState(queryKey);
-    console.log("query state:", state);
-
-    if (!Number.isFinite(companyId) || company.company_id === 0) {
-      window.open(company.company_db.linkedin_url, "_blank");
-      return;
-    }
-
-    try {
-      const data = await qc.fetchQuery({
-        queryKey: ["company_db", companyId],
-        queryFn: () => fetchCompanyDb(companyId),
-        staleTime: 1000 * 60 * 30, // 30분 동안 fresh (원하는대로)
-        gcTime: 1000 * 60 * 60 * 6, // 6시간 캐시 유지
-      });
-
-      if (!data) window.open(company.company_db.linkedin_url, "_blank");
-      else open({ company: data });
-    } catch {
-      // 에러면 그냥 링크로 fallback
-      window.open(company.company_db.linkedin_url, "_blank");
-    }
+  const onButtonClick = () => {
+    handleOpenCompany({
+      companyId: company.company_id ?? "",
+      fallbackUrl: company.company_db.linkedin_url,
+      queryClient: qc,
+    });
   };
 
   return (
     <div className="flex flex-row items-start justify-start font-normal">
-      <div className="text-xgray800 text-sm min-w-24 pt-0.5">{text}</div>
+      <div className="text-hgray600 text-sm min-w-24 pt-0.5 font-light">
+        {text}
+      </div>
       <div className="flex flex-col gap-1 text-sm w-full">
         <div className="flex flex-row items-center justify-between">
           <div
-            className="text-white hover:underline cursor-pointer"
-            onClick={() => openCompany()}
+            className="text-white font-light text-[15px] hover:underline cursor-pointer"
+            onClick={onButtonClick}
           >
             {company.company_db.name}
           </div>
-          <div className="text-xgray800 text-xs">
+          <div className="text-xgray800 text-[13px] font-light">
             {startDate} -{" "}
             {endDate ? endDate : <span className="text-accenta1">Present</span>}
           </div>
         </div>
-        <div className="flex flex-row items-center justify-between text-xgray800">
+        <div className="flex flex-row items-center justify-between text-hgray600 font-light">
           <div>{company.role}</div>
         </div>
       </div>

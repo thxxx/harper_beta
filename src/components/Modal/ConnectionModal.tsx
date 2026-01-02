@@ -102,7 +102,7 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
         onClick={onClose}
       />
 
-      <div className="relative z-50 w-full max-w-[640px] rounded-[28px] bg-bgDark400 p-6 shadow-sm border border-white/10">
+      <div className="relative z-50 w-full max-w-[640px] rounded-[28px] bg-hgray300 p-6 shadow-sm border border-white/10">
         <NameProfile
           id={candidId}
           profile_picture={profilePicture ?? ""}
@@ -112,18 +112,18 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
         />
 
         <div className="flex flex-col items-start justify-start mt-8 gap-1">
-          <div className="text-sm">Message</div>
+          <div className="text-[16px]">Message</div>
           {isRequested ? (
             <div className="w-full mt-2 rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brightnavy">
               {requestText}
             </div>
           ) : (
             <textarea
-              placeholder="안녕하세요 하퍼입니다. 저희 팀은 ~~ 입니다. 커피챗 괜찮으신가요?"
+              placeholder={`Hi [${name}], \nI hope this message finds you well.`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={6}
-              className="w-full text-white mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/10"
+              className="w-full text-white mt-2 rounded-2xl border font-light border-white/10 bg-white/5 p-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-white/10"
             />
           )}
         </div>
@@ -133,13 +133,13 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
             className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-medium text-white hover:bg-white/5"
             onClick={onClose}
           >
-            닫기
+            Close
           </button>
           <button
-            className="inline-flex items-center justify-center rounded-lg bg-accenta1 px-6 py-3 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center justify-center rounded-xl bg-accenta1 px-6 py-3 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-70"
             onClick={onConfirmHandler}
           >
-            {isRequested ? "연결 요청 취소" : "연결 요청"}
+            {isRequested ? "Cancel Request" : "Request Connection"}
           </button>
         </div>
       </div>

@@ -240,7 +240,7 @@ const CandidatePage = () => {
             세계 최고 <span className="hidden md:inline">AI/ML</span> 엔지니어의
             <br /> 다음 커리어가 시작되는 곳
           </div>
-          <div className="text-sm md:text-base text-caption font-light mt-6">
+          <div className="text-sm md:text-base text-hgray700 font-light mt-6">
             {/* 하퍼만의 노하우로 완벽에 가까운 포지션을 연결해드립니다. */}
             풀타임, 리모트, 파트타임, 인턴 등 글로벌 테크 스타트업으로부터 먼저
             커리어 기회를 제안 받으세요.
@@ -253,7 +253,7 @@ const CandidatePage = () => {
           />
 
           <div className="flex items-center flex-row gap-2 mt-16">
-            <div className="relative items-baseline gap-1 text-caption font-normal flex">
+            <div className="relative items-baseline gap-1 text-hgray700 font-normal flex">
               <div>500+ in the waitlist </div>
             </div>
             <div className="flex -space-x-2">
@@ -297,7 +297,7 @@ const CandidatePage = () => {
               <br />
               일반 채용 시장에 공개되지 않습니다.
             </h2>
-            <p className="text-base font-light md:text-lg mt-6 text-caption">
+            <p className="text-base font-light md:text-lg mt-6 text-hgray700">
               {/* 하퍼는 최고의 회사와 인재에 집중하고 있습니다. */}
               {/* 하퍼는 오직 글로벌 AI 리더십의 중심의 */}
               하퍼는 현재 해외 회사들과의 연결에 집중하고 있습니다.
@@ -337,7 +337,7 @@ const CandidatePage = () => {
       <Animate>
         <BaseSectionLayout>
           <div className="flex flex-col items-start gap-4 bg-white/20 rounded-2xl px-6 md:px-[30px] py-6 md:py-8 w-[90%] max-w-[600px]">
-            <div className="text-[15px] md:text-base text-left leading-[26px] font-normal text-caption">
+            <div className="text-[15px] md:text-base text-left leading-[26px] font-normal text-hgray700">
               하퍼는 올라왔다 사라지는 공고들, 반복적인 지원 및 1차 인터뷰,
               그리고 지원자의 역량과 역량과 니즈를 제대로 이해하지 못한 채
               이루어지는 리크루터의 제안들.
@@ -354,7 +354,7 @@ const CandidatePage = () => {
               </div>
               <div className="flex flex-col items-start justify-start gap-1">
                 <div className="text-sm">Chris & Daniel</div>
-                <div className="text-caption text-xs">Co-founder</div>
+                <div className="text-hgray700 text-xs">Co-founder</div>
               </div>
             </div>
           </div>
@@ -516,7 +516,7 @@ function QuestionAnswer({
       >
         <span
           className={`text-base transition-colors hover:text-white ${
-            open ? "text-white" : "text-caption"
+            open ? "text-white" : "text-hgray700"
           }`}
         >
           {question}
@@ -527,7 +527,7 @@ function QuestionAnswer({
             open ? "rotate-180" : "rotate-0"
           }`}
         >
-          <ChevronDown size={16} strokeWidth={1.5} className="text-caption" />
+          <ChevronDown size={16} strokeWidth={1.5} className="text-hgray700" />
         </span>
       </button>
 
@@ -638,7 +638,7 @@ const ImageSection = ({
           dangerouslySetInnerHTML={{ __html: title }}
         />
         <div
-          className="text-[15px] md:text-base leading-6 font-light text-caption"
+          className="text-[15px] md:text-base leading-6 font-light text-hgray700"
           dangerouslySetInnerHTML={{ __html: desc }}
         />
       </div>
@@ -678,7 +678,7 @@ const WhyImageSection = ({
           dangerouslySetInnerHTML={{ __html: title }}
         />
         <div
-          className="text-sm md:text-base leading-6 font-light text-caption"
+          className="text-sm md:text-base leading-6 font-light text-hgray700"
           dangerouslySetInnerHTML={{ __html: desc }}
         />
       </div>

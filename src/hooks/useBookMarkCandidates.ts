@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { CandidateType } from "@/types/type";
 import { CandidateTypeWithConnection } from "./useSearchCandidates";
+import { useState } from "react";
 
 export type ConnectionTyped = 0 | 1 | 2;
 
@@ -18,16 +19,22 @@ export function useCandidatesByConnectionTyped(
   pageIdx: number = 0,
   pageSize: number = 10
 ) {
+  const [isLoading, setIsLoading] = useState(false);
+
   return useQuery({
     queryKey: connectionsKey(userId, typed, pageIdx, pageSize),
-    enabled: !!userId,
+    enabled: !!userId && !isLoading,
     queryFn: async () => {
-      if (!userId)
+      console.log("useBookMarkCandidates ", userId, typed, pageIdx, pageSize);
+      setIsLoading(true);
+      if (!userId) {
+        setIsLoading(false);
         return {
           items: [] as CandidateTypeWithConnection[],
           hasNext: false,
           total: 0,
         };
+      }
 
       const from = pageIdx * pageSize;
       const to = from + pageSize - 1;
@@ -52,6 +59,7 @@ export function useCandidatesByConnectionTyped(
         .filter(Boolean) as string[];
 
       if (ids.length === 0) {
+        setIsLoading(false);
         return {
           items: [] as CandidateTypeWithConnection[],
           hasNext: false,
@@ -108,6 +116,7 @@ export function useCandidatesByConnectionTyped(
 
       const total = count ?? 0;
       const hasNext = to + 1 < total;
+      setIsLoading(false);
 
       return { items, hasNext, total };
     },

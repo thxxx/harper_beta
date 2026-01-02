@@ -7,6 +7,8 @@ import Bookmarkbutton from "@/components/ui/bookmarkbutton";
 import Requestbutton from "@/components/ui/requestbutton";
 import ItemBox from "./components/ItemBox";
 import PublicationBox from "./components/PublicationBox";
+import LinkChips from "./components/LinkChips";
+import { replaceName } from "@/utils/textprocess";
 
 const ExperienceCal = (months: number) => {
   const years = Math.floor(months / 12);
@@ -100,9 +102,9 @@ export default function ProfileDetailPage() {
         <div className="text-white flex flex-col gap-2">
           <div className="text-lg font-normal">Summary</div>
 
-          {c.bio && (
-            <div className="whitespace-pre-wrap text-base text-xlightgray leading-6 font-light">
-              {c.bio}
+          {c.summary && (
+            <div className="whitespace-pre-wrap text-base text-hgray900 leading-6 font-light">
+              {replaceName(c.summary, c.name)}
             </div>
           )}
           {/* Emails + Links */}
@@ -127,6 +129,7 @@ export default function ProfileDetailPage() {
                 <ItemBox
                   key={idx}
                   title={e.role}
+                  company_id={e.company_id}
                   name={e.company_db.name}
                   start_date={e.start_date}
                   end_date={e.end_date}
@@ -146,12 +149,13 @@ export default function ProfileDetailPage() {
             {(c.edu_user ?? []).map((ed: any, idx: number) => (
               <ItemBox
                 key={idx}
-                title={`${ed.degree}`}
-                name={ed.school}
+                title={ed.school}
+                name={ed.degree}
                 start_date={ed.start_date}
                 end_date={ed.end_date}
                 link={ed.school_url}
                 description={ed.field_of_study}
+                isEdu={true}
               />
             ))}
           </div>
@@ -199,76 +203,3 @@ const Box = ({
     </div>
   );
 };
-
-export const BRAND_MAP = [
-  {
-    match: (h: string) => h.includes("linkedin.com"),
-    label: "linkedin.com",
-    icon: "https://www.linkedin.com/favicon.ico",
-  },
-  {
-    match: (h: string) => h === "x.com" || h.includes("twitter.com"),
-    label: "x.com",
-    icon: "https://abs.twimg.com/favicons/twitter.3.ico",
-  },
-  {
-    match: (h: string) => h.includes("instagram.com"),
-    label: "instagram.com",
-    icon: "https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png",
-  },
-  {
-    match: (h: string) => h.includes("github.com"),
-    label: "github.com",
-    icon: "/svgs/github_white.svg",
-  },
-  {
-    match: (h: string) => h.includes("scholar.google."),
-    label: "scholar.google.com",
-    icon: "https://scholar.google.com/favicon.ico",
-  },
-];
-
-type Props = {
-  links: string[];
-};
-
-export function LinkChips({ links }: Props) {
-  if (!links?.length) return null;
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {links.map((raw) => {
-        const url = raw.startsWith("http") ? raw : `https://${raw}`;
-        let host = raw;
-
-        try {
-          host = new URL(url).hostname.replace("www.", "");
-        } catch {}
-
-        const brand = BRAND_MAP.find((b) => b.match(host)) ?? {
-          label: host,
-          icon: `/svgs/chain.svg`,
-        };
-
-        return (
-          <a
-            key={raw}
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex font-light items-center gap-2 rounded-md bg-white/5 px-2.5 py-1.5 text-sm text-white hover:bg-white/10"
-          >
-            <img
-              src={brand.icon}
-              className={`${
-                brand.icon.includes("/svgs/chain") ? "h-3.5 w-3.5" : "h-4 w-4 "
-              }`}
-              alt=""
-            />
-            {brand.label}
-          </a>
-        );
-      })}
-    </div>
-  );
-}
