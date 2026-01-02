@@ -95,14 +95,14 @@ export default function CandidateCard({
 
         <div className="mt-0 flex flex-col gap-3 w-[70%]">
           {!isOnlyOneCompany && latestCompany && (
-            <CompanyCard company={latestCompany} text="Prior Experience" />
+            <CompanyCard company={latestCompany} text="Current Experience" />
           )}
-          {firstCompany && (
+          {/* {firstCompany && (
             <CompanyCard
               company={firstCompany}
               text={isOnlyOneCompany ? "Single Experience" : "First Career"}
             />
-          )}
+          )} */}
           {school && (
             <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
               <div className="text-hgray600 text-sm min-w-24 pt-0.5 font-light">
@@ -191,6 +191,7 @@ const CompanyCard = ({
     [company.end_date]
   );
 
+  //
   const handleOpenCompany = useCompanyModalStore((s) => s.handleOpenCompany);
   const qc = useQueryClient();
 

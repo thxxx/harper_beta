@@ -58,6 +58,16 @@ Output Format (STRICT):
 - Do NOT sort.
 - No extra text, no markdown.
 
+OUTPUT EXAMPLE:
+[
+  { "index": 0, "score": 5 },
+  { "index": 1, "score": 1 },
+  { "index": 2, "score": 3 },
+  { "index": 3, "score": 1 },
+  { "index": 4, "score": 4 }, 
+  ...
+]
+
 Input:
 Query: ${rawinput}
 Docs: ${idRemoved}

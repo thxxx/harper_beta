@@ -31,7 +31,7 @@ const Home: NextPage = () => {
       setIsLoading(false);
       return;
     }
-    if (credits <= MIN_CREDITS_FOR_SEARCH) {
+    if (credits.remain_credit <= MIN_CREDITS_FOR_SEARCH) {
       showToast({
         message: "크레딧이 부족합니다.",
         variant: "white",
@@ -57,9 +57,8 @@ const Home: NextPage = () => {
     const queryId = data.id;
     refreshQueriesHistory(qc, companyUser.user_id);
     setIsLoading(false);
-    router.push(`/my/c/${queryId}`);
-
     setQuery("");
+    router.push(`/my/c/${queryId}`);
   };
 
   const testSql = async () => {
@@ -102,7 +101,7 @@ ${made}
       <main className="flex-1 flex items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
           <h1
-            onClick={() => testSql()}
+            // onClick={() => testSql()}
             className="text-2xl sm:text-3xl font-semibold font-hedvig tracking-tight text-center leading-relaxed"
           >
             Hello, {companyUser?.name}
