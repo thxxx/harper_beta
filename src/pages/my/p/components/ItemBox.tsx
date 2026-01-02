@@ -59,7 +59,7 @@ const ItemBox = ({
                 />
               ) : (
                 <div className="w-12 h-12 mt-[1px] rounded-sm flex items-center justify-center text-lg bg-accenta1/70">
-                  {name.slice(0, 1).toUpperCase()}
+                  {name ? name.slice(0, 1).toUpperCase() : ""}
                 </div>
               )}
             </div>
