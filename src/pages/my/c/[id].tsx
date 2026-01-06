@@ -280,9 +280,9 @@ export default function Result() {
       ) : !isLoading ? (
         <div className="w-full px-4 space-y-2">
           <div className="space-y-4">
-            {items.map((c) => (
+            {items.map((c: any) => (
               <CandidateCard
-                key={c.id}
+                key={c?.id}
                 c={c as CandidateTypeWithConnection}
                 userId={userId}
                 queryItem={queryItem}
