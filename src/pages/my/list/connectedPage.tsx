@@ -1,9 +1,8 @@
 import CandidateCard from "@/components/CandidatesList";
-import AppLayout from "@/components/layout/app";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useMemo } from "react";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useConnectedCandidates } from "@/hooks/useBookMarkCandidates";
+import PrevNextButtons from "./components/PrevNextButtons";
 
 const ConnectedPage = () => {
   const { companyUser } = useCompanyUserStore();
@@ -16,7 +15,7 @@ const ConnectedPage = () => {
 
   return (
     <div>
-      <div className="w-full space-y-2">
+      <div className="w-full space-y-2 text-white">
         {data?.items && (
           <div className="space-y-3">
             {data.items.map((c) => (
@@ -24,17 +23,11 @@ const ConnectedPage = () => {
             ))}
           </div>
         )}
+        {!isLoading && data?.items?.length === 0 && (
+          <div className="text-center text-hgray600">No data</div>
+        )}
       </div>
-      <div className="flex items-center justify-center w-full py-8 flex-col">
-        <div className="flex items-center justify-center gap-1 flex-row">
-          <div className="p-1 rounded-sm border border-xgray400">
-            <ChevronLeft size={20} className="text-xgray600" />
-          </div>
-          <div className="p-1 rounded-sm border border-xgray400">
-            <ChevronRight size={20} className="text-xgray600" />
-          </div>
-        </div>
-      </div>
+      <PrevNextButtons />
     </div>
   );
 };

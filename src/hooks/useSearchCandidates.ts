@@ -46,15 +46,16 @@ async function fetchCandidatesByIds(
   queryId: string
 ) {
   if (ids.length === 0) return [];
+
+  const start_time = performance.now();
   const { data, error } = await supabase
     .from("candid")
     .select(
       `
         id,
         headline,
-        bio,
-        linkedin_url,
         location,
+        bio,
         name,
         profile_picture,
         edu_user (
@@ -66,13 +67,14 @@ async function fetchCandidatesByIds(
         ),
         experience_user (
           role,
+          description,
           start_date,
           end_date,
           company_id,
           company_db (
             name,
-            logo,
-            linkedin_url
+            investors,
+            short_description
           )
         ),
         publications (
@@ -91,37 +93,15 @@ async function fetchCandidatesByIds(
     .eq("synthesized_summary.query_id", queryId);
 
   console.log("fetchCandidatesByIds ", data, error);
+  console.log("fetchCandidatesByIds time ", performance.now() - start_time);
 
   if (error) throw error;
 
-  // // 2) synthesized_summary (queryId + ids)
-  // const { data: sums, error: e2 } = await supabase
-  //   .from("synthesized_summary")
-  //   .select("query_id, candid_id, text")
-  //   .eq("query_id", queryId)
-  //   .in("candid_id", ids);
+  const dataById = new Map((data ?? []).map((item) => [item.id, item]));
 
-  // if (e2) throw e2;
+  const orderedData = ids.map((id) => dataById.get(id)).filter(Boolean);
 
-  // // 3) candid_id -> summary[]
-  // const sumMap = new Map<string, any[]>();
-  // for (const s of sums ?? []) {
-  //   const arr = sumMap.get(s.candid_id ?? "") ?? [];
-  //   arr.push(s);
-  //   sumMap.set(s.candid_id ?? "", arr);
-  // }
-
-  // // 4) attach + keep ids order
-  // const candMap = new Map((data ?? []).map((c: any) => [c.id, c]));
-  // return ids
-  //   .map((id) => {
-  //     const c: any = candMap.get(id);
-  //     if (!c) return null;
-  //     return { ...c, synthesized_summary: sumMap.get(id) ?? [] };
-  //   })
-  //   .filter(Boolean);
-
-  return data ?? [];
+  return orderedData;
 }
 
 export function useSearchCandidates(
@@ -142,7 +122,7 @@ export function useSearchCandidates(
       const { ids, isNewSearch } = await fetchSearchIds(queryId!, pageIdx);
       if (ids && ids.length > 0) {
         if (isNewSearch) {
-          await deduct(ids.length);
+          await deduct(ids.length * 3);
         }
         const items = await fetchCandidatesByIds(ids, userId!, queryId!);
         setIsLoading(false);

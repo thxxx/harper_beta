@@ -12,6 +12,8 @@ import Requestbutton from "./ui/requestbutton";
 import { QueryType } from "@/types/type";
 import { dateToFormat } from "@/utils/textprocess";
 import { useSynthesizedSummary } from "@/hooks/useSynthesizedSummary";
+import { Tooltips } from "./ui/tooltip";
+import { Check, Dot, X } from "lucide-react";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -81,7 +83,10 @@ export default function CandidateCard({
   const isOnlyOneCompany = exps.length === 1;
 
   return (
-    <div key={c.id} className="w-full rounded-[28px] text-white bg-white/5 p-6">
+    <div
+      key={c.id}
+      className="w-full rounded-[28px] max-w-[980px] text-white bg-white/5 p-6"
+    >
       <div className="flex flex-row flex-1 items-start gap-4">
         <div className="w-[40%]">
           <NameProfile
@@ -105,12 +110,12 @@ export default function CandidateCard({
           )} */}
           {school && (
             <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
-              <div className="text-hgray600 text-sm min-w-24 pt-0.5 font-light">
+              <div className="text-hgray600 text-sm w-24 pt-0.5 font-light">
                 Education
               </div>
               <div className="flex flex-col gap-0.5 text-sm w-full">
                 <div className="flex flex-row items-center justify-between">
-                  <div className="text-white hover:underline cursor-pointer">
+                  <div className="text-white">
                     {koreaUniversityEnToKo(school.school)}
                     {school.degree && (
                       <span className="text-hgray600 font-light">
@@ -132,44 +137,25 @@ export default function CandidateCard({
         ) : (
           <div>
             {synthesizedSummary?.map((item, index) => (
-              <div className="mt-2" key={index}>
-                <span
-                  className={`
-                    py-1.5 px-3 rounded-lg text-[14px] border
-                    ${
-                      item.score === SummaryScore.SATISFIED
-                        ? "border-accenta1/80 text-accenta1"
-                        : item.score === SummaryScore.AMBIGUOUS
-                        ? "border-orange-500/80 text-orange-500"
-                        : "border-red-500/80 text-red-500"
-                    }
-                  `}
-                >
-                  {queryItem?.criteria?.[index]}
-                </span>
-                <div
-                  className="mt-2 text-[15px]"
-                  dangerouslySetInnerHTML={{
-                    __html: item.reason.replace(
-                      /strong>/g,
-                      'span class="text-white font-normal">'
-                    ),
-                  }}
-                />
-              </div>
+              <MemoizedSummaryBox
+                key={index}
+                reason={item.reason}
+                criteria={queryItem?.criteria?.[index] ?? ""}
+                score={item.score}
+              />
             ))}
           </div>
         )}
       </div>
 
-      <div className="flex flex-row items-center justify-start mt-4 gap-2 w-full">
+      <div className="flex flex-row items-center justify-start mt-6 gap-2 w-full">
         <Bookmarkbutton
           userId={userId}
           candidId={c.id}
           connection={c.connection}
           isText={false}
         />
-        <Requestbutton c={c} />
+        <Requestbutton c={c} isBeta={true} />
       </div>
     </div>
   );
@@ -198,16 +184,13 @@ const CompanyCard = ({
   const onButtonClick = () => {
     handleOpenCompany({
       companyId: company.company_id ?? "",
-      fallbackUrl: company.company_db.linkedin_url,
       queryClient: qc,
     });
   };
 
   return (
     <div className="flex flex-row items-start justify-start font-normal">
-      <div className="text-hgray600 text-sm min-w-24 pt-0.5 font-light">
-        {text}
-      </div>
+      <div className="text-hgray600 text-sm w-24 pt-0.5 font-light">{text}</div>
       <div className="flex flex-col gap-1 text-sm w-full">
         <div className="flex flex-row items-center justify-between">
           <div
@@ -228,3 +211,64 @@ const CompanyCard = ({
     </div>
   );
 };
+
+const CriteriaBox = ({
+  reason,
+  criteria,
+  score,
+}: {
+  reason: string;
+  criteria: string;
+  score: string;
+}) => {
+  const badeStyle = useMemo(() => {
+    if (score === SummaryScore.SATISFIED) return "text-accenta1";
+    if (score === SummaryScore.AMBIGUOUS) return "text-hgray900";
+    if (score === SummaryScore.UNSATISFIED) return "text-hgray900";
+    return "";
+  }, [score]);
+
+  const badgeIcon = useMemo(() => {
+    if (score === SummaryScore.SATISFIED)
+      return <Check className="w-3 h-3 text-accenta1" strokeWidth={2} />;
+    if (score === SummaryScore.AMBIGUOUS)
+      return <Dot className="w-3 h-3 text-hgray700" strokeWidth={2} />;
+    if (score === SummaryScore.UNSATISFIED)
+      return <X className="w-3 h-3 text-red-700" strokeWidth={2} />;
+    return null;
+  }, [score]);
+
+  const tooltipText = useMemo(() => {
+    if (score === SummaryScore.SATISFIED) return "Matches your criteria";
+    if (score === SummaryScore.AMBIGUOUS)
+      return "Not enough information to decide";
+    if (score === SummaryScore.UNSATISFIED)
+      return "Does not match this criterion";
+    return "";
+  }, [score]);
+
+  return (
+    <div className="mt-5">
+      <Tooltips text={tooltipText}>
+        <div
+          className={`flex-row inline-flex items-center font-normal gap-1 py-1.5 px-2 rounded-md text-[12px] bg-white/5 cursor-default ${badeStyle}`}
+        >
+          {badgeIcon}
+          <span>{criteria}</span>
+        </div>
+      </Tooltips>
+      {/* </Tooltips> */}
+      <div
+        className="mt-2 text-[14px] font-normal"
+        dangerouslySetInnerHTML={{
+          __html: reason.replace(
+            /strong>/g,
+            'span class="text-white font-normal">'
+          ),
+        }}
+      />
+    </div>
+  );
+};
+
+const MemoizedSummaryBox = React.memo(CriteriaBox);

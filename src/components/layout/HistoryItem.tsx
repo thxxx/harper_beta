@@ -29,12 +29,12 @@ const HistoryItem = ({
       key={queryItem.query_id}
       onClick={() => router.push(`/my/c/${queryItem.query_id}`)}
     >
-      <div className="flex flex-col items-start w-full max-w-[85%]">
-        <div className="truncate text-[15px] max-w-[100%]">
+      <div className="flex flex-col items-start w-full max-w-[85%] font-normal">
+        <div className="truncate text-sm max-w-[100%]">
           {queryItem.query_keyword ?? queryItem.raw_input_text}
         </div>
         {!collapsed && (
-          <div className="mt-0.5 text-[13px] text-hgray600 font-light">
+          <div className="text-[12px] text-hgray600">
             {dateToFormatLong(
               new Date(queryItem.created_at).toLocaleDateString()
             )}
@@ -107,13 +107,15 @@ export function NavItem({
       type="button"
       onClick={onClick}
       className={[
-        "w-full flex text-base font-extralight items-center gap-3 rounded-[6px] px-3 py-2",
-        "transition text-white",
+        "w-full flex text-sm font-extralight items-center gap-3 rounded-[6px] px-3 py-2",
+        "transition duration-200 text-white",
         active ? "bg-bgDark500  shadow-sm" : "bg-transparent hover:bg-white/10",
       ].join(" ")}
     >
       <div className="shrink-0">{icon}</div>
-      {!collapsed && <div className="truncate">{label}</div>}
+      {!collapsed && (
+        <div className="truncate text-[14px] font-normal">{label}</div>
+      )}
     </button>
   );
 }

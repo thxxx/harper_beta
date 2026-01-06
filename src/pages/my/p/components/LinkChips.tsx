@@ -38,6 +38,8 @@ function LinkChips({ links }: Props) {
   return (
     <div className="flex flex-wrap gap-2">
       {links.map((raw) => {
+        if (!raw || raw === "") return null;
+
         const url = raw.startsWith("http") ? raw : `https://${raw}`;
         let host = raw;
 

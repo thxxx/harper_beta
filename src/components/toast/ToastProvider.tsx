@@ -27,7 +27,7 @@ export default function ToastProvider() {
         typeof input === "string" ? { message: input } : input;
 
       const id = opts.id ?? Math.random().toString(36).slice(2);
-      const duration = opts.duration ?? 2000;
+      const duration = opts.duration ?? 3000;
 
       setList((prev) => [
         ...prev,
@@ -77,7 +77,7 @@ function Toast({ item, onClose }: { item: Item; onClose: () => void }) {
       isSpring={true}
       triggerOnce={true}
       className={[
-        "pointer-events-auto flex items-center gap-2 rounded-full border px-3 py-2 text-xs sm:text-sm shadow-lg backdrop-blur",
+        "pointer-events-auto flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm shadow-lg backdrop-blur",
         item.variant === "success"
           ? "border-green-400/20 bg-green-400/10 text-green-100"
           : item.variant === "error"

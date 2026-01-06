@@ -46,7 +46,10 @@ export const useCredits = () => {
     },
     // 성공 시 캐시를 직접 업데이트하여 UI를 즉시 갱신
     onSuccess: (newBalance) => {
-      queryClient.setQueryData(CREDIT_QUERY_KEY, newBalance);
+      queryClient.setQueryData(CREDIT_QUERY_KEY, {
+        remain_credit: newBalance,
+        charged_credit: credits?.charged_credit ?? 0,
+      });
     },
     onError: (error: any) => {
       if (error.message.includes("Insufficient credits")) {

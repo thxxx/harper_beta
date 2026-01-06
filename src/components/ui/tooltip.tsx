@@ -42,7 +42,7 @@ export function Tooltips({
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className="mb-[1px]">
+        <TooltipContent side="bottom" align="start" className="mb-[1px]">
           <p>{text}</p>
         </TooltipContent>
       </Tooltip>

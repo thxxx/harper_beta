@@ -1,12 +1,45 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ConnectionModal from "../Modal/ConnectionModal";
 import { CandidateTypeWithConnection } from "@/hooks/useSearchCandidates";
 
-const Requestbutton = ({ c }: { c: CandidateTypeWithConnection }) => {
-  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
-  const [isRequested, setIsRequested] = useState(
-    c.connection?.map((con) => con.typed).includes(1)
+type ModalMode = "request" | "cancel";
+
+const Requestbutton = ({
+  c,
+  isBeta = false,
+}: {
+  c: CandidateTypeWithConnection;
+  isBeta?: boolean;
+}) => {
+  const initialRequested = useMemo(
+    () => c.connection?.some((con) => con.typed === 1) ?? false,
+    [c.connection]
   );
+
+  const [isRequested, setIsRequested] = useState(initialRequested);
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("request");
+
+  const openRequestModal = () => {
+    setModalMode("request");
+    setIsConnectionModalOpen(true);
+  };
+
+  const openCancelModal = () => {
+    setModalMode("cancel");
+    setIsConnectionModalOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    // TODO: Call your API here (insert/delete on supabase).
+    // Keep UI update only after success if you want strict consistency.
+    if (modalMode === "request") {
+      setIsRequested(true);
+    } else {
+      setIsRequested(false);
+    }
+    setIsConnectionModalOpen(false);
+  };
 
   return (
     <>
@@ -19,20 +52,42 @@ const Requestbutton = ({ c }: { c: CandidateTypeWithConnection }) => {
         profilePicture={c.profile_picture ?? ""}
         isRequested={isRequested}
         onClose={() => setIsConnectionModalOpen(false)}
-        onConfirm={() => {
-          if (isRequested) {
-            setIsRequested(false);
-          } else {
-            setIsRequested(true);
-          }
-        }}
+        onConfirm={handleConfirm}
       />
-      <div
-        onClick={() => setIsConnectionModalOpen(true)}
-        className="cursor-pointer items-center justify-center flex h-10 px-4 rounded-xl text-sm bg-accenta1/20 text-accenta1"
-      >
-        Request Connection
-      </div>
+
+      {!isRequested ? (
+        <div
+          onClick={openRequestModal}
+          className="transition-all duration-200 font-normal cursor-pointer items-center justify-center flex h-10 px-4 rounded-xl text-sm bg-accenta1/20 text-accenta1 hover:bg-accenta1/25"
+        >
+          <div className="flex items-center flex-row">
+            <span>Request Connection</span>
+            {isBeta && (
+              <span className="ml-1 text-[10px] font-light text-hgray900 border border-white/10 rounded-md px-1 py-0.5">
+                BETA
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Requested: show status + cancel */
+        <div className="flex items-center gap-2">
+          <div
+            onClick={openCancelModal}
+            className="transition-all duration-200 cursor-pointer items-center justify-center flex h-10 px-4 rounded-xl text-sm bg-accenta1/20 text-accenta1 hover:bg-accenta1/25"
+            aria-disabled="true"
+          >
+            Cancel Connection
+          </div>
+
+          {/* <div
+            onClick={openCancelModal}
+            className="cursor-pointer flex items-center justify-center h-10 px-4 rounded-xl text-sm text-red-400 bg-transparent hover:bg-red-500/10"
+          >
+            Cancel
+          </div> */}
+        </div>
+      )}
     </>
   );
 };

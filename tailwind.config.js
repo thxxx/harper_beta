@@ -106,10 +106,19 @@ module.exports = {
             transform: "translateX(3px)",
           },
         },
+        textGlow: {
+          "0%, 100%": {
+            opacity: "0.6",
+          },
+          "50%": {
+            opacity: "0.9",
+          },
+        },
       },
       animation: {
         upDown: "upDowns 2s ease-in-out infinite",
         shake: "shake 0.3s ease-in-out",
+        textGlow: "textGlow 3s ease-in-out infinite",
       },
       fontFamily: {
         inter: ["var(--font-inter)", "sans-serif"],

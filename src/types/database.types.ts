@@ -118,11 +118,11 @@ export type Database = {
           investors: string | null
           last_updated_at: string
           linkedin_url: string | null
-          links: Json | null
           location: string | null
           logo: string | null
           name: string | null
           related_links: string[] | null
+          short_description: string | null
           specialities: string
           website_url: string | null
         }
@@ -136,11 +136,11 @@ export type Database = {
           investors?: string | null
           last_updated_at?: string
           linkedin_url?: string | null
-          links?: Json | null
           location?: string | null
           logo?: string | null
           name?: string | null
           related_links?: string[] | null
+          short_description?: string | null
           specialities?: string
           website_url?: string | null
         }
@@ -154,11 +154,11 @@ export type Database = {
           investors?: string | null
           last_updated_at?: string
           linkedin_url?: string | null
-          links?: Json | null
           location?: string | null
           logo?: string | null
           name?: string | null
           related_links?: string[] | null
+          short_description?: string | null
           specialities?: string
           website_url?: string | null
         }
@@ -166,27 +166,36 @@ export type Database = {
       }
       company_users: {
         Row: {
+          company: string | null
           created_at: string
           email: string | null
           is_authenticated: boolean
+          location: string | null
           name: string | null
           profile_picture: string | null
+          role: string | null
           user_id: string
         }
         Insert: {
+          company?: string | null
           created_at?: string
           email?: string | null
           is_authenticated?: boolean
+          location?: string | null
           name?: string | null
           profile_picture?: string | null
+          role?: string | null
           user_id?: string
         }
         Update: {
+          company?: string | null
           created_at?: string
           email?: string | null
           is_authenticated?: boolean
+          location?: string | null
           name?: string | null
           profile_picture?: string | null
+          role?: string | null
           user_id?: string
         }
         Relationships: []
@@ -196,6 +205,7 @@ export type Database = {
           candid_id: string | null
           created_at: string
           id: number
+          last_updated_at: string
           typed: number | null
           user_id: string | null
         }
@@ -203,6 +213,7 @@ export type Database = {
           candid_id?: string | null
           created_at?: string
           id?: number
+          last_updated_at?: string
           typed?: number | null
           user_id?: string | null
         }
@@ -210,6 +221,7 @@ export type Database = {
           candid_id?: string | null
           created_at?: string
           id?: number
+          last_updated_at?: string
           typed?: number | null
           user_id?: string | null
         }
@@ -294,6 +306,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company_users"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      crunchbase_company: {
+        Row: {
+          company_id: number | null
+          created_at: string
+          id: number
+          storage_path: string | null
+        }
+        Insert: {
+          company_id?: number | null
+          created_at?: string
+          id?: number
+          storage_path?: string | null
+        }
+        Update: {
+          company_id?: number | null
+          created_at?: string
+          id?: number
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crunchbase_company_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_db"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -494,6 +535,30 @@ export type Database = {
         }
         Relationships: []
       }
+      link_previews: {
+        Row: {
+          description: string | null
+          fetched_at: string
+          published_at: string | null
+          title: string | null
+          url: string
+        }
+        Insert: {
+          description?: string | null
+          fetched_at?: string
+          published_at?: string | null
+          title?: string | null
+          url: string
+        }
+        Update: {
+          description?: string | null
+          fetched_at?: string
+          published_at?: string | null
+          title?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       new_people: {
         Row: {
           content: string | null
@@ -568,6 +633,7 @@ export type Database = {
           query_id: string
           query_keyword: string | null
           raw_input_text: string | null
+          status: string | null
           thinking: string | null
           user_id: string
         }
@@ -579,6 +645,7 @@ export type Database = {
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          status?: string | null
           thinking?: string | null
           user_id: string
         }
@@ -590,6 +657,7 @@ export type Database = {
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          status?: string | null
           thinking?: string | null
           user_id?: string
         }
@@ -608,28 +676,22 @@ export type Database = {
           candidate_ids: string[] | null
           created_at: string
           id: number
-          next_cursor: string | null
           page_idx: number | null
           query_id: string | null
-          synthesized_summary: Json | null
         }
         Insert: {
           candidate_ids?: string[] | null
           created_at?: string
           id?: number
-          next_cursor?: string | null
           page_idx?: number | null
           query_id?: string | null
-          synthesized_summary?: Json | null
         }
         Update: {
           candidate_ids?: string[] | null
           created_at?: string
           id?: number
-          next_cursor?: string | null
           page_idx?: number | null
           query_id?: string | null
-          synthesized_summary?: Json | null
         }
         Relationships: [
           {
@@ -646,6 +708,7 @@ export type Database = {
           candid_id: string | null
           created_at: string
           id: number
+          status: number
           text: string | null
           user_id: string | null
         }
@@ -653,6 +716,7 @@ export type Database = {
           candid_id?: string | null
           created_at?: string
           id?: number
+          status?: number
           text?: string | null
           user_id?: string | null
         }
@@ -660,6 +724,7 @@ export type Database = {
           candid_id?: string | null
           created_at?: string
           id?: number
+          status?: number
           text?: string | null
           user_id?: string | null
         }
@@ -736,6 +801,8 @@ export type Database = {
         Args: { limit_num: number; page_idx: number; sql_query: string }
         Returns: Json[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

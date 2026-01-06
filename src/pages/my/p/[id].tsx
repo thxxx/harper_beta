@@ -2,19 +2,19 @@ import AppLayout from "@/components/layout/app";
 import { useRouter } from "next/router";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useCandidateDetail } from "@/hooks/useCandidateDetail";
-import { Bookmark, ExternalLink, Link as LinkIcon } from "lucide-react";
 import Bookmarkbutton from "@/components/ui/bookmarkbutton";
 import Requestbutton from "@/components/ui/requestbutton";
 import ItemBox from "./components/ItemBox";
 import PublicationBox from "./components/PublicationBox";
 import LinkChips from "./components/LinkChips";
 import { replaceName } from "@/utils/textprocess";
+import { useMemo } from "react";
 
-const ExperienceCal = (months: number) => {
+export const ExperienceCal = (months: number) => {
   const years = Math.floor(months / 12);
   const remainingMonths = months % 12;
-  return `${years} ${years > 1 ? "years" : "year"} ${remainingMonths} ${
-    remainingMonths > 1 ? "months" : "month"
+  return `${years > 0 ? `${years}y ` : ""}${remainingMonths} ${
+    remainingMonths > 1 ? "m" : "m"
   }`;
 };
 
@@ -29,13 +29,31 @@ export default function ProfileDetailPage() {
   const { data, isLoading, error } = useCandidateDetail(userId, candidId);
   console.log(data);
 
+  const c: any = data;
+
+  const links: string[] = useMemo(() => {
+    if (!c?.links) return [];
+
+    const newLinks: string[] = [];
+    if (Array.isArray(c.links)) {
+      for (const link of c.links) {
+        const ll = link.replace(/\/+$/, "");
+        if (ll && ll !== "" && !newLinks.includes(ll)) {
+          newLinks.push(ll);
+        }
+      }
+      return newLinks;
+    }
+    return [];
+  }, [c]);
+
+  console.log(links);
+
   if (!candidId) return <AppLayout>Loading...</AppLayout>;
   if (!userId) return <AppLayout>Loading...</AppLayout>;
   if (isLoading) return <AppLayout>Loading...</AppLayout>;
   if (error) return <AppLayout>Failed to load.</AppLayout>;
   if (!data) return <AppLayout>Not found.</AppLayout>;
-
-  const c: any = data;
 
   // 대충: email은 string일 수도 / JSON string일 수도 있어서 try-catch 한 번만
   let emails: string[] = [];
@@ -45,11 +63,9 @@ export default function ProfileDetailPage() {
     emails = c.email ? [String(c.email)] : [];
   }
 
-  const links: string[] = Array.isArray(c.links) ? c.links : [];
-
   return (
     <AppLayout>
-      <div className="w-full mx-auto px-8 py-10 min-h-screen space-y-9">
+      <div className="w-full mx-auto px-8 py-10 space-y-9">
         {/* Header */}
         <div className="flex flex-row items-start justify-between w-full">
           <div className="flex items-start gap-6 w-[70%]">
@@ -149,8 +165,8 @@ export default function ProfileDetailPage() {
             {(c.edu_user ?? []).map((ed: any, idx: number) => (
               <ItemBox
                 key={idx}
-                title={ed.school}
-                name={ed.degree}
+                title={`${ed.school}`}
+                name={`${ed.field}, ${ed.degree}`}
                 start_date={ed.start_date}
                 end_date={ed.end_date}
                 link={ed.school_url}
@@ -177,9 +193,6 @@ export default function ProfileDetailPage() {
           </div>
         </Box>
       </div>
-      <br />
-      <br />
-      <br />
     </AppLayout>
   );
 }

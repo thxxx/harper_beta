@@ -208,42 +208,73 @@ export function highlightDifferences2(originalText: string, newText: string) {
 }
 
 export const buildSummary = (doc: any) => {
-  const exps = doc.experience_user?.map((exp: any) => {
-    let expText = `Role: ${exp.role}, Company: ${exp.company_db.name}`;
+  const exps = doc.experience_user?.map((exp: any, idx: number) => {
+    let expText = `\n${idx + 1}. Role: ${exp.role}, Company: ${
+      exp.company_db.name
+    }`;
     if (exp.start_date) {
-      expText += `, Start Date: ${exp.start_date}`;
+      expText += `, Start Date of the experience: ${exp.start_date}`;
     }
     if (exp.end_date) {
-      expText += `, End Date: ${exp.end_date}`;
+      expText += `, End Date of the experience: ${exp.end_date ?? "Present"}`;
+    }
+    if (exp.description) {
+      expText += `, Description of the experience: ${exp.description}`;
+    }
+    if (exp.company_db.investors) {
+      expText += `, Investors of the company: ${exp.company_db.investors}`;
+    }
+    if (exp.company_db.short_description) {
+      expText += `, Short Description about the company: ${exp.company_db.short_description}`;
     }
 
     return expText;
   });
 
-  const educations = doc.edu_user?.map((edu: any) => {
-    let eduText = `School: ${edu.school}, Degree: ${edu.degree}, Field: ${edu.field}`;
+  const educations = doc.edu_user?.map((edu: any, idx: number) => {
+    let eduText = `${idx + 1}. School: ${edu.school}, Degree: ${
+      edu.degree
+    }, Field: ${edu.field}`;
     if (edu.start_date) {
       eduText += `, Start Date: ${edu.start_date}`;
     }
     if (edu.end_date) {
-      eduText += `, End Date: ${edu.end_date}`;
+      eduText += `, End Date: ${edu.end_date ?? "Present"}`;
     }
     return eduText;
   });
 
-  const publications = doc.publications?.slice(0, 10).map((pub: any) => {
-    return `Title: ${pub.title}, Published At: ${pub.published_at}`;
-  });
+  const publications = doc.publications
+    ?.slice(0, 20)
+    .map((pub: any, idx: number) => {
+      return `${idx + 1}. Title: ${pub.title}, Published At: ${
+        pub.published_at
+      }`;
+    });
 
   const bio = doc.bio ?? "";
 
-  return `
-${doc.name} is a ${doc.location} based.
-About: ${bio}
-Headline: ${doc.headline}
-Experiences: ${exps}
-Educations: ${educations}
-Publications: ${publications}`;
+  let docSummary = `Name: ${doc.name}`;
+  if (doc.location) {
+    docSummary += `\nLocation: ${doc.location}`;
+  }
+  if (bio) {
+    docSummary += `\nAbout: ${bio}`;
+  }
+  if (doc.headline) {
+    docSummary += `\nHeadline: ${doc.headline}`;
+  }
+  if (exps) {
+    docSummary += `\nExperiences: ${exps}`;
+  }
+  if (educations) {
+    docSummary += `\nEducations: ${educations}`;
+  }
+  if (publications) {
+    docSummary += `\nPublications: ${publications}`;
+  }
+
+  return docSummary;
 };
 
 export const dateToFormat = (dateStr: string) => {
@@ -369,6 +400,7 @@ export function fixUnbalancedParens(sql: string) {
 
   return s;
 }
+
 function topLevelIndexOf(sql: string, needle: RegExp): number {
   let depth = 0;
   let inStr = false;
@@ -427,7 +459,16 @@ export function ensureGroupBy(sql: string, groupByClause: string): string {
           .slice(insertAt)
           .trimStart()}`;
 
-  return out;
+  const replaced = out.replace(
+    /\bto_jsonb\s*\(\s*c\s*\)/g,
+    `jsonb_build_object(
+      'name', c.name,
+      'investors', c.investors,
+      'short_description', c.short_description
+    )`
+  );
+
+  return replaced;
 }
 
 export const replaceName = (text: string, name: string) => {

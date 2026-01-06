@@ -3,24 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { buildSummary } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  if (req.method !== "POST")
-    return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-
-  const body = await req.json();
-  const { doc, queryId, criteria, raw_input_text } = body as {
-    doc: any;
-    queryId: string;
-    criteria: string[];
-    raw_input_text: string;
-  };
-
-  if (!doc || !criteria || !raw_input_text)
-    return NextResponse.json(
-      { error: "Missing userId or queryText" },
-      { status: 400 }
-    );
-
+export const generateSummary = async (
+  doc: string,
+  criteria: string[],
+  raw_input_text: string
+) => {
   const information = buildSummary(doc);
 
   const systemPrompt = `You are a helpful assistant. Given a search query and criteria, generate a relevance-focused summary explaining whether this candidate matches the query or not.
@@ -47,7 +34,7 @@ output: [만족, 자율주행 인지 분야의 TOP 학회인 CVPR에 'Self-drivi
 Search Query : ${raw_input_text},
 Criteria : ${JSON.stringify(criteria)},
 Information : ${information}
-output: 
+Output: 
 `;
 
   const summary = await xaiInference(
@@ -55,7 +42,30 @@ output:
     systemPrompt,
     userPrompt
   );
-  console.log("summary ", summary, "\n\n 기준 : ", JSON.stringify(criteria));
+
+  return summary;
+};
+
+export async function POST(req: NextRequest) {
+  if (req.method !== "POST")
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+
+  const body = await req.json();
+  const { doc, queryId, criteria, raw_input_text } = body as {
+    doc: any;
+    queryId: string;
+    criteria: string[];
+    raw_input_text: string;
+  };
+
+  if (!doc || !criteria || !raw_input_text)
+    return NextResponse.json(
+      { error: "Missing userId or queryText" },
+      { status: 400 }
+    );
+
+  const summary = await generateSummary(doc, criteria, raw_input_text);
+  // console.log("summary ", summary);
 
   try {
     const jsonoutput = JSON.parse(summary as string);
@@ -71,10 +81,6 @@ output:
 
   if (insErr)
     return NextResponse.json({ error: insErr.message }, { status: 500 });
-
-  // 요약 만들고
-  // 저장하고
-  // 리턴하기
 
   return NextResponse.json({ result: summary, success: true }, { status: 200 });
 }

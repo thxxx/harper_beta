@@ -10,8 +10,9 @@ import { Tooltips } from "@/components/ui/tooltip";
 import { useCredits } from "@/hooks/useCredit";
 import { MIN_CREDITS_FOR_SEARCH } from "@/utils/constantkeys";
 import { showToast } from "@/components/toast/toast";
+import { buildSummary, ensureGroupBy } from "@/utils/textprocess";
 import { supabase } from "@/lib/supabase";
-import { ensureGroupBy } from "@/utils/textprocess";
+import { transformSql } from "@/app/api/search/utils";
 
 const Home: NextPage = () => {
   const [query, setQuery] = useState("");
@@ -61,39 +62,95 @@ const Home: NextPage = () => {
     router.push(`/my/c/${queryId}`);
   };
 
+  // (p.title ILIKE '%TTS%' OR p.title ILIKE '%Text-to-Speech%' OR p.title ILIKE '%Speech Synthesis%' OR p.title ILIKE '%Voice Synthesis%' OR p.title ILIKE '%Speech Generation%' OR p.title ILIKE '%Speech-to-Speech%' OR p.title ILIKE '%Vocoder%' OR p.title ILIKE '%WaveNet%' OR p.title ILIKE '%Tacotron%' OR p.title ILIKE '%FastSpeech%')
   const testSql = async () => {
     console.log("testSql");
-    const made = `WHERE((fts @@ to_tsquery('english','((aviation | airplane | aircraft | pilot | flying | aeronautics | avionics | flight <-> simulator ) & (developer | engineer | programmer | software))')) OR (((T2.role ILIKE '%developer%') OR (T2.role ILIKE '%engineer%') OR (T2.role ILIKE '%software%') OR (T1.headline ILIKE '%developer%') OR (T1.headline ILIKE '%engineer%') OR (T1.bio ILIKE '%developer%') OR (T1.bio ILIKE '%engineer%')) AND ((T1.bio ILIKE '%aviation%') OR (T1.bio ILIKE '%airplane%') OR (T1.bio ILIKE '%aircraft%') OR (T1.bio ILIKE '%pilot%') OR (T1.bio ILIKE '%flying%') OR (T2.description ILIKE '%flight simulator%') OR (T2.description ILIKE '%avionics%') OR (T3.specialities ILIKE '%aviation%') OR (T3.name ILIKE '%airline%') OR (T5.title ILIKE '%aviation%') OR (T5.title ILIKE '%flight simulator%') OR (T1.bio ILIKE '%비행기%') OR (T1.bio ILIKE '%항공%') OR (T1.headline ILIKE '%비행기%')))) ORDER BY ts_rank(fts, to_tsquery('english','((aviation | airplane | aircraft | pilot | flying | aeronautics | avionics | "flight simulator" ) & (developer | engineer | programmer | software))')) DESC`;
     const sqlQuery = `
-SELECT 
-  to_json(T1.id) AS id,
-  T1.name,
-  T1.headline,
-  T1.summary
-FROM 
-  candid AS T1
-LEFT JOIN 
-  experience_user AS T2 ON T1.id = T2.candid_id
-LEFT JOIN 
-  company_db AS T3 ON T2.company_id = T3.id
-LEFT JOIN
-  edu_user AS T4 ON T1.id = T4.candid_id
-LEFT JOIN
-  publications AS T5 ON T1.id = T5.candid_id
-${made}
+WITH params AS (
+  SELECT to_tsquery('english', '(machine <-> learning) | ML | MLE | (deep <-> learning)') AS tsq
+),
+-- [1단계] 필터링 및 ID 확정 (Phase 1: ID-only Filtering)
+-- 무거운 컬럼이나 JSON 연산 없이 오직 ID와 정렬 순서만 결정합니다.
+identified_ids AS (
+  SELECT
+    T1.id,
+    ts_rank(T1.fts, params.tsq) AS fts_rank
+  FROM candid AS T1
+  CROSS JOIN params
+  WHERE
+    -- 학교 조건 1: 서울과고
+    EXISTS (
+      SELECT 1 FROM edu_user e1
+      WHERE e1.candid_id = T1.id
+        AND e1.school ILIKE ANY (ARRAY['%서울과학고%', '%서울과학고등학교%', '%Seoul Science High School%', '%SSHS%'])
+    )
+    -- 학교 조건 2: KAIST
+    AND EXISTS (
+      SELECT 1 FROM edu_user e2
+      WHERE e2.candid_id = T1.id
+        AND e2.school ILIKE ANY (ARRAY['%KAIST%', '%카이스트%', '%Korea Advanced Institute of Science and Technology%'])
+    )
+    -- 경력 및 키워드 조건
+    AND EXISTS (
+      SELECT 1 FROM experience_user ex
+      WHERE ex.candid_id = T1.id
+        AND (
+          ex.role ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
+          OR T1.headline ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
+          OR T1.fts @@ params.tsq
+        )
+    )
+  ORDER BY fts_rank DESC, T1.id
+  LIMIT 100 -- 여기서 100건만 남기고 나머지는 버립니다.
+)
+-- [2단계] 확정된 100건에 대해서만 상세 정보 및 JSON 집계 (Phase 2: Hydration)
+SELECT
+  to_json(i.id) AS id,
+  c.name,
+  c.headline,
+  c.location,
+  i.fts_rank,
+  COALESCE(edu_block.edu_rows, '[]'::jsonb) AS edu_user,
+  COALESCE(exp_block.experience_rows, '[]'::jsonb) AS experience_user
+FROM identified_ids i
+JOIN candid c ON c.id = i.id -- 기본 정보 조인
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(to_jsonb(e)) AS edu_rows
+  FROM edu_user e
+  WHERE e.candid_id = i.id
+) edu_block ON TRUE
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(
+    (to_jsonb(ex) || jsonb_build_object('company_db', jsonb_build_object(
+      'name', comp.name,
+      'investors', comp.investors,
+      'short_description', comp.short_description
+    )))
+  ) AS experience_rows
+  FROM experience_user ex
+  LEFT JOIN company_db comp ON comp.id = ex.company_id
+  WHERE ex.candid_id = i.id
+) exp_block ON TRUE
+ORDER BY i.fts_rank DESC, i.id
 `;
-    const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "GROUP BY T1.id");
+    const sqlQueryWithGroupBy2 = ensureGroupBy(sqlQuery, "");
+    console.log("sqlQueryWithGroupBy2 === \n", sqlQueryWithGroupBy2, "\n---\n");
 
-    // const { data, error } = await supabase.rpc(
-    //   "set_timeout_and_execute_raw_sql",
-    //   {
-    //     sql_query: sqlQueryWithGroupBy,
-    //     page_idx: 0,
-    //     limit_num: 10,
-    //   }
-    // );
+    const start_time = performance.now();
+    const { data, error } = await supabase.rpc(
+      "set_timeout_and_execute_raw_sql",
+      {
+        sql_query: sqlQueryWithGroupBy2,
+        page_idx: 0,
+        limit_num: 50,
+      }
+    );
+    const end_time = performance.now();
+    console.log("time ", end_time - start_time);
+    console.log("data ", data, "\n\nError : ", error);
 
-    // console.log("data ", data, "\n\nError : ", error);
+    // const information = buildSummary(data?.[0]?.[0]);
+    // console.log("information ", information);
   };
 
   return (
@@ -101,15 +158,15 @@ ${made}
       <main className="flex-1 flex items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
           <h1
-            // onClick={() => testSql()}
+            onClick={testSql}
             className="text-2xl sm:text-3xl font-semibold font-hedvig tracking-tight text-center leading-relaxed"
           >
-            Hello, {companyUser?.name}
+            Hello, {companyUser?.name.split(" ")[0]}
             <div className="h-3" />
             Who are you looking for?
           </h1>
 
-          <form onSubmit={onSubmit} className="mt-8 w-full max-w-[640px]">
+          <form className="mt-8 w-full max-w-[640px]">
             <div className={`w-full`}>
               <div className="relative rounded-3xl p-1 bg-white/5 border border-white/10">
                 <div className="rounded-2xl backdrop-blur-xl">
@@ -132,7 +189,6 @@ ${made}
                 <div className="flex flex-row items-center justify-center gap-2 absolute right-5 bottom-5">
                   <Tooltips text="Search by JD file or link">
                     <button
-                      type="submit"
                       disabled={!canSend}
                       className={[
                         "inline-flex items-center justify-center rounded-full cursor-pointer hover:opacity-90",
@@ -141,11 +197,11 @@ ${made}
                       ].join(" ")}
                       aria-label="Send"
                     >
-                      <Plus size={20} />
+                      <Plus size={20} color="white" />
                     </button>
                   </Tooltips>
                   <button
-                    type="submit"
+                    onClick={onSubmit}
                     disabled={!canSend}
                     className={[
                       "inline-flex items-center justify-center rounded-full cursor-pointer hover:opacity-90",
@@ -160,6 +216,31 @@ ${made}
                     <ArrowUp size={20} />
                   </button>
                 </div>
+              </div>
+              <div className="w-full flex flex-row items-start justify-between gap-4 mt-6">
+                <div
+                  className={[
+                    "group relative w-full cursor-pointer select-none",
+                    "rounded-2xl py-5 px-6",
+                    "bg-white/5 text-hgray900 text-sm",
+                    "border border-white/0",
+                    "transition-all duration-200 ease-out",
+                    "hover:border-white/5 hover:-translate-y-[2px]",
+                    "active:translate-y-[0px] active:scale-[0.99]",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
+                  ].join(" ")}
+                  onClick={() =>
+                    setQuery(
+                      "국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI / Machine Learning 경험 2년 이하 보유한 사람"
+                    )
+                  }
+                  role="button"
+                  tabIndex={0}
+                >
+                  국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI /
+                  Machine Learning 경험 2년 이하 보유한 사람
+                </div>
+                <div className="relative rounded-2xl bg-white/5 text-hgray900 text-sm w-full"></div>
               </div>
             </div>
           </form>

@@ -386,8 +386,6 @@ body {
   opacity: 0.7;
 }
 
-
-
 @layer base {
   * {
     @apply border-border;

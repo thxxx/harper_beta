@@ -82,7 +82,7 @@ export const xaiInference = async (
     usage.completion_tokens * outputTokenPrice +
     (usage.completion_tokens_details?.reasoning_tokens ?? 0) * outputTokenPrice;
 
-  console.log("cost ", cost * 1450, "원");
+  // console.log("cost ", cost * 1450, "원");
 
   return content ?? "";
 };
@@ -108,8 +108,8 @@ export async function geminiInference(
       temperature: temperature,
     },
   });
-  console.log("response ", response);
-  console.log("response ", response.usageMetadata?.promptTokensDetails);
+  // console.log("response ", response);
+  // console.log("response ", response.usageMetadata?.promptTokensDetails);
 
   const cost =
     (response.usageMetadata?.promptTokenCount ?? 0) *
@@ -328,14 +328,15 @@ Now extract all information and output JSON only. Do not include \`\`\`json or \
 
 // 한 번 호출해서 문자열로 답만 받아오는 헬퍼
 export async function queryKeyword(input_query: string): Promise<any> {
-  const response = await client.chat.completions.create({
-    model: "gpt-4.1-nano",
+  const response = await xaiClient.chat.completions.create({
+    model: "grok-4-fast-non-reasoning",
     messages: [
       { role: "system", content: "You are a helpful assistant." },
       {
         role: "user",
         content: `
-Below is the input query of a user. 나중에 검색 목록에서 무엇을 검색했었는지 다시 기억하고 찾기 쉽게, 2-3 단어의 키워드로 만들어줘.
+Below is the input query of a user. 나중에 검색 목록에서 무엇을 검색했었는지 다시 기억하고 찾기 쉽게, 의미를 유지한채로 2-3 단어의 키워드로 만들어줘.
+You should return in english.
 
 Input Query: ${input_query}
 

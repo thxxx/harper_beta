@@ -3,6 +3,7 @@ import { dateToFormat } from "@/utils/textprocess";
 import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import React, { useMemo } from "react";
+import { ExperienceCal } from "../[id]";
 
 const ItemBox = ({
   title,
@@ -50,12 +51,12 @@ const ItemBox = ({
       <div className="flex flex-row items-start justify-between">
         <div className="flex flex-row items-start justify-start gap-3">
           {!isEdu && (
-            <div>
+            <div onClick={() => onButtonClick()} className="">
               {logo_url ? (
                 <img
                   src={logo_url}
                   alt={name}
-                  className="w-12 h-12 mt-[1px] rounded-sm object-cover border border-white/5"
+                  className="transition-all duration-200 w-12 h-12 mt-[1px] rounded-sm object-cover border border-white/5 cursor-pointer hover:border-accenta1"
                 />
               ) : (
                 <div className="w-12 h-12 mt-[1px] rounded-sm flex items-center justify-center text-lg bg-accenta1/70">
@@ -80,7 +81,7 @@ const ItemBox = ({
           {startDate}
           <span className="px-1"> - </span>
           {!endDate ? <span className="text-accenta1">Present</span> : endDate}
-          {typeof months === "number" ? ` (${months}개월) ` : ""}
+          {typeof months === "number" ? ` (${ExperienceCal(months)})` : ""}
         </div>
       </div>
       {description && (

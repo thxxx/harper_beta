@@ -30,14 +30,14 @@ const Bookmarkbutton = ({
   return (
     <button
       onClick={toggleBookmark}
-      className="cursor-pointer h-10 px-4 rounded-xl bg-white/10 text-white flex flex-row items-center gap-2"
+      className="cursor-pointer text-sm h-10 px-4 rounded-xl bg-white/10 text-white flex flex-row items-center gap-2"
     >
       {isBookmarked ? (
         <Bookmark className="w-4 h-4 text-white" fill="white" />
       ) : (
         <Bookmark className="w-4 h-4 text-white" />
       )}
-      {isText && <span>Save</span>}
+      {isText && <span>{isBookmarked ? "Saved" : "Save"}</span>}
     </button>
   );
 };

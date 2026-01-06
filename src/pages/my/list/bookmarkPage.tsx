@@ -1,10 +1,9 @@
-import AppLayout from "@/components/layout/app";
-import CandidateList from "@/components/CandidatesList";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useBookmarkedCandidates } from "@/hooks/useBookMarkCandidates";
 import CandidateCard from "@/components/CandidatesList";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
+import PrevNextButtons from "./components/PrevNextButtons";
 
 export default function BookmarksPage() {
   const { companyUser } = useCompanyUserStore();
@@ -26,16 +25,7 @@ export default function BookmarksPage() {
           </div>
         )}
       </div>
-      <div className="flex items-center justify-center w-full py-8 flex-col">
-        <div className="flex items-center justify-center gap-1 flex-row">
-          <div className="p-1 rounded-sm border border-xgray400">
-            <ChevronLeft size={20} className="text-xgray600" />
-          </div>
-          <div className="p-1 rounded-sm border border-xgray400">
-            <ChevronRight size={20} className="text-xgray600" />
-          </div>
-        </div>
-      </div>
+      <PrevNextButtons />
     </div>
   );
 }

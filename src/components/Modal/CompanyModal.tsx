@@ -3,11 +3,28 @@ import { useCompanyModalStore } from "@/store/useModalStore";
 import LinkChips from "@/pages/my/p/components/LinkChips";
 import { XIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import LinkPreview from "../LinkPreview";
 
 export default function CompanyModalRoot() {
   const { isOpen, payload, close } = useCompanyModalStore();
   const company = payload?.company;
   const closeOnBackdrop = payload?.closeOnBackdrop ?? true;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 모달 열릴 때 히스토리 스택 하나 추가
+    history.pushState({ modal: "company" }, "");
+
+    const onPopState = (e: PopStateEvent) => {
+      close();
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [isOpen, close]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,7 +75,7 @@ export default function CompanyModalRoot() {
             role="dialog"
             aria-modal="true"
             className={[
-              "absolute right-0 top-0 h-full px-8 overflow-y-auto",
+              "absolute right-0 top-0 h-full px-8 overflow-y-scroll pb-20",
               "w-[min(560px,92vw)]",
               "bg-hgray200 text-hgray900",
               "shadow-2xl",
@@ -82,13 +99,11 @@ export default function CompanyModalRoot() {
             {/* Header */}
             <div className="flex items-start justify-between gap-4 px-5 py-4 pt-20">
               <div className="flex flex-row gap-6 items-start justify-start">
-                <div>
-                  <img
-                    src={company.logo ?? ""}
-                    alt={company.name ?? ""}
-                    className="w-20 h-20 rounded-md object-cover"
-                  />
-                </div>
+                <img
+                  src={company.logo ?? ""}
+                  alt={company.name ?? ""}
+                  className="w-20 h-20 rounded-md object-cover"
+                />
                 <div className="min-w-0">
                   <div className="text-3xl font-medium leading-6">
                     {company.name ?? "Company"}
@@ -112,9 +127,11 @@ export default function CompanyModalRoot() {
               <Section title="Company Information">
                 <div className="mt-3 space-y-2 text-sm">
                   <Row label="HQ" value={company.location} />
-                  {company.founded_year && (
-                    <Row label="Established" value={company.founded_year} />
-                  )}
+                  {company.founded_year !== null &&
+                    company.founded_year !== undefined &&
+                    company.founded_year > 1000 && (
+                      <Row label="Established" value={company.founded_year} />
+                    )}
                   {company.website_url && (
                     <Row label="Website" value={company.website_url} isLink />
                   )}
@@ -122,16 +139,16 @@ export default function CompanyModalRoot() {
                 </div>
               </Section>
 
-              {company.description ? (
+              {company.short_description || company.description ? (
                 <Section title="Company Information">
                   <p className="mt-2 text-sm leading-6 whitespace-pre-wrap font-light">
-                    {company.description}
+                    {company.short_description ?? company.description}
                   </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-6 flex flex-wrap gap-2">
                     {tags.map((t) => (
                       <span
                         key={t}
-                        className="rounded-md bg-white/10 px-3 py-2 text-xs"
+                        className="rounded-md bg-white/5 px-3 py-2 text-xs"
                       >
                         {t}
                       </span>
@@ -146,7 +163,7 @@ export default function CompanyModalRoot() {
                     {company.investors.split(",").map((i) => (
                       <span
                         key={i}
-                        className="rounded-md bg-white/10 px-3 py-2 text-xs"
+                        className="rounded-md bg-white/5 px-3 py-2 text-xs"
                       >
                         {i}
                       </span>
@@ -159,9 +176,7 @@ export default function CompanyModalRoot() {
                 <Section title="Important News">
                   <div className="mt-4 flex flex-wrap gap-2">
                     {company.related_links.map((l) => (
-                      <a key={l} href={l} target="_blank" rel="noreferrer">
-                        {l}
-                      </a>
+                      <LinkPreview key={l} url={l} />
                     ))}
                   </div>
                 </Section>
@@ -214,7 +229,7 @@ const Section = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex flex-col gap-4 w-full max-w-full">
+    <div className="flex flex-col gap-2 w-full max-w-full">
       <div className="text-lg text-hgray900 font-normal">{title}</div>
       <div className="text-hgray900 max-w-full overflow-x-hidden">
         {children}

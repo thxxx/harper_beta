@@ -35,7 +35,7 @@ export default function MyPage() {
       <div className="min-h-screen w-full">
         {/* Header */}
         <div className="sticky top-0 z-20 w-full backdrop-blur">
-          <div className="mx-auto w-full px-4 py-6">
+          <div className="mx-auto w-full px-4 pt-6 pb-2">
             <div className="flex items-end justify-between gap-4">
               <div className="text-3xl font-hedvig font-light tracking-tight text-white">
                 {title}
@@ -59,7 +59,7 @@ export default function MyPage() {
                       type="button"
                       onClick={() => setCurrentPage(t.key)}
                       className={[
-                        "relative rounded-3xl px-5 py-3 text-sm font-light transition",
+                        "relative rounded-3xl px-5 py-3 text-sm font-normal transition",
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20",
                         active
                           ? "bg-white/10 text-white shadow-sm"

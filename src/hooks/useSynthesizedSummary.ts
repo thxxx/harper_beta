@@ -48,6 +48,7 @@ async function generateSynthesizedSummary(args: {
   criteria: string[];
   raw_input_text?: string | null;
 }) {
+  console.log("generateSynthesizedSummary ");
   const res = await fetch("/api/search/criteria_summarize", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -89,7 +90,6 @@ export function useSynthesizedSummary(params?: {
     enabled = true,
     text,
   } = params ?? {};
-
   return useQuery({
     queryKey: synthesizedSummaryKey(queryId, candidId),
     enabled: !!queryId && !!candidId && enabled,
@@ -97,7 +97,6 @@ export function useSynthesizedSummary(params?: {
     queryFn: async () => {
       const qid = queryId!;
       const cid = candidId!;
-
       if (text && text.length > 0) {
         return text;
       }

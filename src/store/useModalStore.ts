@@ -29,7 +29,6 @@ type ModalState = {
   // 새로 추가될 액션
   handleOpenCompany: (params: {
     companyId: number | string;
-    fallbackUrl: string;
     queryClient: QueryClient;
   }) => Promise<void>;
 };
@@ -47,12 +46,11 @@ export const useCompanyModalStore = create<ModalState>((set, get) => ({
   },
 
   // 로직을 스토어 안으로 이동
-  handleOpenCompany: async ({ companyId, fallbackUrl, queryClient }) => {
+  handleOpenCompany: async ({ companyId, queryClient }) => {
     const id = Number(companyId);
 
     // 1. 유효성 검사 및 Fallback 처리
     if (!Number.isFinite(id) || id === 0) {
-      window.open(fallbackUrl, "_blank");
       return;
     }
 
@@ -64,16 +62,20 @@ export const useCompanyModalStore = create<ModalState>((set, get) => ({
         staleTime: 1000 * 60 * 30,
         gcTime: 1000 * 60 * 60 * 6,
       });
+      console.log("data", data, data && data.founded_year);
 
       // 3. 결과에 따른 분기
-      if (data) {
+      if (
+        data &&
+        data.founded_year !== null &&
+        data.founded_year !== undefined
+      ) {
         get().open({ company: data });
       } else {
-        window.open(fallbackUrl, "_blank");
+        window.open(data?.linkedin_url ?? "https://www.linkedin.com", "_blank");
       }
     } catch (error) {
       console.error("Failed to fetch company data:", error);
-      window.open(fallbackUrl, "_blank");
     }
   },
 }));
