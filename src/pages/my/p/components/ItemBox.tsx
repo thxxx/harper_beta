@@ -41,7 +41,6 @@ const ItemBox = ({
   const onButtonClick = () => {
     handleOpenCompany({
       companyId: company_id ?? "",
-      fallbackUrl: link,
       queryClient: qc,
     });
   };
