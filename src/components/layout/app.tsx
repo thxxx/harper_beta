@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   List,
@@ -9,11 +9,10 @@ import {
   PanelLeft,
   PanelLeftOpen,
   Database,
-  MoreHorizontal,
   User,
   LogOut,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useCredits } from "@/hooks/useCredit";
 import HistoryItem, { NavItem } from "./HistoryItem";
@@ -33,13 +32,36 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [openHistory, setOpenHistory] = useState(true);
   const { credits, isLoading: isLoadingCredits } = useCredits();
 
-  const { companyUser } = useCompanyUserStore();
+  const { companyUser, loading, initialized } = useCompanyUserStore();
+
   const router = useRouter();
+  const params = useParams();
+  useEffect(() => {
+    if (!initialized) return; // ✅ 로드 완료 전엔 아무 것도 하지 않음
+
+    if (!companyUser) {
+      router.replace("/companies"); // push보다 replace 추천 (뒤로가기로 돌아오는거 방지)
+    }
+  }, [initialized, companyUser]);
+
   const pathname = usePathname();
   const isHome = pathname === "/my";
   const isList = pathname === "/my/list";
 
   const userId = companyUser?.user_id;
+
+  // ✅ /my/c/[queryId] 라면 queryId 읽기 (쿼리스트링 유무 무관)
+  const activeQueryId = useMemo(() => {
+    // route가 app/my/c/[queryId]/page.tsx 형태라면 params.queryId가 잡힘
+    const q = params?.queryId;
+    if (typeof q === "string" && q.length > 0) return q;
+    if (Array.isArray(q) && q[0]) return q[0];
+
+    // 혹시 파일 구조가 아직 동적 라우트가 아니라면 fallback으로 pathname 파싱
+    // /my/c/~~~ 형태에서 ~~~만 추출
+    const m = pathname?.match(/^\/my\/c\/([^/?#]+)/);
+    return m?.[1] ?? null;
+  }, [params, pathname]);
 
   return (
     <div className="flex h-screen w-full bg-white text-neutral-900 font-roboto overflow-hidden">
@@ -112,7 +134,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* 2. Nav & History: 이 영역이 스크롤됨 */}
         <div className="mt-1 px-3 pb-3 gap-1 flex-1 overflow-y-auto">
           {openHistory && userId && (
-            <QueryHistories collapsed={collapsed} userId={userId} />
+            <QueryHistories
+              collapsed={collapsed}
+              userId={userId}
+              activeQueryId={activeQueryId}
+            />
           )}
         </div>
 
@@ -205,10 +231,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-screen overflow-y-auto bg-hgray200 text-white scroll-smooth">
+      <main
+        id="app-scroll"
+        className="flex-1 h-screen overflow-y-auto bg-hgray200 text-white scroll-smooth"
+      >
         {/* overflow-scroll 대신 overflow-y-auto 사용 (필요할 때만 스크롤바 생성) */}
         <div className="max-w-5xl mx-auto px-4 pb-24 min-h-full flex flex-col items-center">
-          {!isLoadingCredits && children}
+          {!isLoadingCredits && userId && children}
         </div>
       </main>
     </div>

@@ -13,6 +13,7 @@ import { showToast } from "@/components/toast/toast";
 import { buildSummary, ensureGroupBy } from "@/utils/textprocess";
 import { supabase } from "@/lib/supabase";
 import { transformSql } from "@/app/api/search/utils";
+import { xaiInference } from "@/lib/llm/llm";
 
 const Home: NextPage = () => {
   const [query, setQuery] = useState("");
@@ -153,12 +154,18 @@ ORDER BY i.fts_rank DESC, i.id
     // console.log("information ", information);
   };
 
+  const testLLM = async () => {
+    const response = await fetch("/api/hello");
+    const data = await response.json();
+    console.log("data ", data);
+  };
+
   return (
     <AppLayout>
       <main className="flex-1 flex items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
           <h1
-            onClick={testSql}
+            onClick={testLLM}
             className="text-2xl sm:text-3xl font-semibold font-hedvig tracking-tight text-center leading-relaxed"
           >
             Hello, {companyUser?.name.split(" ")[0]}

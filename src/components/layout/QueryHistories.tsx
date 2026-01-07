@@ -6,9 +6,11 @@ import HistoryItem from "./HistoryItem";
 const QueryHistories = ({
   collapsed,
   userId,
+  activeQueryId,
 }: {
   collapsed: boolean;
   userId: string;
+  activeQueryId: string | null;
 }) => {
   // fetchNextPage, hasNextPage, isFetchingNextPage 추가
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
@@ -38,6 +40,7 @@ const QueryHistories = ({
           queryItem={queryItem}
           onDelete={deleteQueryItem}
           collapsed={collapsed}
+          isActive={activeQueryId === queryItem.query_id}
         />
       ))}
 
@@ -56,4 +59,4 @@ const QueryHistories = ({
   );
 };
 
-export default QueryHistories;
+export default React.memo(QueryHistories);

@@ -1,111 +1,35 @@
 import { geminiInference, xaiClient, xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
-import { ensureGroupBy, replaceName } from "@/utils/textprocess";
+import { buildSummary, ensureGroupBy, replaceName } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
-import { sqlPrompt, criteriaPrompt, sqlPrompt2 } from "./prompt";
-import { transformSql } from "./utils";
+import { criteriaPrompt, sqlPrompt2, sqlExistsPrompt } from "./prompt";
+import { generateSummary } from "./criteria_summarize/route";
+import {
+  deduplicateAndScore,
+  mapWithConcurrency,
+  ScoredCandidate,
+  sumScore,
+} from "./utils";
 
-const rerankByLLM = async (rawinput: string, candidates: any[]) => {
-  if (candidates.length === 0) return [];
-
-  const idRemoved = candidates.map((item, index) => {
-    return {
-      index: index,
-      name: item["name"],
-      headline: item["headline"],
-      summary: replaceName(item["summary"], item["name"]),
-      bio: item["bio"],
-    };
+export const updateQueryStatus = async (
+  queryId: string,
+  userId: string,
+  status: string
+) => {
+  await supabase.from("queries").upsert({
+    query_id: queryId,
+    user_id: userId,
+    status: status,
   });
-
-  console.log("rawinput ", rawinput);
-  // console.log("idRemoved ", idRemoved);
-
-  // let sortedIndexes = await xaiInference(
-  let sortedIndexes = await geminiInference(
-    "gemini-3-flash-preview",
-    // "grok-4-fast-reasoning",
-    "You are a helpful assistant, relevance selection engine.",
-    `
-Goal:
-Given a user Query and a list of people documents (Docs), evaluate how well each document matches the Query intent.
-
-Input:
-- Query: short natural-language query for finding a person.
-- Docs: array of people objects with:
-  - index (integer)
-  - name (string)
-  - headline (string)
-  - summary (string)
-
-Task:
-1) Read the Query and infer intent precisely.
-2) You MUST evaluate ALL docs. Do not skip or stop early.
-3) For EACH doc, assign a relevance score from 1 to 5 based ONLY on (name, headline, summary, bio).
-4) The score must reflect how well the doc satisfies the Query intent.
-
-Scoring Guidance:
-- Query와 가장 거리가 먼 사람에게는 1점, 가장 거리가 가까운 사람에게는 5점. 모두 연관이 없거나 모두 연관이 있더라도 최대한 다양하게 분배해줘.
-
-Rules:
-- Do NOT invent facts.
-- Use ONLY the provided text.
-- If the query implies hands-on experience, prioritize direct personal participation.
-- You must output EXACTLY one score per input doc.
-
-Output Format (STRICT):
-- Output ONLY a JSON array.
-- Each element MUST be an object: { "index": number, "score": number }
-- Array length MUST equal the number of input docs.
-- Do NOT sort.
-- No extra text, no markdown.
-
-OUTPUT EXAMPLE:
-[
-  { "index": 0, "score": 5 },
-  { "index": 1, "score": 1 },
-  { "index": 2, "score": 3 },
-  { "index": 3, "score": 1 },
-  { "index": 4, "score": 4 }, 
-  ...
-]
-
-Input:
-Query: ${rawinput}
-Docs: ${idRemoved}
-`,
-    0.5
-  );
-
-  const sortedIndexe = JSON.parse(sortedIndexes as string);
-  console.log("sortedIndexes ", sortedIndexe);
-  type Scored = { index: number; score: number };
-
-  function pickTopK(scored: Scored[], k = 10): number[] {
-    return scored
-      .slice()
-      .sort((a, b) => b.score - a.score || a.index - b.index)
-      .slice(0, k)
-      .map((v) => v.index);
-  }
-
-  let sortedCandidates = [];
-  for (const index of pickTopK(sortedIndexe)) {
-    sortedCandidates.push(candidates[index]["id"]);
-    // sortedCandidates.push(candidates[parseInt(index)]["id"]);
-  }
-
-  return sortedCandidates;
 };
 
-async function parseQueryForCriteria(
+export async function parseCriteria(
   queryText: string
 ): Promise<{ criteria: string[]; rephrasing: string; thinking: string }> {
   const prompt = `
 ${criteriaPrompt}
 ${queryText}
 `.trim();
-
   // Responses API + structured outputs (text.format)
   const outText = await xaiInference(
     "grok-4-fast-reasoning",
@@ -124,64 +48,63 @@ ${queryText}
   return outJson as any;
 }
 
-async function parseQueryWithLLM(
+export async function parseQueryWithLLM(
   queryText: string,
   criteria: string[],
-  thinking: string
+  extraInfo: string = ""
 ): Promise<string> {
-  const prompt = `
+  let prompt = `
 ${sqlPrompt2}
 Natural Language Query: ${queryText}
 Criteria: ${criteria}
 `.trim();
+  if (extraInfo) {
+    prompt += `
+Extra Info: ${extraInfo}
+`;
+  }
 
   // Responses API + structured outputs (text.format)
   const outText = await geminiInference(
-    // "grok-4-fast-reasoning",
-    // "grok-4-fast-reasoning",
     "gemini-3-flash-preview",
     "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
     prompt,
     0.5
   );
+  const cleanText = (outText as string).trim().replace(/\n/g, " ").trim();
 
-  const cleanedResponse = (outText as string).trim().replace(/\n/g, " ").trim();
+  // const transformedSqlQuery = transformSql(cleanedResponse);
+  const sqlQuery = `
+SELECT DISTINCT ON (T1.id)
+  to_json(T1.id) AS id,
+  T1.name,
+  T1.headline,
+  T1.location
+FROM 
+  candid AS T1
+${cleanText}
+`;
+  const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "");
+  console.log(
+    "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n",
+    sqlQueryWithGroupBy,
+    "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n"
+  );
 
-  const pp2 = `
-${sqlPrompt2}
-SQL Query: ${cleanedResponse}
----
-Given the prompt above as input, a SQL query has already been generated.
-Your task is to analyze this SQL query and determine whether there are any parts that could lead to incorrect or misleading search results, or whether the query is logically sound as-is. If improvements can be made to achieve better candidate matching, explain what should be adjusted and why, then output a revised SQL query.
-The focus is not SQL syntax correctness, but whether the query logically retrieves the right people.
-
-In particular, analyze:
-- Is the search scope too narrow or too broad?
-- Are meaningful synonyms and variations sufficiently covered?
-- Are there unnecessary constraints that could exclude valid candidates?
-- Are any essential conditions missing?
-- Do the AND / OR groupings correctly reflect the intended semantics?
-- to_tsquery 안에서는 두개의 단어를 공백이 아니라 <->로 연결해야한다.
-
-If the query is already logically optimal, it does not need to be modified.
-
-Important constraints
-- Do not modify the ILIKE keyword structure.
-- Keywords inside ILIKE '%%' are intentionally separated using | and must remain unchanged.
-
-OUTPUT Format should be JSON with keys: "analysis" and "fixed_sql_query".
-- analysis: string
-- fixed_sql_query: string
+  const pp2 =
+    sqlExistsPrompt +
+    `
+Input SQL Query: 
+"""
+${sqlQueryWithGroupBy}
+"""
 `;
 
-  const outText2 = await xaiInference(
-    "grok-4-fast-reasoning",
-    "You are a logical SQL Query refinement expert.",
+  const outText2 = await geminiInference(
+    "gemini-3-flash-preview",
+    "You are a SQL Query refinement expert.",
     pp2,
-    0.5,
-    1,
-    false,
-    "search_query_parser_harper_20260105"
+    0.4
   );
   const cleanedResponse2 = (outText2 as string)
     .trim()
@@ -194,137 +117,97 @@ OUTPUT Format should be JSON with keys: "analysis" and "fixed_sql_query".
     "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n"
   );
 
-  const outJson = JSON.parse(cleanedResponse2);
+  // const outJson = JSON.parse(cleanedResponse2);
+  const sqlQueryWithGroupBy2 = ensureGroupBy(cleanedResponse2, "");
 
-  return outJson.fixed_sql_query;
+  return sqlQueryWithGroupBy2;
 }
 
-const makeSqlQuery = async (
+/**
+ * raw_input_text, criteria를 받아서 SQL 쿼리를 만들고, 50명을 검색하고, 요약을 만들고, 만족하는 10명을 점수와 함께 리턴하는 함수
+ */
+export const searchDatabase = async (
+  raw_input_text: string,
+  criteria: string[],
+  pageIdx: number,
   queryId: string,
   userId: string,
-  rawInputText: string
+  sql_query: string,
+  limit: number = 50,
+  offset: number = 0
 ) => {
-  // input query로 SQL문을 만들어뒀는지 아닌지
-  try {
-    const middleOutput = await parseQueryForCriteria(rawInputText);
+  // const sqlQueryWithGroupBy = ensureGroupBy(sql_query, ""); // 다듬기
+  console.log("sqlQueryWithGroupBy === \n", sql_query, "\n---\n");
 
-    const upsertRes = await supabase.from("queries").upsert({
-      query_id: queryId,
-      user_id: userId,
-      criteria: middleOutput.criteria,
-      thinking: middleOutput.rephrasing + "\n" + middleOutput.thinking,
-      status: "Thinking how to get the best candidates",
-    });
+  const upRes2 = await supabase.from("queries").upsert({
+    query_id: queryId,
+    user_id: userId,
+    query: sql_query,
+    status: "Searching Database...",
+  });
 
-    const sql_query = await parseQueryWithLLM(
-      rawInputText,
-      middleOutput.criteria,
-      middleOutput.rephrasing + "\n" + middleOutput.thinking
-    );
-
-    const upsertRes2 = await supabase.from("queries").upsert({
-      query_id: queryId,
-      user_id: userId,
-      query: sql_query,
-      status: "Searching Database...",
-    });
-
-    console.log("upsertRes ", upsertRes);
-
-    return sql_query;
-  } catch (e) {
-    console.log("parseQueryWithLLM error ", e);
-    return null;
-  }
-};
-
-const search = async () => {};
-
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { queryId, pageIdx } = body;
-
-  if (!queryId)
-    return NextResponse.json({ error: "Missing queryId" }, { status: 400 });
-
-  // 검색 후 저장해둔 사용자 검색 결과가 있는지 찾기
-  const { data: resultsPages, error: lpErr } = await supabase
-    .from("query_pages")
-    .select("*")
-    .eq("query_id", queryId)
-    .eq("page_idx", pageIdx);
-
-  const results = resultsPages?.[0];
-
-  console.log(pageIdx, "쿼리와 results ", results, lpErr);
-  if (lpErr)
-    return NextResponse.json({ error: lpErr.message }, { status: 500 });
-
-  const nextPageIdx = pageIdx + 1;
-  // 이미 검색한 결과가 있다면 그대로 리턴
-  if (results) {
-    return NextResponse.json(
-      { nextPageIdx, results: results.candidate_ids },
-      { status: 200 }
-    );
-  }
-
-  // 저장되어있는 결과가 없다면 새롭게 검색해야한다는 뜻.
-  const { data: q, error: qErr } = await supabase
-    .from("queries")
-    .select("query_id,user_id,raw_input_text,query,criteria")
-    .eq("query_id", queryId)
-    .single();
-
-  console.log("일단 쿼리 확인 : ", q);
-
-  if (qErr || !q || !q.raw_input_text)
-    return NextResponse.json({ error: "Query not found" }, { status: 404 });
-
-  // 저장되어있는 결과가 없다면 새롭게 검색해야한다는 뜻.
-  let parsed_query = q.query;
-
-  // input query로 SQL문을 만들어뒀는지 아닌지
-  if (!parsed_query) {
-    parsed_query = await makeSqlQuery(queryId, q.user_id, q.raw_input_text);
-    if (!parsed_query)
-      return NextResponse.json(
-        { error: "Failed to make SQL query" },
-        { status: 500 }
-      );
-  }
-
-  // LLM이 생성해야 하는 안전한 SQL 쿼리 (예시)
-  const transformedSqlQuery = transformSql(parsed_query);
-  const sqlQuery = `
-SELECT DISTINCT ON (T1.id)
-  to_json(T1.id) AS id,
-  T1.name,
-  T1.headline,
-  T1.summary
-FROM 
-  candid AS T1
-${transformedSqlQuery}
-`;
-  const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "GROUP BY T1.id");
-  console.log("sqlQueryWithGroupBy === \n", sqlQueryWithGroupBy, "\n---\n");
-
-  const limit = 50;
+  const start_time = performance.now();
   let data: any[] | null = [];
   let error;
-  try {
-    const { data: data1, error: error1 } = await supabase.rpc(
+  const { data: data1, error: error1 } = await supabase.rpc(
+    "set_timeout_and_execute_raw_sql",
+    {
+      sql_query: sql_query,
+      page_idx: pageIdx,
+      limit_num: limit,
+      offset_num: offset,
+    }
+  );
+  data = data1;
+  error = error1;
+  const end_time = performance.now();
+  console.log(
+    "\n\ntime for fetching data : ",
+    end_time - start_time,
+    error,
+    "\n\n"
+  );
+
+  if (error && error.message.includes("timeout")) {
+    console.log("\n\n⚠️ 그냥 Database 쿼리 자체만 한번 더 실행 ==");
+    updateQueryStatus(queryId, userId, "🐦‍🔥 Searching Again...");
+    const { data: data2, error: error2 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
       {
-        sql_query: sqlQueryWithGroupBy,
+        sql_query: sql_query,
         page_idx: pageIdx,
         limit_num: limit,
+        offset_num: offset,
       }
     );
-    data = data1;
-    error = error1;
-  } catch (err) {
-    console.log("First sql query error ", err, "== try second ==");
+    data = data2;
+    error = error2;
+  }
+
+  if (error) {
+    console.log("\n\n⚠️ First sql query error == try second == ", error);
+    updateQueryStatus(queryId, userId, "Fixing SQL Query and issues...");
+
+    let additional_prompt = "";
+    if (error.message.includes("timeout")) {
+      additional_prompt = `
+If the error indicates a timeout (e.g., contains any of: timeout, statement timeout, canceling statement due to statement timeout, 504, Function timed out, deadline exceeded), treat it as a performance-fix task rather than a syntax-fix task.
+
+**TIMEOUT rules**
+- Preserve the meaning and returned rows as much as possible, but you MAY restructure the query ONLY to reduce execution time.
+- Prefer a two-phase approach for speed: first select only T1.id (and any columns required for ORDER BY / DISTINCT ON) with restrictive filters and LIMIT, then join other tables to fetch the final columns.
+- Do NOT add new tables. Do NOT add new filtering logic. Do NOT change ranking/ordering semantics.
+- Allowed performance-only transformations (choose the minimum needed):
+- Replace JOIN-based filtering with EXISTS subqueries when the joined table is used only for filtering (keeps semantics, reduces row explosion).
+- If the query uses LEFT JOIN but filters on the joined table in WHERE, rewrite to EXISTS (or change to INNER JOIN) without changing logic.
+- Add DISTINCT/DISTINCT ON only if the original query already implied deduplication or is returning duplicates due to joins (do not change results otherwise).
+- Push down WHERE filters into the phase-1 id subquery/CTE so fewer rows are joined later.
+- Avoid selecting large JSON/text columns in phase-1; fetch them only in phase-2.
+- Keep all tsvector / tsquery logic as-is (@@ and tsquery functions), except minimal fixes required to avoid tsquery syntax errors.
+- Output MUST be a single valid SQL statement only. No explanations.
+- **중요** DB Search 속도를 위해서는 먼저 조건을 만족하는 candid의 id만 뽑고, 그 다음에 table을 JOIN으로 붙여야 한다.
+`;
+    }
     let fixed_query = await xaiInference(
       "grok-4-fast-reasoning",
       "You are a specialized SQL query fixing assistant. If there are any errors in the SQL query, fix them and return the fixed SQL query.",
@@ -343,102 +226,334 @@ Critical rules:
 - If the error is caused by tsquery syntax, fix the query string minimally (escaping, removing illegal operators, using websearch_to_tsquery, etc.).
 - If the error is caused by ambiguous columns/aliases, qualify with table aliases instead of changing logic.
 - If the error is caused by type mismatch, cast minimally.
-- Output MUST be a single valid SQL statement only. No explanations, no markdown, no comments.
-- always start with "WHERE"
-
+- Output MUST be a single valid SQL statement only. No explanations, no markdown, no comments, no codeblock.
+- 속도를 위해서는 먼저 id만 뽑고(LIMIT), 그 다음에 table을 붙이는게 낫다.
+${additional_prompt}
 Inputs:
 [SQL]
-${sqlQueryWithGroupBy},
+${sql_query},
 
 [ERROR]
-${err}
+${error.message}
 
 Return:
-A corrected SQL query.`,
+A corrected SQL query.
+`,
       0.2,
       1
     );
 
     console.log("⚠️ ==== fixed_query ==== \n\n", fixed_query);
+    const sqlQueryWithGroupBy2 = ensureGroupBy(fixed_query as string, "");
+    const upRes3 = await supabase.from("queries").upsert({
+      query_id: queryId,
+      user_id: userId,
+      query: fixed_query as string,
+      status: "Searching New Candidates...",
+    });
 
     const { data: data2, error: error2 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
       {
-        sql_query: fixed_query as string,
+        sql_query: sqlQueryWithGroupBy2,
         page_idx: pageIdx,
         limit_num: limit,
+        offset_num: offset,
       }
     );
     data = data2;
+    error = error2;
   }
 
-  console.log("data ", data, "\n\nError : ", error);
-  supabase.from("queries").upsert({
-    query_id: queryId,
-    user_id: q.user_id,
-    status: "Got candidates! Identifying suitable candidates.",
-  });
+  console.log(
+    "총 가져온 지원자 data : ",
+    data?.[0]?.length,
+    // JSON.stringify(data?.[0]?.slice(0, 1), null, 2),
+    "\nError : ",
+    error
+  );
+  if (!data || !data[0] || data[0].length === 0) {
+    return [];
+  }
 
-  try {
-    if (!data || !data[0] || data[0].length === 0) {
-      const { error: insErr } = await supabase.from("query_pages").insert({
-        query_id: queryId,
-        page_idx: pageIdx,
-        candidate_ids: [],
-      });
-      console.log("data is empty", insErr);
-      return NextResponse.json(
-        { page_idx: pageIdx, results: [] },
-        { status: 500 }
-      );
+  await updateQueryStatus(
+    queryId,
+    userId,
+    "Reading and analyzing candidates' information..."
+  );
+
+  const fullScore = criteria.length * 2;
+  // 50명을 각각 synthesize해서 요약을 만들기.
+  const scored: ScoredCandidate[] = await mapWithConcurrency(
+    data[0] as any[],
+    10,
+    async (candidate) => {
+      const id = candidate.id as string;
+
+      let lines: string[] = [];
+      try {
+        const summary = await generateSummary(
+          candidate,
+          criteria,
+          raw_input_text
+        );
+        lines = JSON.parse(summary as string);
+        // console.log(candidate["name"], " lines ", lines);
+        await supabase.from("synthesized_summary").upsert({
+          candid_id: id,
+          query_id: queryId,
+          text: summary as string,
+        });
+      } catch (e) {
+        lines = [];
+      }
+
+      const score = sumScore(lines);
+      console.log("score ", score, fullScore);
+
+      return {
+        id,
+        score:
+          fullScore !== 0 ? Math.round((score / fullScore) * 100) / 100 : 1,
+      };
     }
+  );
 
-    if (data[0].length < 12) {
-      const cids =
-        (data[0] as Array<any>)?.slice(0, 10).map((r: any) => r.id) ?? [];
+  // Sort desc by score, tie-breaker optional (stable-ish by id)
+  scored.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 
-      const { error: insErr } = await supabase.from("query_pages").insert({
+  return scored;
+};
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { queryId, pageIdx } = body;
+
+  if (!queryId)
+    return NextResponse.json({ error: "Missing queryId" }, { status: 400 });
+
+  let offset = 0;
+  let cachedCandidates: any[] = [];
+
+  // 이미 검색해둔 결과가 있는지 찾기
+  const { data: resultsPages, error: lpErr } = await supabase
+    .from("query_pages")
+    .select("*")
+    .eq("query_id", queryId)
+    .eq("page_idx", pageIdx);
+
+  const nextPageIdx = pageIdx + 1;
+  const cachedResults = resultsPages?.[0];
+  console.log(pageIdx, "쿼리와 results ", cachedResults);
+
+  // 이미 검색한 결과가 있다면 그대로 리턴
+  if (cachedResults && cachedResults.candidate_ids) {
+    const candidateIds = cachedResults.candidate_ids
+      .slice(0, 10)
+      .map((r: any) => r.id);
+    return NextResponse.json(
+      { nextPageIdx, results: candidateIds },
+      { status: 200 }
+    );
+  } else if (pageIdx > 0) {
+    const { data: prevResultsPages } = await supabase
+      .from("query_pages")
+      .select("*")
+      .eq("query_id", queryId)
+      .eq("page_idx", pageIdx - 1);
+
+    const prevCachedResults = prevResultsPages?.[0];
+    if (
+      !prevResultsPages ||
+      !prevCachedResults ||
+      !prevCachedResults.candidate_ids ||
+      prevCachedResults.candidate_ids.length === 0
+    ) {
+      return NextResponse.json({ nextPageIdx, results: [] }, { status: 200 });
+    }
+    const isLoadMore =
+      (prevCachedResults.candidate_ids.length + pageIdx * 10) % 50 === 0;
+    console.log("prevCachedResults ", prevCachedResults.candidate_ids?.length);
+    if (!isLoadMore) {
+      console.log("\n\n50의 배수가 아닌 경우 그냥 10개 리턴\n\n");
+      // 점수 순으로 나열, 앞 10개 제외하고 뒤 (N-10)개 저장, 리턴은 max(N-10, 10)개 리턴
+      // 같은 쿼리를 날려봤자 50명 이하이기 때문에 똑같음.
+      const candidateIds = prevCachedResults.candidate_ids.slice(10);
+      await supabase.from("query_pages").insert({
         query_id: queryId,
         page_idx: pageIdx,
-        candidate_ids: cids,
+        candidate_ids: candidateIds,
       });
-      console.log("data is less than 12", insErr);
       return NextResponse.json(
         {
-          page_idx: nextPageIdx,
-          results: cids,
+          nextPageIdx,
+          results: candidateIds.slice(0, 10).map((r: any) => r.id),
         },
         { status: 200 }
       );
+    } else if (isLoadMore) {
+      console.log("\n\n50의 배수인 경우\n\n");
+      const candidateIds = prevCachedResults.candidate_ids.slice(10);
+      const scoreSum = candidateIds
+        .slice(0, 10)
+        .reduce((acc: number, curr: any) => acc + curr.score, 0);
+      if (scoreSum >= 10) {
+        await supabase.from("query_pages").insert({
+          query_id: queryId,
+          page_idx: pageIdx,
+          candidate_ids: candidateIds,
+        });
+        return NextResponse.json(
+          {
+            nextPageIdx,
+            results: candidateIds.slice(0, 10).map((r: any) => r.id),
+          },
+          { status: 200 }
+        );
+      } else {
+        //
+        offset = 50;
+        cachedCandidates = candidateIds;
+      }
     }
-  } catch (e: any) {
-    console.log("error in after parsing ", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 
-  const candidateIds = await rerankByLLM(
-    q.criteria?.join(", ") ?? "",
-    data[0] as any[]
+  // 저장되어있는 결과가 없다면 새롭게 검색해야한다는 뜻.
+  const { data: q, error: qErr } = await supabase
+    .from("queries")
+    .select("query_id,user_id,raw_input_text,query,criteria")
+    .eq("query_id", queryId)
+    .single();
+
+  console.log("일단 쿼리 확인 : ", q);
+
+  if (qErr || !q || !q.raw_input_text)
+    return NextResponse.json({ error: "Query not found" }, { status: 404 });
+
+  const uploadBestTenCandidates = async (fullCandidates: any[]) => {
+    updateQueryStatus(
+      queryId,
+      q.user_id,
+      "Got Best 10 Candidates. Now organizing results."
+    );
+    const candidates = fullCandidates.map((r: any) => ({
+      score: r.score,
+      id: r.id,
+    }));
+    // const candidateIds = fullCandidates.slice(0, 10).map((r: any) => r.id);
+    const { error: insErr } = await supabase.from("query_pages").insert({
+      query_id: queryId,
+      page_idx: pageIdx,
+      candidate_ids: candidates,
+    });
+
+    return candidates.slice(0, 10).map((r: any) => r.id);
+  };
+
+  // input query로 SQL문을 만들어뒀는지 아닌지
+  // 저장되어있는 결과가 없다면 새롭게 검색해야한다는 뜻.
+  let parsed_query = q.query;
+  let criteria = q.criteria;
+
+  if (!parsed_query) {
+    updateQueryStatus(
+      queryId,
+      q.user_id,
+      "Thinking how to get the best candidates"
+    );
+    const {
+      criteria: criteria1,
+      rephrasing,
+      thinking,
+    } = await parseCriteria(q.raw_input_text);
+    criteria = criteria1;
+
+    const upRes = await supabase.from("queries").upsert({
+      query_id: queryId,
+      user_id: q.user_id,
+      criteria: criteria,
+      thinking: rephrasing + "\n" + thinking,
+      status: "Making SQL Query...",
+    });
+
+    parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
+  }
+  // 쿼리를 만들었다.
+  let searchResults = await searchDatabase(
+    q.raw_input_text ?? "",
+    criteria ?? [],
+    pageIdx,
+    queryId,
+    q.user_id,
+    parsed_query,
+    50,
+    offset
   );
-  console.log("candidateIds ", candidateIds);
+  console.log(`idWithScores === ${searchResults.length} nums `, searchResults);
 
-  supabase.from("queries").upsert({
-    query_id: queryId,
-    user_id: q.user_id,
-    status: "Got Best 10 Candidates. Now organizing results.",
-  });
+  console.log(
+    "\n\n첫번째 검색이라면, 더 좋은 결과가 나올 수 있게 뭔가 한다.\n\n"
+  );
 
-  const { error: insErr } = await supabase.from("query_pages").insert({
-    query_id: queryId,
-    page_idx: pageIdx,
-    candidate_ids: candidateIds.slice(0, 10),
-  });
+  // score가 1점인 사람 수
+  const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
+  console.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
 
-  if (insErr)
-    return NextResponse.json({ error: insErr.message }, { status: 500 });
+  // 진짜 결과가 적거나, 끝까지 오류가 나서 아무것도 반환되지 않았거나 둘중 하나.
+  if (
+    pageIdx === 20 &&
+    (searchResults.length < 10 ||
+      (searchResults.length >= 30 && oneScoreCount < 5))
+  ) {
+    console.log(
+      "\n\nidWithScores.length < 10 || (idWithScores.length >= 30 && oneScoreCount < 5), 범위를 넓혀서 한번 더 하자.\n\n"
+    );
+    updateQueryStatus(queryId, q.user_id, "Trying to get more candidates...");
 
+    parsed_query = await parseQueryWithLLM(
+      q.raw_input_text,
+      criteria ?? [],
+      `
+이미 한번 검색을 했는데 조건에 맞는 결과가 충분히 잡히지 않았기 때문에, 이번에는 범위를 더 넓혀서 최대한 누군가라도 검색에 잡히도록 좀 더 단순하게 SQL 쿼리를 만들어줘. 아래가 기존에 사용했던 쿼리야.
+
+Original SQL Query:
+"""
+${parsed_query}
+"""
+`
+    );
+
+    // 범위를 넓게 해서 한번 더 하자.
+    const idWithScores2 = await searchDatabase(
+      q.raw_input_text ?? "",
+      criteria ?? [],
+      pageIdx,
+      queryId,
+      q.user_id,
+      parsed_query,
+      50,
+      offset
+    );
+    console.log(
+      "idWithScores second change  === ",
+      idWithScores2.length,
+      idWithScores2
+    );
+
+    searchResults = deduplicateAndScore(searchResults, idWithScores2);
+  }
+
+  const mergeCachedCandidates = deduplicateAndScore(
+    searchResults,
+    cachedCandidates
+  );
+  console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
+  const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
+
+  if (pageIdx === 0 && candidateIds.length === 0) {
+  }
   return NextResponse.json(
-    { nextPageIdx, results: candidateIds.slice(0, 10), isNewSearch: true },
+    { nextPageIdx, results: candidateIds, isNewSearch: true },
     { status: 200 }
   );
 }

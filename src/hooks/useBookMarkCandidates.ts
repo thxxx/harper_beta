@@ -148,3 +148,39 @@ export function useConnectedCandidates(
 ) {
   return useCandidatesByConnectionTyped(userId, 2, pageIdx, pageSize);
 }
+
+export const connectionsCountKey = (userId?: string) =>
+  ["connectionsCount", userId] as const;
+
+async function fetchConnectionCount(userId: string, typed: ConnectionTyped) {
+  const { count, error } = await supabase
+    .from("connection")
+    .select("id", { count: "exact", head: true }) // ✅ rows 없이 count만
+    .eq("user_id", userId)
+    .eq("typed", typed);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export function useConnectionCounts(userId?: string) {
+  return useQuery({
+    queryKey: connectionsCountKey(userId),
+    enabled: !!userId,
+    queryFn: async () => {
+      const uid = userId!;
+      const [bookmark, request, connected] = await Promise.all([
+        fetchConnectionCount(uid, 0),
+        fetchConnectionCount(uid, 1),
+        fetchConnectionCount(uid, 2),
+      ]);
+
+      return { bookmark, request, connected };
+    },
+
+    // "그때그때 바뀌는 값 반영"을 위해 보통 이 조합이 무난
+    staleTime: 3_000, // 캐시 유지(짧게)
+    refetchInterval: 10_000, // 10초마다 자동 갱신 (원하면 끄거나 조정)
+    refetchOnWindowFocus: true, // 탭 다시 보면 갱신
+  });
+}

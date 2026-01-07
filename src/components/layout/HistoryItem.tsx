@@ -15,17 +15,22 @@ const HistoryItem = ({
   queryItem,
   onDelete,
   collapsed,
+  isActive,
 }: {
   queryItem: QueryType;
   onDelete: (queryId: string) => void;
   collapsed: boolean;
+  isActive: boolean;
 }) => {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div
-      className="group relative flex flex-row items-center justify-between px-2.5 py-1.5 text-white font-normal cursor-pointer rounded-lg gap-1 hover:bg-white/5 transition-all duration-200"
+      className={[
+        "group relative flex flex-row items-center justify-between px-2.5 py-1.5 text-white font-normal cursor-pointer rounded-lg gap-1 hover:bg-white/5 transition-all duration-200",
+        isActive ? "bg-white/10" : "",
+      ].join(" ")}
       key={queryItem.query_id}
       onClick={() => router.push(`/my/c/${queryItem.query_id}`)}
     >

@@ -54,7 +54,7 @@ export const xaiInference = async (
   max_retries: number = 1,
   is_json: boolean = false,
   prompt_cache_key: string = ""
-): Promise<string | Object | JSON> => {
+): Promise<string> => {
   const response = await xaiClient.chat.completions.create({
     model: model,
     messages: [
@@ -336,7 +336,7 @@ export async function queryKeyword(input_query: string): Promise<any> {
         role: "user",
         content: `
 Below is the input query of a user. 나중에 검색 목록에서 무엇을 검색했었는지 다시 기억하고 찾기 쉽게, 의미를 유지한채로 2-3 단어의 키워드로 만들어줘.
-You should return in english.
+You should return in korean.
 
 Input Query: ${input_query}
 

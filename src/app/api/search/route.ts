@@ -10,8 +10,9 @@ import {
   ScoredCandidate,
   sumScore,
 } from "./utils";
+import { makeMessage } from "../hello/route";
 
-const updateQueryStatus = async (
+export const updateQueryStatus = async (
   queryId: string,
   userId: string,
   status: string
@@ -23,7 +24,7 @@ const updateQueryStatus = async (
   });
 };
 
-async function parseCriteria(
+export async function parseCriteria(
   queryText: string
 ): Promise<{ criteria: string[]; rephrasing: string; thinking: string }> {
   const prompt = `
@@ -48,7 +49,7 @@ ${queryText}
   return outJson as any;
 }
 
-async function parseQueryWithLLM(
+export async function parseQueryWithLLM(
   queryText: string,
   criteria: string[],
   extraInfo: string = ""
@@ -126,14 +127,15 @@ ${sqlQueryWithGroupBy}
 /**
  * raw_input_text, criteria를 받아서 SQL 쿼리를 만들고, 50명을 검색하고, 요약을 만들고, 만족하는 10명을 점수와 함께 리턴하는 함수
  */
-const searchDatabase = async (
+export const searchDatabase = async (
   raw_input_text: string,
   criteria: string[],
   pageIdx: number,
   queryId: string,
   userId: string,
   sql_query: string,
-  limit: number = 50
+  limit: number = 50,
+  offset: number = 0
 ) => {
   // const sqlQueryWithGroupBy = ensureGroupBy(sql_query, ""); // 다듬기
   console.log("sqlQueryWithGroupBy === \n", sql_query, "\n---\n");
@@ -154,6 +156,7 @@ const searchDatabase = async (
       sql_query: sql_query,
       page_idx: pageIdx,
       limit_num: limit,
+      offset_num: offset,
     }
   );
   data = data1;
@@ -175,6 +178,7 @@ const searchDatabase = async (
         sql_query: sql_query,
         page_idx: pageIdx,
         limit_num: limit,
+        offset_num: offset,
       }
     );
     data = data2;
@@ -255,6 +259,7 @@ A corrected SQL query.
         sql_query: sqlQueryWithGroupBy2,
         page_idx: pageIdx,
         limit_num: limit,
+        offset_num: offset,
       }
     );
     data = data2;
@@ -305,9 +310,13 @@ A corrected SQL query.
       }
 
       const score = sumScore(lines);
-      console.log("score ", score, fullScore, lines);
+      console.log("score ", score, fullScore);
 
-      return { id, score: Math.round((score / fullScore) * 100) / 100 };
+      return {
+        id,
+        score:
+          fullScore !== 0 ? Math.round((score / fullScore) * 100) / 100 : 1,
+      };
     }
   );
 
@@ -324,37 +333,92 @@ export async function POST(req: NextRequest) {
   if (!queryId)
     return NextResponse.json({ error: "Missing queryId" }, { status: 400 });
 
+  let offset = 0;
+  let cachedCandidates: any[] = [];
+
   // 이미 검색해둔 결과가 있는지 찾기
   const { data: resultsPages, error: lpErr } = await supabase
     .from("query_pages")
     .select("*")
     .eq("query_id", queryId)
-    .eq("page_idx", 0);
-  // .eq("page_idx", pageIdx);
-  console.log(pageIdx, "쿼리와 results ", resultsPages?.[0]);
+    .eq("page_idx", pageIdx)
+    .order("created_at", { ascending: false });
 
   const nextPageIdx = pageIdx + 1;
+  const cachedResults = resultsPages?.[0];
+  console.log(pageIdx, "쿼리와 results ", cachedResults);
+
   // 이미 검색한 결과가 있다면 그대로 리턴
-  if (
-    resultsPages?.[0] &&
-    resultsPages?.[0].candidate_ids &&
-    resultsPages?.[0].candidate_ids.length >= pageIdx * 10 + 10 - 1
-  ) {
-    const candidateIds = resultsPages?.[0].candidate_ids.slice(
-      pageIdx * 10,
-      pageIdx * 10 + 10
-    );
+  if (cachedResults && cachedResults.candidate_ids) {
+    const candidateIds = cachedResults.candidate_ids
+      .slice(0, 10)
+      .map((r: any) => r.id);
     return NextResponse.json(
       { nextPageIdx, results: candidateIds },
       { status: 200 }
     );
-  }
-  if (
-    resultsPages?.[0] &&
-    resultsPages?.[0].candidate_ids &&
-    resultsPages?.[0].candidate_ids.length < pageIdx * 10 + 10 - 1
-  ) {
-    return NextResponse.json({ nextPageIdx, results: [] }, { status: 200 });
+  } else if (pageIdx > 0) {
+    const { data: prevResultsPages } = await supabase
+      .from("query_pages")
+      .select("*")
+      .eq("query_id", queryId)
+      .eq("page_idx", pageIdx - 1)
+      .order("created_at", { ascending: false });
+
+    const prevCachedResults = prevResultsPages?.[0];
+    if (
+      !prevResultsPages ||
+      !prevCachedResults ||
+      !prevCachedResults.candidate_ids ||
+      prevCachedResults.candidate_ids.length === 0
+    ) {
+      return NextResponse.json({ nextPageIdx, results: [] }, { status: 200 });
+    }
+    const isLoadMore =
+      (prevCachedResults.candidate_ids.length + pageIdx * 10) % 50 === 0;
+    console.log("prevCachedResults ", prevCachedResults.candidate_ids?.length);
+    if (!isLoadMore) {
+      console.log("\n\n50의 배수가 아닌 경우 그냥 10개 리턴\n\n");
+      // 점수 순으로 나열, 앞 10개 제외하고 뒤 (N-10)개 저장, 리턴은 max(N-10, 10)개 리턴
+      // 같은 쿼리를 날려봤자 50명 이하이기 때문에 똑같음.
+      const candidateIds = prevCachedResults.candidate_ids.slice(10);
+      await supabase.from("query_pages").insert({
+        query_id: queryId,
+        page_idx: pageIdx,
+        candidate_ids: candidateIds,
+      });
+      return NextResponse.json(
+        {
+          nextPageIdx,
+          results: candidateIds.slice(0, 10).map((r: any) => r.id),
+        },
+        { status: 200 }
+      );
+    } else if (isLoadMore) {
+      console.log("\n\n50의 배수인 경우\n\n");
+      const candidateIds = prevCachedResults.candidate_ids.slice(10);
+      const scoreSum = candidateIds
+        .slice(0, 10)
+        .reduce((acc: number, curr: any) => acc + curr.score, 0);
+      if (scoreSum >= 10) {
+        await supabase.from("query_pages").insert({
+          query_id: queryId,
+          page_idx: pageIdx,
+          candidate_ids: candidateIds,
+        });
+        return NextResponse.json(
+          {
+            nextPageIdx,
+            results: candidateIds.slice(0, 10).map((r: any) => r.id),
+          },
+          { status: 200 }
+        );
+      } else {
+        //
+        offset = 50;
+        cachedCandidates = candidateIds;
+      }
+    }
   }
 
   // 저장되어있는 결과가 없다면 새롭게 검색해야한다는 뜻.
@@ -369,24 +433,24 @@ export async function POST(req: NextRequest) {
   if (qErr || !q || !q.raw_input_text)
     return NextResponse.json({ error: "Query not found" }, { status: 404 });
 
-  const uploadBestTenCandidates = async (
-    fullCandidates: any[],
-    pageIdx: number = 0
-  ) => {
+  const uploadBestTenCandidates = async (fullCandidates: any[]) => {
     updateQueryStatus(
       queryId,
       q.user_id,
       "Got Best 10 Candidates. Now organizing results."
     );
-    const candidateIds = fullCandidates.map((r: any) => r.id);
+    const candidates = fullCandidates.map((r: any) => ({
+      score: r.score,
+      id: r.id,
+    }));
     // const candidateIds = fullCandidates.slice(0, 10).map((r: any) => r.id);
     const { error: insErr } = await supabase.from("query_pages").insert({
       query_id: queryId,
       page_idx: pageIdx,
-      candidate_ids: candidateIds,
+      candidate_ids: candidates,
     });
 
-    return candidateIds.slice(0, 10);
+    return candidates.slice(0, 10).map((r: any) => r.id);
   };
 
   // input query로 SQL문을 만들어뒀는지 아닌지
@@ -425,18 +489,10 @@ export async function POST(req: NextRequest) {
     queryId,
     q.user_id,
     parsed_query,
-    50
+    50,
+    offset
   );
-  console.log("idWithScores === ", searchResults);
-
-  if (pageIdx !== 0) {
-    const candidateIds = await uploadBestTenCandidates(searchResults);
-
-    return NextResponse.json(
-      { nextPageIdx, results: candidateIds, isNewSearch: true },
-      { status: 200 }
-    );
-  }
+  console.log(`idWithScores === ${searchResults.length} nums `, searchResults);
 
   console.log(
     "\n\n첫번째 검색이라면, 더 좋은 결과가 나올 수 있게 뭔가 한다.\n\n"
@@ -446,44 +502,28 @@ export async function POST(req: NextRequest) {
   const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
   console.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
 
-  // 진짜 결과가 적거나, 끝까지 오류가 나서 아무것도 반환되지 않았거나 둘중 하나.
-  if (
-    searchResults.length < 10 ||
-    (searchResults.length >= 30 && oneScoreCount < 5)
-  ) {
-    console.log(
-      "\n\nidWithScores.length < 10 || (idWithScores.length >= 30 && oneScoreCount < 5), 범위를 넓혀서 한번 더 하자.\n\n"
-    );
-    updateQueryStatus(queryId, q.user_id, "Trying to get more candidates...");
+  const mergeCachedCandidates = deduplicateAndScore(
+    searchResults,
+    cachedCandidates
+  );
+  console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
+  const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
 
-    parsed_query = await parseQueryWithLLM(
-      q.raw_input_text,
-      criteria ?? [],
-      `
-이미 한번 검색을 했는데 조건에 맞는 결과가 충분히 잡히지 않았기 때문에, 이번에는 범위를 더 넓혀서 최대한 누군가라도 검색에 잡히도록 좀 더 단순하게 SQL 쿼리를 만들어줘. 아래가 기존에 사용했던 쿼리야.
-
-Original SQL Query:
-"""
-${parsed_query}
-"""
-`
-    );
-
-    // 범위를 넓게 해서 한번 더 하자.
-    const idWithScores2 = await searchDatabase(
+  if (pageIdx === 0 && candidateIds.length === 0) {
+    const message = await makeMessage(
       q.raw_input_text ?? "",
-      criteria ?? [],
-      pageIdx,
-      queryId,
-      q.user_id,
-      parsed_query,
-      50
+      criteria?.join(", ") ?? ""
     );
-    console.log("idWithScores2  === ", idWithScores2);
-
-    searchResults = deduplicateAndScore(searchResults, idWithScores2);
+    console.log("message ", message);
+    if (message && message.message) {
+      await supabase.from("queries").upsert({
+        query_id: queryId,
+        user_id: q.user_id,
+        status: message.message,
+        recommendations: message.recommendations,
+      });
+    }
   }
-  const candidateIds = await uploadBestTenCandidates(searchResults);
   return NextResponse.json(
     { nextPageIdx, results: candidateIds, isNewSearch: true },
     { status: 200 }

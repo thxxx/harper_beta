@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import ConnectedPage from "./connectedPage";
 import BookmarkPage from "./bookmarkPage";
 import RequestedPage from "./requestedPage";
+import { useConnectionCounts } from "@/hooks/useBookMarkCandidates";
+import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 
 type PageKey = "bookmark" | "request" | "connected";
 
@@ -14,6 +16,10 @@ const TABS: { key: PageKey; label: string }[] = [
 
 export default function MyPage() {
   const [currentPage, setCurrentPage] = useState<PageKey>("bookmark");
+  const { companyUser } = useCompanyUserStore();
+  const userId = useMemo(() => companyUser?.user_id, [companyUser]);
+  const { data } = useConnectionCounts(userId);
+  console.log("data ", data);
 
   const title = useMemo(() => {
     return TABS.find((t) => t.key === currentPage)?.label ?? "마이페이지";
@@ -66,7 +72,14 @@ export default function MyPage() {
                           : "text-xgray800 hover:text-white",
                       ].join(" ")}
                     >
-                      {t.label}
+                      {t.label}{" "}
+                      {data?.[t.key] ? (
+                        <span className="ml-1 text-[14px] text-accenta1">
+                          {data?.[t.key]}
+                        </span>
+                      ) : (
+                        ""
+                      )}
                     </button>
                   );
                 })}

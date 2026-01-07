@@ -2,10 +2,11 @@
 import { supabase } from "@/lib/supabase";
 import { create } from "zustand";
 
-type CompanyUser = any; // 너 테이블 타입으로 바꾸면 됨
+type CompanyUser = any;
 
 type S = {
   loading: boolean;
+  initialized: boolean; // ✅ 추가
   companyUser: CompanyUser | null;
   load: (userId: string) => Promise<void>;
   clear: () => void;
@@ -13,22 +14,28 @@ type S = {
 
 export const useCompanyUserStore = create<S>((set) => ({
   loading: false,
+  initialized: false, // ✅ 초기에는 "아직 확인 안 함"
   companyUser: null,
 
   load: async (userId) => {
     set({ loading: true });
-    console.log("load companyUser");
     const { data, error } = await supabase
       .from("company_users")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
+
     if (error) {
-      set({ loading: false });
+      set({ loading: false, initialized: true });
       throw error;
     }
-    set({ companyUser: data ?? null, loading: false });
+
+    set({
+      companyUser: data ?? null,
+      loading: false,
+      initialized: true, // ✅ 여기서 "확인 완료"
+    });
   },
 
-  clear: () => set({ companyUser: null, loading: false }),
+  clear: () => set({ companyUser: null, loading: false, initialized: false }),
 }));

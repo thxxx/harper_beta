@@ -12,7 +12,13 @@ import NotExistingPage from "@/components/layout/NotExistingPage";
 import TypewriterText from "@/components/TypeWriterText";
 import { supabase } from "@/lib/supabase";
 import { dateToFormatLong } from "@/utils/textprocess";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, ChevronRight, Loader2 } from "lucide-react";
+import {
+  getRandomLessResultMessage,
+  getRandomNoResultMessage,
+  LESS_RESULT_MESSAGES,
+  NO_RESULT_MESSAGES,
+} from "@/utils/constantkeys";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -52,9 +58,16 @@ export default function Result() {
     return Number.isFinite(n) ? n : 0;
   }, [page]);
 
+  const scrollToTop = useCallback(() => {
+    const el = document.getElementById("app-scroll");
+    if (el) el.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    else window.scrollTo({ top: 0, left: 0, behavior: "auto" }); // fallback
+  }, []);
+
   const setPageInUrl = useCallback(
     (nextIdx: number, mode: "push" | "replace" = "push") => {
       const method = mode === "push" ? router.push : router.replace;
+      scrollToTop();
 
       method(
         {
@@ -86,11 +99,6 @@ export default function Result() {
       // setPageInUrl(capped, "replace");
     }
   }, [router.isReady, pageIdxRaw, setPageInUrl]);
-
-  // page 바뀌면 스크롤 탑
-  useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, [pageIdx]);
 
   // 서버에 실제로 저장된 마지막 페이지 idx 확인 (URL이 너무 앞서가면 줄이기)
   const checkLastPageIdx = useCallback(async () => {
@@ -126,11 +134,22 @@ export default function Result() {
     })();
   }, [ready, queryId, pageIdx, checkLastPageIdx, setPageInUrl]);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useSearchCandidates(userId, queryId, ready);
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    runMoreSearch,
+  } = useSearchCandidates(userId, queryId, ready);
 
   useEffect(() => {
-    if (queryItem && queryItem.raw_input_text && !queryItem.thinking) {
+    if (
+      queryItem &&
+      queryItem.raw_input_text &&
+      !queryItem.thinking &&
+      !queryItem.status
+    ) {
       setIsFirst(true);
     }
   }, [queryItem]);
@@ -180,7 +199,6 @@ export default function Result() {
       </AppLayout>
     );
 
-  if (!userId) return <AppLayout>Loading...</AppLayout>;
   if (!queryId) return <AppLayout>Loading...</AppLayout>;
 
   const current = pages[pageIdx];
@@ -218,6 +236,10 @@ export default function Result() {
     }
   };
 
+  const isNoResultAtall = pageIdx === 0 && items.length === 0 && !isLoading;
+  const isLessResultThan10 =
+    pageIdx === 0 && items.length !== 0 && items.length < 10 && !isLoading;
+
   return (
     <AppLayout>
       {queryItem && (
@@ -248,24 +270,26 @@ export default function Result() {
             className="font-light text-base mt-2 text-hgray800"
             text={queryItem.thinking}
           />
-          <div className="text-sm text-hgray900 mt-4 mb-2 flex flex-col gap-2">
-            <div className="font-hedvig">Criteria</div>
-            <div className="flex flex-row gap-2">
-              {queryItem.criteria?.map((item) => {
-                return (
-                  <span
-                    key={item}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-white/5 text-hgray900"
-                  >
-                    {item}
-                  </span>
-                );
-              })}
+          {queryItem.criteria && (
+            <div className="text-sm text-hgray900 mt-4 mb-2 flex flex-col gap-2">
+              <div className="font-hedvig">Criteria</div>
+              <div className="flex flex-row gap-2">
+                {queryItem.criteria.map((item) => {
+                  return (
+                    <span
+                      key={item}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-white/5 text-hgray900"
+                    >
+                      {item}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
           {isLoading && (
             <div className="text-sm font-light mt-4 text-hgray900 flex flex-row gap-2 items-center">
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
               <div className="animate-textGlow">{queryItem.status}</div>
             </div>
           )}
@@ -275,7 +299,7 @@ export default function Result() {
       {/* pageReady가 false면: target page까지 prefetch 중 */}
       {!pageReady ? (
         <div className="w-full px-4 py-10 text-sm font-light text-xgray800">
-          Loading page {pageIdx + 1}...
+          {/* Loading page {pageIdx + 1}... */}
         </div>
       ) : !isLoading ? (
         <div className="w-full px-4 space-y-2">
@@ -289,52 +313,91 @@ export default function Result() {
               />
             ))}
           </div>
-
-          {items.length === 0 && (
-            <div className="py-10 text-base text-xgray800">No results.</div>
-          )}
         </div>
       ) : (
-        <div>Loading...</div>
+        <div></div>
       )}
 
-      <div className="flex items-center justify-center w-full py-16 flex-col">
-        <div className="text-sm text-white">
-          Page {pageIdx + 1}
-          {isFetchingNextPage ? " (loading...)" : ""}
-          {pageIdxRaw > MAX_PREFETCH_PAGES ? (
-            <span className="ml-2 text-xgray400">
-              (capped to {MAX_PREFETCH_PAGES + 1})
+      <div className="w-full px-4 flex flex-col gap-1 items-start justify-start py-4 text-[15px] text-hgray900 ">
+        {/* {pageReady && !isLoading && !isNoResultAtall && (
+          <div className="">No results.</div>
+        )} */}
+        {isNoResultAtall && (
+          <div className="flex flex-col gap-2 items-start justify-start">
+            {queryItem?.status} {/* {getRandomNoResultMessage()}{" "} */}
+            <span
+              onClick={() => runMoreSearch()}
+              className="cursor-pointer hover:underline underline-offset-2 mt-4 text-accenta1 text-[15px] flex flex-row gap-0 items-center justify-start"
+            >
+              더 찾아보기 <ArrowRight strokeWidth={1.4} size={16} />
+              {/* <ChevronRight strokeWidth={1.4} size={22} /> */}
             </span>
-          ) : null}
-        </div>
-
-        <div className="flex items-center justify-center gap-1 flex-row mt-2">
-          <button
-            type="button"
-            onClick={prevPage}
-            disabled={!canPrev}
-            className={`flex items-center justify-center px-8 minw-16 h-16 rounded-sm border border-xgray400 hover:opacity-90 ${
-              canPrev ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            Previous
-          </button>
-
-          <button
-            type="button"
-            onClick={nextPage}
-            disabled={!canNext || isFetchingNextPage}
-            className={`flex items-center justify-center px-8 minw-16 h-16 bg-accenta1 text-black rounded-sm hover:opacity-90 ${
-              canNext && !isFetchingNextPage
-                ? "cursor-pointer"
-                : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            <div>Search next 10 more</div>
-          </button>
-        </div>
+            {/* <div className="cursor-pointer hover:underline underline-offset-2 text-white/90 text-[15px] flex flex-row items-center justify-start hover:text-white transition-all">
+              새로 검색하기
+              <ArrowRight strokeWidth={1.4} size={16} />
+            </div> */}
+          </div>
+        )}
+        {isLessResultThan10 && (
+          <div className="mt-20 flex flex-col gap-2 items-start justify-start">
+            {getRandomLessResultMessage()}
+            {queryItem?.retries !== undefined &&
+              queryItem?.retries !== null &&
+              queryItem?.retries > 0 &&
+              LESS_RESULT_MESSAGES[1]}
+            <span
+              onClick={() => runMoreSearch()}
+              className="cursor-pointer hover:underline underline-offset-2 mt-4 text-accenta1 text-[15px] flex flex-row gap-0 items-center justify-start"
+            >
+              더 찾아보기 <ArrowRight strokeWidth={1.4} size={16} />
+              {/* <ChevronRight strokeWidth={1.4} size={22} /> */}
+            </span>
+          </div>
+        )}
       </div>
+
+      {!isQueryDetailLoading &&
+        !isLoading &&
+        !isNoResultAtall &&
+        !isLessResultThan10 && (
+          <div className="flex items-center justify-center w-full py-16 flex-col">
+            <div className="text-sm text-white">
+              Page {pageIdx + 1}
+              {isFetchingNextPage ? " (loading...)" : ""}
+              {pageIdxRaw > MAX_PREFETCH_PAGES ? (
+                <span className="ml-2 text-xgray400">
+                  (capped to {MAX_PREFETCH_PAGES + 1})
+                </span>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-center gap-1 flex-row mt-2">
+              <button
+                type="button"
+                onClick={prevPage}
+                disabled={!canPrev}
+                className={`flex items-center justify-center px-8 minw-16 h-16 rounded-sm border border-xgray400 hover:opacity-90 ${
+                  canPrev ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
+                }`}
+              >
+                Previous
+              </button>
+
+              <button
+                type="button"
+                onClick={nextPage}
+                disabled={!canNext || isFetchingNextPage}
+                className={`flex items-center justify-center px-8 minw-16 h-16 bg-accenta1 text-black rounded-sm hover:opacity-90 ${
+                  canNext && !isFetchingNextPage
+                    ? "cursor-pointer"
+                    : "opacity-40 cursor-not-allowed"
+                }`}
+              >
+                <div>Search next 10 more</div>
+              </button>
+            </div>
+          </div>
+        )}
     </AppLayout>
   );
 }

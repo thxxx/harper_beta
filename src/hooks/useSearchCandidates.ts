@@ -1,8 +1,8 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { CandidateType, EduUserType, ExpUserType } from "@/types/type";
 import { useCredits } from "./useCredit";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export type ExperienceUserType = ExpUserType & {
   company_db: {
@@ -24,8 +24,15 @@ export type CandidateTypeWithConnection = CandidateType & {
   synthesized_summary?: { text: string }[];
 };
 
-async function fetchSearchIds(queryId: string, pageIdx: number) {
-  const res = await fetch("/api/search", {
+async function fetchSearchIds(
+  queryId: string,
+  pageIdx: number,
+  mode: "normal" | "more" = "normal"
+) {
+  const endpoint = mode === "more" ? "/api/search/more" : "/api/search";
+  console.log("fetchSearchIds endpoint ", endpoint);
+
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ queryId, pageIdx }),
@@ -110,44 +117,63 @@ export function useSearchCandidates(
   enabled: boolean = true
 ) {
   const { deduct } = useCredits();
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  return useInfiniteQuery({
-    queryKey: ["searchCandidates", queryId, userId],
-    enabled: enabled && !isLoading,
+  const [mode, setMode] = useState<"normal" | "more">("normal");
+
+  const query = useInfiniteQuery({
+    queryKey: ["searchCandidates", queryId, userId, mode], // ✅ mode 포함
+    enabled: enabled && !!userId && !!queryId,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
-      setIsLoading(true);
       const pageIdx = pageParam as number;
-      const { ids, isNewSearch } = await fetchSearchIds(queryId!, pageIdx);
-      if (ids && ids.length > 0) {
-        if (isNewSearch) {
-          await deduct(ids.length * 3);
-        }
+
+      const { ids, isNewSearch } = await fetchSearchIds(
+        queryId!,
+        pageIdx,
+        mode
+      );
+
+      if (ids?.length) {
+        if (isNewSearch) await deduct(ids.length * 3);
         const items = await fetchCandidatesByIds(ids, userId!, queryId!);
-        setIsLoading(false);
         return { pageIdx, ids, items };
       }
+
       return { pageIdx, ids: [], items: [] };
     },
     getNextPageParam: (lastPage) => {
-      // 다음 페이지가 더 있는지 판단:
-      // 1) /api/search 가 "페이지 사이즈 만큼" 채워서 주는 구조면,
-      //    마지막 페이지 ids가 비었거나 너무 적으면 끝.
-      if (!lastPage.ids || lastPage.ids.length === 0) return undefined;
-
-      // (선택) pageSize를 정해두고 "덜 차면 끝" 룰을 쓰고 싶으면:
-      // const pageSize = 10;
-      // if (lastPage.ids.length < pageSize) return undefined;
-
+      if (!lastPage.ids?.length) return undefined;
       return lastPage.pageIdx + 1;
     },
-    // 기존 페이지 유지하면서 계속 append
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    staleTime: 30_000, // 30초 정도
+    staleTime: 30_000,
     gcTime: 5 * 60_000,
     retry: false,
   });
+
+  // ✅ 버튼 핸들러: "더 찾아보기" 같은 동작
+  const runMoreSearch = useCallback(async () => {
+    // 지금까지 쌓인 페이지/캐시를 버리고 새로 시작하고 싶으면:
+    await queryClient.removeQueries({
+      queryKey: ["searchCandidates", queryId, userId], // mode 제외 prefix로 싹 제거
+    });
+    setMode("more"); // ✅ key 변경 -> page 0부터 queryFn 다시 실행
+  }, [queryClient, queryId, userId]);
+
+  const runNormalSearch = useCallback(async () => {
+    await queryClient.removeQueries({
+      queryKey: ["searchCandidates", queryId, userId],
+    });
+    setMode("normal");
+  }, [queryClient, queryId, userId]);
+
+  return {
+    ...query,
+    mode,
+    runMoreSearch,
+    runNormalSearch,
+  };
 }

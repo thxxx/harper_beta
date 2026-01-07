@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
     );
 
   const keyword = await queryKeyword(queryText.trim());
-  console.log("keyword ", keyword);
 
   const { data, error } = await supabase
     .from("queries")

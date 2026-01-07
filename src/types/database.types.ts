@@ -633,6 +633,7 @@ export type Database = {
           query_id: string
           query_keyword: string | null
           raw_input_text: string | null
+          retries: number
           status: string | null
           thinking: string | null
           user_id: string
@@ -645,6 +646,7 @@ export type Database = {
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          retries?: number
           status?: string | null
           thinking?: string | null
           user_id: string
@@ -657,6 +659,7 @@ export type Database = {
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          retries?: number
           status?: string | null
           thinking?: string | null
           user_id?: string
@@ -673,21 +676,21 @@ export type Database = {
       }
       query_pages: {
         Row: {
-          candidate_ids: string[] | null
+          candidate_ids: Json[] | null
           created_at: string
           id: number
           page_idx: number | null
           query_id: string | null
         }
         Insert: {
-          candidate_ids?: string[] | null
+          candidate_ids?: Json[] | null
           created_at?: string
           id?: number
           page_idx?: number | null
           query_id?: string | null
         }
         Update: {
-          candidate_ids?: string[] | null
+          candidate_ids?: Json[] | null
           created_at?: string
           id?: number
           page_idx?: number | null
@@ -794,11 +797,21 @@ export type Database = {
         Returns: number
       }
       execute_raw_sql: {
-        Args: { limit_num: number; page_idx: number; sql_query: string }
+        Args: {
+          limit_num: number
+          offset_num: number
+          page_idx: number
+          sql_query: string
+        }
         Returns: Json[]
       }
       set_timeout_and_execute_raw_sql: {
-        Args: { limit_num: number; page_idx: number; sql_query: string }
+        Args: {
+          limit_num: number
+          offset_num: number
+          page_idx: number
+          sql_query: string
+        }
         Returns: Json[]
       }
       show_limit: { Args: never; Returns: number }
