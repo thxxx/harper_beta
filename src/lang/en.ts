@@ -17,6 +17,7 @@ export const en = {
     summarizing: "Reading and analyzing candidates' information..",
     return: "Got Candidates. Now organizing results for return.",
     start: "",
+    processing: "Processing...",
   },
   system: {
     history: "History",

@@ -17,6 +17,7 @@ export const ko = {
     summarizing: "후보자의 정보를 확인하고 적합성을 판단하고 있습니다...",
     return: "결과를 획득했습니다. 정리하고 반환합니다.",
     start: "검색을 시작합니다...",
+    processing: "처리 중...",
   },
   system: {
     history: "기록",
