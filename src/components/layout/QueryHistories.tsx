@@ -2,6 +2,7 @@ import { useQueriesHistory } from "@/hooks/useSearchHistory";
 import { supabase } from "@/lib/supabase";
 import React from "react";
 import HistoryItem from "./HistoryItem";
+import { useMessages } from "@/i18n/useMessage";
 
 const QueryHistories = ({
   collapsed,
@@ -12,6 +13,7 @@ const QueryHistories = ({
   userId: string;
   activeQueryId: string | null;
 }) => {
+  const { m } = useMessages();
   // fetchNextPage, hasNextPage, isFetchingNextPage 추가
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useQueriesHistory(userId);
@@ -52,7 +54,7 @@ const QueryHistories = ({
           disabled={isFetchingNextPage}
           className="text-xs text-gray-500 py-2 hover:text-white transition-all duration-200"
         >
-          {isFetchingNextPage ? "Loading..." : "Load More"}
+          {isFetchingNextPage ? "Loading..." : m.system.loadmore}
         </button>
       )}
     </div>

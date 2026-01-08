@@ -78,6 +78,12 @@ ${parsed_query}
     50,
     0
   );
+  const upRes2 = await supabase.from("queries").upsert({
+    query_id: queryId,
+    user_id: q.user_id,
+    retries: q.retries + 1,
+    status: "Got Candidates. Now organizing results.",
+  });
   if (!searchResults || searchResults.length === 0) {
     return NextResponse.json(
       { results: [], isNewSearch: true },
@@ -96,12 +102,7 @@ ${parsed_query}
   );
   console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
   const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
-  const upRes2 = await supabase.from("queries").upsert({
-    query_id: queryId,
-    user_id: q.user_id,
-    retries: q.retries + 1,
-    status: "Got Candidates. Now organizing results.",
-  });
+  console.log("upRes2 ", upRes2);
   return NextResponse.json(
     { results: candidateIds, isNewSearch: true },
     { status: 200 }

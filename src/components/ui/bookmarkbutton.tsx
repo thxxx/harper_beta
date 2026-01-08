@@ -2,6 +2,7 @@ import { useToggleBookmark } from "@/hooks/useToggleBookmark";
 import React, { useState } from "react";
 import { showToast } from "../toast/toast";
 import { Bookmark } from "lucide-react";
+import { useMessages } from "@/i18n/useMessage";
 
 const Bookmarkbutton = ({
   userId,
@@ -14,6 +15,7 @@ const Bookmarkbutton = ({
   connection: { typed: number }[];
   isText?: boolean;
 }) => {
+  const { m } = useMessages();
   const [isBookmarked, setIsBookmarked] = useState(
     connection?.map((con) => con.typed).includes(0)
   );
@@ -37,7 +39,7 @@ const Bookmarkbutton = ({
       ) : (
         <Bookmark className="w-4 h-4 text-white" />
       )}
-      {isText && <span>{isBookmarked ? "Saved" : "Save"}</span>}
+      {isText && <span>{isBookmarked ? m.data.saved : m.data.save}</span>}
     </button>
   );
 };

@@ -527,6 +527,7 @@ export const sqlExistsPrompt = `
 - experience_user에는 company_db를 함께 조회해서, experience_user에 company_db 정보를 포함하도록 해줘.
 
 모든 검색 조건과 Logic은 그대로 유지하되, 속도가 개선된 SQL Query를 리턴해줘.
+주석은 예시에는 있지만, 출력에는 절대 달면 안돼.
 
 ---
 OUTPUT EXAMPLE: 

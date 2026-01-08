@@ -14,6 +14,7 @@ import { dateToFormat } from "@/utils/textprocess";
 import { useSynthesizedSummary } from "@/hooks/useSynthesizedSummary";
 import { Tooltips } from "./ui/tooltip";
 import { Check, Dot, X } from "lucide-react";
+import { useMessages } from "@/i18n/useMessage";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -55,6 +56,7 @@ export default function CandidateCard({
   isMyList?: boolean;
   queryItem?: QueryType | null;
 }) {
+  const { m } = useMessages();
   const queryId = queryItem?.query_id;
   const candidId = c.id;
 
@@ -100,7 +102,10 @@ export default function CandidateCard({
 
         <div className="mt-0 flex flex-col gap-3 w-[70%]">
           {!isOnlyOneCompany && latestCompany && (
-            <CompanyCard company={latestCompany} text="Current Experience" />
+            <CompanyCard
+              company={latestCompany}
+              text={m.data.currentExperience}
+            />
           )}
           {/* {firstCompany && (
             <CompanyCard
@@ -111,7 +116,7 @@ export default function CandidateCard({
           {school && (
             <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
               <div className="text-hgray600 text-sm w-24 pt-0.5 font-light">
-                Education
+                {m.data.education}
               </div>
               <div className="flex flex-col gap-0.5 text-sm w-full">
                 <div className="flex flex-row items-center justify-between">
@@ -133,7 +138,7 @@ export default function CandidateCard({
 
       <div className="mt-8 text-hgray700 leading-relaxed font-light">
         {isLoadingSummary ? (
-          <div className="text-[15px]">Generating summary...</div>
+          <div className="text-[15px]">{m.data.generating}</div>
         ) : (
           <div>
             {synthesizedSummary?.map((item, index) => (

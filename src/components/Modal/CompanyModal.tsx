@@ -4,12 +4,14 @@ import LinkChips from "@/pages/my/p/components/LinkChips";
 import { XIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import LinkPreview from "../LinkPreview";
+import { useMessages } from "@/i18n/useMessage";
+import { countryEnToKo } from "@/utils/language_map";
 
 export default function CompanyModalRoot() {
   const { isOpen, payload, close } = useCompanyModalStore();
   const company = payload?.company;
   const closeOnBackdrop = payload?.closeOnBackdrop ?? true;
-
+  const { m } = useMessages();
   useEffect(() => {
     if (!isOpen) return;
 
@@ -124,23 +126,29 @@ export default function CompanyModalRoot() {
 
             {/* Body */}
             <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-12">
-              <Section title="Company Information">
+              <Section title={m.company.information}>
                 <div className="mt-3 space-y-2 text-sm">
-                  <Row label="HQ" value={company.location} />
+                  <Row
+                    label={m.company.hq}
+                    value={countryEnToKo(company.location ?? "")}
+                  />
                   {company.founded_year !== null &&
                     company.founded_year !== undefined &&
                     company.founded_year > 1000 && (
-                      <Row label="Established" value={company.founded_year} />
+                      <Row
+                        label={m.company.established}
+                        value={company.founded_year}
+                      />
                     )}
                   {company.website_url && (
-                    <Row label="Website" value={company.website_url} isLink />
+                    <Row label="Home page" value={company.website_url} isLink />
                   )}
                   <Row label="LinkedIn" value={company.linkedin_url} isLink />
                 </div>
               </Section>
 
               {company.short_description || company.description ? (
-                <Section title="Company Information">
+                <Section title={m.company.description}>
                   <p className="mt-2 text-sm leading-6 whitespace-pre-wrap font-light">
                     {company.short_description ?? company.description}
                   </p>
@@ -158,7 +166,7 @@ export default function CompanyModalRoot() {
               ) : null}
 
               {company.investors && (
-                <Section title="Investors">
+                <Section title={m.company.investors}>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {company.investors.split(",").map((i) => (
                       <span
@@ -173,7 +181,7 @@ export default function CompanyModalRoot() {
               )}
 
               {company.related_links && (
-                <Section title="Important News">
+                <Section title={m.company.news}>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {company.related_links.map((l) => (
                       <LinkPreview key={l} url={l} />

@@ -14,10 +14,12 @@ import { buildSummary, ensureGroupBy } from "@/utils/textprocess";
 import { supabase } from "@/lib/supabase";
 import { transformSql } from "@/app/api/search/utils";
 import { xaiInference } from "@/lib/llm/llm";
+import { useMessages } from "@/i18n/useMessage";
 
 const Home: NextPage = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { m } = useMessages();
 
   const { companyUser } = useCompanyUserStore();
   const { credits } = useCredits();
@@ -154,23 +156,14 @@ const Home: NextPage = () => {
   //     // console.log("information ", information);
   //   };
 
-  const testLLM = async () => {
-    const response = await fetch("/api/hello");
-    const data = await response.json();
-    console.log("data ", data);
-  };
-
   return (
     <AppLayout>
       <main className="flex-1 flex items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
-          <h1
-            // onClick={testLLM}
-            className="text-2xl sm:text-3xl font-semibold font-hedvig tracking-tight text-center leading-relaxed"
-          >
-            Hello, {companyUser?.name.split(" ")[0]}
+          <h1 className="text-2xl sm:text-3xl font-medium font-hedvig tracking-tight text-center leading-relaxed">
+            {m.system.hello}, {companyUser?.name.split(" ")[0]}
             <div className="h-3" />
-            Who are you looking for?
+            {m.system.intro}
           </h1>
 
           <form className="mt-8 w-full max-w-[640px]">
@@ -225,29 +218,14 @@ const Home: NextPage = () => {
                 </div>
               </div>
               <div className="w-full flex flex-row items-start justify-between gap-4 mt-6">
-                <div
-                  className={[
-                    "group relative w-full cursor-pointer select-none",
-                    "rounded-2xl py-5 px-6",
-                    "bg-white/5 text-hgray900 text-sm",
-                    "border border-white/0",
-                    "transition-all duration-200 ease-out",
-                    "hover:border-white/5 hover:-translate-y-[2px]",
-                    "active:translate-y-[0px] active:scale-[0.99]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
-                  ].join(" ")}
-                  onClick={() =>
-                    setQuery(
-                      "국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI / Machine Learning 경험 2년 이하 보유한 사람"
-                    )
-                  }
-                  role="button"
-                  tabIndex={0}
-                >
-                  국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI /
-                  Machine Learning 경험 2년 이하 보유한 사람
-                </div>
-                <div className="relative rounded-2xl bg-white/5 text-hgray900 text-sm w-full"></div>
+                <ExampleQuery
+                  query="국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI / Machine Learning 경험 2년 이하 보유한 사람"
+                  onClick={() => setQuery(query)}
+                />
+                <ExampleQuery
+                  query="네카라쿠배 출신 프로덕트 매니저 + 개발 역량 보유"
+                  onClick={() => setQuery(query)}
+                />
               </div>
             </div>
           </form>
@@ -260,3 +238,31 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+const ExampleQuery = ({
+  query,
+  onClick,
+}: {
+  query: string;
+  onClick: () => void;
+}) => {
+  return (
+    <div
+      className={[
+        "group relative w-full cursor-pointer",
+        "rounded-2xl py-5 px-6",
+        "bg-white/5 text-hgray900 text-sm",
+        "border border-white/0",
+        "transition-all duration-200 ease-out",
+        "hover:border-white/5 hover:-translate-y-[2px]",
+        "active:translate-y-[0px] active:scale-[0.99]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
+      ].join(" ")}
+      onClick={() => onClick()}
+      role="button"
+      tabIndex={0}
+    >
+      {query}
+    </div>
+  );
+};

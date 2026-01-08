@@ -236,9 +236,25 @@ export default function Result() {
     }
   };
 
-  const isNoResultAtall = pageIdx === 0 && items.length === 0 && !isLoading;
+  const isNoResultAtall =
+    pageIdx === 0 &&
+    items.length === 0 &&
+    !isLoading &&
+    (queryItem?.retries ?? 1) <= 0;
+
   const isLessResultThan10 =
-    pageIdx === 0 && items.length !== 0 && items.length < 10 && !isLoading;
+    pageIdx === 0 &&
+    items.length !== 0 &&
+    items.length < 10 &&
+    !isLoading &&
+    (queryItem?.retries ?? 1) <= 0;
+
+  const isLessSatisfyingThan5 =
+    pageIdx === 0 &&
+    items.length === 10 &&
+    queryItem?.recommendation === "no" &&
+    !isLoading &&
+    (queryItem?.retries ?? 1) <= 0;
 
   return (
     <AppLayout>
@@ -270,7 +286,7 @@ export default function Result() {
             className="font-light text-base mt-2 text-hgray800"
             text={queryItem.thinking}
           />
-          {queryItem.criteria && (
+          {queryItem.criteria && queryItem.criteria.length > 0 && (
             <div className="text-sm text-hgray900 mt-4 mb-2 flex flex-col gap-2">
               <div className="font-hedvig">Criteria</div>
               <div className="flex flex-row gap-2">
@@ -322,35 +338,43 @@ export default function Result() {
         {/* {pageReady && !isLoading && !isNoResultAtall && (
           <div className="">No results.</div>
         )} */}
-        {isNoResultAtall && (
+        {isLessSatisfyingThan5 && (
           <div className="flex flex-col gap-2 items-start justify-start">
-            {queryItem?.status} {/* {getRandomNoResultMessage()}{" "} */}
+            {queryItem?.message
+              ? queryItem?.message
+              : "모든 조건을 만족하는 사람을 충분히 찾지 못했어요. 한번 더 실행하면 조건에 해당하는 사람을 더 찾을 수 있어요."}{" "}
             <span
               onClick={() => runMoreSearch()}
               className="cursor-pointer hover:underline underline-offset-2 mt-4 text-accenta1 text-[15px] flex flex-row gap-0 items-center justify-start"
             >
               더 찾아보기 <ArrowRight strokeWidth={1.4} size={16} />
-              {/* <ChevronRight strokeWidth={1.4} size={22} /> */}
             </span>
-            {/* <div className="cursor-pointer hover:underline underline-offset-2 text-white/90 text-[15px] flex flex-row items-center justify-start hover:text-white transition-all">
-              새로 검색하기
-              <ArrowRight strokeWidth={1.4} size={16} />
-            </div> */}
+          </div>
+        )}
+        {isNoResultAtall && (
+          <div className="flex flex-col gap-2 items-start justify-start">
+            {queryItem?.message
+              ? queryItem?.message
+              : getRandomNoResultMessage()}{" "}
+            {/* {getRandomNoResultMessage()}{" "} */}
+            <span
+              onClick={() => runMoreSearch()}
+              className="cursor-pointer hover:underline underline-offset-2 mt-4 text-accenta1 text-[15px] flex flex-row gap-0 items-center justify-start"
+            >
+              더 찾아보기 <ArrowRight strokeWidth={1.4} size={16} />
+            </span>
           </div>
         )}
         {isLessResultThan10 && (
           <div className="mt-20 flex flex-col gap-2 items-start justify-start">
-            {getRandomLessResultMessage()}
-            {queryItem?.retries !== undefined &&
-              queryItem?.retries !== null &&
-              queryItem?.retries > 0 &&
-              LESS_RESULT_MESSAGES[1]}
+            {queryItem?.message
+              ? queryItem?.message
+              : getRandomLessResultMessage()}{" "}
             <span
               onClick={() => runMoreSearch()}
               className="cursor-pointer hover:underline underline-offset-2 mt-4 text-accenta1 text-[15px] flex flex-row gap-0 items-center justify-start"
             >
               더 찾아보기 <ArrowRight strokeWidth={1.4} size={16} />
-              {/* <ChevronRight strokeWidth={1.4} size={22} /> */}
             </span>
           </div>
         )}

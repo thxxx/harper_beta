@@ -11,6 +11,7 @@ import {
   Database,
   User,
   LogOut,
+  HelpCircle,
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
@@ -26,12 +27,13 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { useMessages } from "@/i18n/useMessage";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [openHistory, setOpenHistory] = useState(true);
   const { credits, isLoading: isLoadingCredits } = useCredits();
-
+  const { m } = useMessages();
   const { companyUser, loading, initialized } = useCompanyUserStore();
 
   const router = useRouter();
@@ -132,7 +134,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
         {/* 2. Nav & History: 이 영역이 스크롤됨 */}
-        <div className="mt-1 px-3 pb-3 gap-1 flex-1 overflow-y-auto">
+        <div
+          className="mt-1 px-3 pb-3 gap-1 flex-1 overflow-y-auto 
+    [scrollbar-width:none]
+    [-ms-overflow-style:none]
+    [&::-webkit-scrollbar]:hidden"
+        >
           {openHistory && userId && (
             <QueryHistories
               collapsed={collapsed}
@@ -206,11 +213,22 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    router.push("/my/help");
+                  }}
+                >
+                  <HelpCircle size={18} />
+                  <div>Help</div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex flex-row gap-1 cursor-pointer mt-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     router.push("/my/account");
                   }}
                 >
                   <User size={18} />
-                  <div>Account</div>
+                  <div>{m.system.account}</div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex flex-row gap-1 mt-1 cursor-pointer"
@@ -222,7 +240,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                   }}
                 >
                   <LogOut size={18} />
-                  <div>Log out</div>
+                  <div>{m.system.logout}</div>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

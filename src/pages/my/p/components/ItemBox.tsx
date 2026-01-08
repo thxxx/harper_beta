@@ -34,6 +34,7 @@ const ItemBox = ({
   const endDate = useMemo(() => {
     return dateToFormat(end_date);
   }, [end_date]);
+  console.log(startDate, endDate, title);
 
   const handleOpenCompany = useCompanyModalStore((s) => s.handleOpenCompany);
   const qc = useQueryClient();
@@ -77,9 +78,17 @@ const ItemBox = ({
           </div>
         </div>
         <div className="text-sm text-xgray800 font-light mt-1">
-          {startDate}
-          <span className="px-1"> - </span>
-          {!endDate ? <span className="text-accenta1">Present</span> : endDate}
+          {startDate ? (
+            <span className="px-1">
+              {startDate} -{" "}
+              {endDate === "" ? (
+                <span className="text-accenta1">Present</span>
+              ) : (
+                endDate
+              )}
+            </span>
+          ) : null}
+
           {typeof months === "number" ? ` (${ExperienceCal(months)})` : ""}
         </div>
       </div>

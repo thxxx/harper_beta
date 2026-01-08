@@ -11,6 +11,8 @@ import {
   sumScore,
 } from "./utils";
 import { makeMessage } from "../hello/route";
+import { ko } from "@/lang/ko";
+import { notifyToSlack } from "@/lib/slack";
 
 export const updateQueryStatus = async (
   queryId: string,
@@ -144,7 +146,7 @@ export const searchDatabase = async (
     query_id: queryId,
     user_id: userId,
     query: sql_query,
-    status: "Searching Database...",
+    status: ko.loading.searching_candidates,
   });
 
   const start_time = performance.now();
@@ -187,7 +189,7 @@ export const searchDatabase = async (
 
   if (error) {
     console.log("\n\n⚠️ First sql query error == try second == ", error);
-    updateQueryStatus(queryId, userId, "Fixing SQL Query and issues...");
+    updateQueryStatus(queryId, userId, ko.loading.retrying_error);
 
     let additional_prompt = "";
     if (error.message.includes("timeout")) {
@@ -250,7 +252,7 @@ A corrected SQL query.
       query_id: queryId,
       user_id: userId,
       query: fixed_query as string,
-      status: "Searching New Candidates...",
+      status: ko.loading.searching_candidates,
     });
 
     const { data: data2, error: error2 } = await supabase.rpc(
@@ -284,44 +286,57 @@ A corrected SQL query.
   );
 
   const fullScore = criteria.length * 2;
-  // 50명을 각각 synthesize해서 요약을 만들기.
-  const scored: ScoredCandidate[] = await mapWithConcurrency(
-    data[0] as any[],
-    10,
-    async (candidate) => {
+  // 1. LLM 요약 및 점수 계산만 먼저 수행
+  const scored: (ScoredCandidate & { summary: string })[] =
+    await mapWithConcurrency(data[0] as any[], 10, async (candidate) => {
       const id = candidate.id as string;
-
+      let summary: string | null = null;
       let lines: string[] = [];
+
       try {
-        const summary = await generateSummary(
+        summary = (await generateSummary(
           candidate,
           criteria,
           raw_input_text
-        );
-        lines = JSON.parse(summary as string);
-        // console.log(candidate["name"], " lines ", lines);
-        await supabase.from("synthesized_summary").upsert({
-          candid_id: id,
-          query_id: queryId,
-          text: summary as string,
-        });
+        )) as string;
+        lines = JSON.parse(summary);
       } catch (e) {
         lines = [];
+        summary = "";
       }
 
       const score = sumScore(lines);
-      console.log("score ", score, fullScore);
 
       return {
         id,
         score:
           fullScore !== 0 ? Math.round((score / fullScore) * 100) / 100 : 1,
+        summary, // 나중에 저장하기 위해 결과에 포함
       };
-    }
-  );
+    });
+
+  // 2. DB에 저장할 데이터 필터링 (에러 등으로 요약이 없는 경우 제외)
+  const upsertData = scored
+    .filter((s) => s.summary !== null)
+    .map((s) => ({
+      candid_id: s.id,
+      query_id: queryId,
+      text: s.summary,
+    }));
+
+  // 3. 한 번의 네트워크 요청으로 모두 저장 (Batch Upsert)
+  if (upsertData.length > 0) {
+    const { error } = await supabase
+      .from("synthesized_summary")
+      .upsert(upsertData); // 단일 요청으로 N개 저장
+
+    if (error) console.error("Batch upsert error:", error);
+  }
 
   // Sort desc by score, tie-breaker optional (stable-ish by id)
-  scored.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  scored
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
+    .map((s) => ({ score: s.score, id: s.id }));
 
   return scored;
 };
@@ -459,11 +474,7 @@ export async function POST(req: NextRequest) {
   let criteria = q.criteria;
 
   if (!parsed_query) {
-    updateQueryStatus(
-      queryId,
-      q.user_id,
-      "Thinking how to get the best candidates"
-    );
+    updateQueryStatus(queryId, q.user_id, ko.loading.making_criteria);
     const {
       criteria: criteria1,
       rephrasing,
@@ -476,7 +487,7 @@ export async function POST(req: NextRequest) {
       user_id: q.user_id,
       criteria: criteria,
       thinking: rephrasing + "\n" + thinking,
-      status: "Making SQL Query...",
+      status: ko.loading.making_query,
     });
 
     parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
@@ -494,10 +505,6 @@ export async function POST(req: NextRequest) {
   );
   console.log(`idWithScores === ${searchResults.length} nums `, searchResults);
 
-  console.log(
-    "\n\n첫번째 검색이라면, 더 좋은 결과가 나올 수 있게 뭔가 한다.\n\n"
-  );
-
   // score가 1점인 사람 수
   const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
   console.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
@@ -509,20 +516,39 @@ export async function POST(req: NextRequest) {
   console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
   const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
 
-  if (pageIdx === 0 && candidateIds.length === 0) {
+  if (
+    pageIdx === 0 &&
+    (candidateIds.length === 0 || candidateIds.length < 10) &&
+    (candidateIds.length === 50 || oneScoreCount <= 5)
+  ) {
     const message = await makeMessage(
       q.raw_input_text ?? "",
-      criteria?.join(", ") ?? ""
+      criteria?.join(", ") ?? "",
+      candidateIds.length === 0
+        ? "no"
+        : candidateIds.length < 10
+        ? "less"
+        : "more"
     );
     console.log("message ", message);
-    if (message && message.message) {
-      await supabase.from("queries").upsert({
+    if (message) {
+      console.log("들어는 옵니다. message ", message["message"]);
+      const res = await supabase.from("queries").upsert({
         query_id: queryId,
         user_id: q.user_id,
-        status: message.message,
-        recommendations: message.recommendations,
+        message: message["message"],
+        recommendation: message["recommendations"]?.join("|") ?? "no",
       });
+      console.log("res ", res);
     }
+  }
+  if (pageIdx === 0 && candidateIds.length === 0) {
+    await notifyToSlack(`🔍 *Search Result Not Found! 검색 결과가 없어요!*
+
+• *Query*: ${q.raw_input_text}
+• *Criteria*: ${criteria?.join(", ")}
+- *User ID*: ${q.user_id}
+• *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`);
   }
   return NextResponse.json(
     { nextPageIdx, results: candidateIds, isNewSearch: true },

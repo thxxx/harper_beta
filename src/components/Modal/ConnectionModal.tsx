@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import NameProfile from "../NameProfile";
 import { dateToFormatLong } from "@/utils/textprocess";
 import { showToast } from "../toast/toast";
+import { notifyToSlack } from "@/lib/slack";
 
 interface ConnectionModalProps {
   open: boolean;
@@ -88,6 +89,13 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
         candid_id: candidId,
         text: text,
       });
+      await notifyToSlack(`💬 *Connection Request from user: ${
+        companyUser?.name
+      }* (${companyUser?.company ?? "회사 정보 없음"})
+
+      • *To*: ${name} - ${headline}
+      • *Content*: ${text}
+      • *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`);
 
       if (error) {
         return;

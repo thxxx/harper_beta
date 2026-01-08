@@ -278,23 +278,48 @@ export const buildSummary = (doc: any) => {
 };
 
 export const dateToFormat = (dateStr: string) => {
-  if (dateStr === "Present" || dateStr === "") return "";
+  if (
+    dateStr === "Present" ||
+    dateStr === "" ||
+    dateStr === null ||
+    dateStr === undefined
+  )
+    return "";
 
   const d = new Date(dateStr);
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString("ko-KR", {
     month: "short",
     year: "numeric",
   });
 };
 
 export const dateToFormatLong = (dateStr: string) => {
-  if (dateStr === "Present" || dateStr === "") return "";
+  if (
+    !dateStr ||
+    dateStr === "Present" ||
+    dateStr === null ||
+    dateStr === undefined
+  )
+    return "";
 
   const d = new Date(dateStr);
-  return d.toLocaleString("en-US", {
+  if (isNaN(d.getTime())) return "";
+
+  const now = new Date();
+
+  // 자정 기준으로 날짜만 비교
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const diffDays = (today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (diffDays === 0) return "오늘";
+  if (diffDays === 1) return "어제";
+
+  return d.toLocaleString("ko-KR", {
+    year: "numeric",
     month: "long",
     day: "numeric",
-    year: "numeric",
   });
 };
 

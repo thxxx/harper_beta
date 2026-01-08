@@ -314,19 +314,19 @@ export type Database = {
           company_id: number | null
           created_at: string
           id: number
-          storage_path: string | null
+          is_crunchbase_done: boolean
         }
         Insert: {
           company_id?: number | null
           created_at?: string
           id?: number
-          storage_path?: string | null
+          is_crunchbase_done?: boolean
         }
         Update: {
           company_id?: number | null
           created_at?: string
           id?: number
-          storage_path?: string | null
+          is_crunchbase_done?: boolean
         }
         Relationships: [
           {
@@ -341,6 +341,7 @@ export type Database = {
       edu_user: {
         Row: {
           candid_id: string | null
+          created_at: string
           degree: string | null
           end_date: string | null
           field: string | null
@@ -351,6 +352,7 @@ export type Database = {
         }
         Insert: {
           candid_id?: string | null
+          created_at?: string
           degree?: string | null
           end_date?: string | null
           field?: string | null
@@ -361,6 +363,7 @@ export type Database = {
         }
         Update: {
           candid_id?: string | null
+          created_at?: string
           degree?: string | null
           end_date?: string | null
           field?: string | null
@@ -383,6 +386,7 @@ export type Database = {
         Row: {
           candid_id: string | null
           company_id: number | null
+          created_at: string
           description: string | null
           end_date: string | null
           id: number
@@ -393,6 +397,7 @@ export type Database = {
         Insert: {
           candid_id?: string | null
           company_id?: number | null
+          created_at?: string
           description?: string | null
           end_date?: string | null
           id?: number
@@ -403,6 +408,7 @@ export type Database = {
         Update: {
           candid_id?: string | null
           company_id?: number | null
+          created_at?: string
           description?: string | null
           end_date?: string | null
           id?: number
@@ -424,6 +430,76 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company_db"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      extra_experience: {
+        Row: {
+          candid_id: string | null
+          created_at: string
+          description: string | null
+          id: number
+          issued_at: string | null
+          issued_by: string | null
+          title: string | null
+          type: string | null
+        }
+        Insert: {
+          candid_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          issued_at?: string | null
+          issued_by?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Update: {
+          candid_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          issued_at?: string | null
+          issued_by?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_experience_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -629,10 +705,12 @@ export type Database = {
           created_at: string
           criteria: string[] | null
           is_deleted: boolean
+          message: string | null
           query: string | null
           query_id: string
           query_keyword: string | null
           raw_input_text: string | null
+          recommendation: string | null
           retries: number
           status: string | null
           thinking: string | null
@@ -642,10 +720,12 @@ export type Database = {
           created_at?: string
           criteria?: string[] | null
           is_deleted?: boolean
+          message?: string | null
           query?: string | null
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          recommendation?: string | null
           retries?: number
           status?: string | null
           thinking?: string | null
@@ -655,10 +735,12 @@ export type Database = {
           created_at?: string
           criteria?: string[] | null
           is_deleted?: boolean
+          message?: string | null
           query?: string | null
           query_id?: string
           query_keyword?: string | null
           raw_input_text?: string | null
+          recommendation?: string | null
           retries?: number
           status?: string | null
           thinking?: string | null

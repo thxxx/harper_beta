@@ -9,6 +9,12 @@ import PublicationBox from "./components/PublicationBox";
 import LinkChips from "./components/LinkChips";
 import { replaceName } from "@/utils/textprocess";
 import { useMemo } from "react";
+import { useMessages } from "@/i18n/useMessage";
+import {
+  degreeEnToKo,
+  koreaUniversityEnToKo,
+  majorEnToKo,
+} from "@/utils/language_map";
 
 export const ExperienceCal = (months: number) => {
   const years = Math.floor(months / 12);
@@ -22,7 +28,7 @@ export default function ProfileDetailPage() {
   const router = useRouter();
   const candidId =
     typeof router.query.id === "string" ? router.query.id : undefined;
-
+  const { m } = useMessages();
   const { companyUser } = useCompanyUserStore();
   const userId = companyUser?.user_id;
 
@@ -99,7 +105,7 @@ export default function ProfileDetailPage() {
                 )}
                 {typeof c.total_exp_months === "number" && (
                   <span className="text-xgray600">
-                    Total exp: {ExperienceCal(c.total_exp_months)}
+                    {m.data.totalexp}: {ExperienceCal(c.total_exp_months)}
                   </span>
                 )}
               </div>
@@ -116,7 +122,7 @@ export default function ProfileDetailPage() {
         </div>
 
         <div className="text-white flex flex-col gap-2">
-          <div className="text-lg font-normal">Summary</div>
+          <div className="text-lg font-normal">{m.data.summary}</div>
 
           {c.summary && (
             <div className="whitespace-pre-wrap text-base text-hgray900 leading-6 font-light">
@@ -137,7 +143,9 @@ export default function ProfileDetailPage() {
 
         {/* Experiences */}
         <Box
-          title={`Experiences (${(c.experience_user?.length ?? 0) as number})`}
+          title={`${m.data.experience} (${
+            (c.experience_user?.length ?? 0) as number
+          })`}
         >
           <div className="space-y-3">
             {(c.experience_user ?? []).map((e: any, idx: number) => {
@@ -160,13 +168,19 @@ export default function ProfileDetailPage() {
         </Box>
 
         {/* Educations */}
-        <Box title={`Educations (${(c.edu_user?.length ?? 0) as number})`}>
+        <Box
+          title={`${m.data.education} (${(c.edu_user?.length ?? 0) as number})`}
+        >
           <div className="space-y-3">
             {(c.edu_user ?? []).map((ed: any, idx: number) => (
               <ItemBox
                 key={idx}
-                title={`${ed.school}`}
-                name={`${ed.field}, ${ed.degree}`}
+                title={`${koreaUniversityEnToKo(ed.school)}`}
+                name={
+                  ed.field
+                    ? `${majorEnToKo(ed.field)}, ${degreeEnToKo(ed.degree)}`
+                    : ed.degree
+                }
                 start_date={ed.start_date}
                 end_date={ed.end_date}
                 link={ed.school_url}
@@ -179,7 +193,9 @@ export default function ProfileDetailPage() {
 
         {/* Publications */}
         <Box
-          title={`Publications (${(c.publications?.length ?? 0) as number})`}
+          title={`${m.data.publications} (${
+            (c.publications?.length ?? 0) as number
+          })`}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {(c.publications ?? []).map((p: any, idx: number) => (

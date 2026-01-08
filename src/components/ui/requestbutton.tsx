@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ConnectionModal from "../Modal/ConnectionModal";
 import { CandidateTypeWithConnection } from "@/hooks/useSearchCandidates";
+import { useMessages } from "@/i18n/useMessage";
 
 type ModalMode = "request" | "cancel";
 
@@ -19,7 +20,7 @@ const Requestbutton = ({
   const [isRequested, setIsRequested] = useState(initialRequested);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("request");
-
+  const { m } = useMessages();
   const openRequestModal = () => {
     setModalMode("request");
     setIsConnectionModalOpen(true);
@@ -61,7 +62,7 @@ const Requestbutton = ({
           className="transition-all duration-200 font-normal cursor-pointer items-center justify-center flex h-10 px-4 rounded-xl text-sm bg-accenta1/20 text-accenta1 hover:bg-accenta1/25"
         >
           <div className="flex items-center flex-row">
-            <span>Request Connection</span>
+            <span>{m.data.request}</span>
             {isBeta && (
               <span className="ml-1 text-[10px] font-light text-hgray900 border border-white/10 rounded-md px-1 py-0.5">
                 BETA
@@ -77,7 +78,7 @@ const Requestbutton = ({
             className="transition-all duration-200 cursor-pointer items-center justify-center flex h-10 px-4 rounded-xl text-sm bg-accenta1/20 text-accenta1 hover:bg-accenta1/25"
             aria-disabled="true"
           >
-            Cancel Connection
+            {m.data.request_cancel}
           </div>
 
           {/* <div

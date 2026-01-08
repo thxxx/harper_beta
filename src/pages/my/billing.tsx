@@ -8,6 +8,8 @@ import { useCreditRequestHistory } from "@/hooks/useCreditRequestHistory";
 import { dateToFormatLong } from "@/utils/textprocess";
 import router from "next/router";
 import { showToast } from "@/components/toast/toast";
+import { useMessages } from "@/i18n/useMessage";
+import { notifyToSlack } from "@/lib/slack";
 
 const Billing = () => {
   const { credits } = useCredits();
@@ -16,6 +18,7 @@ const Billing = () => {
     useCreditRequestHistory(companyUser?.user_id);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { m } = useMessages();
 
   const onConfirm = async (credit_num: number) => {
     if (!companyUser?.user_id) return false;
@@ -24,6 +27,12 @@ const Billing = () => {
       user_id: companyUser.user_id,
       credit_num: credit_num,
     });
+    await notifyToSlack(`💳 *Credit Request*
+
+• *이름*: *${companyUser.name}* (${companyUser?.company ?? "회사 정보 없음"})
+• *이메일*: ${companyUser.email}
+• *요청 크레딧*: *${credit_num}*
+• *요청 시간*: ${new Date().toLocaleString("ko-KR")}`);
     refetchCreditRequestHistory();
     setIsLoading(false);
     return true;
@@ -40,7 +49,7 @@ const Billing = () => {
       />
       <div className="px-6 py-8 w-full">
         <div className="text-3xl font-hedvig font-light tracking-tight text-white">
-          Credits
+          {m.system.credits}
         </div>
         <div className="mt-8">
           <div className="rounded-3xl bg-white/5 p-6">
@@ -79,7 +88,7 @@ const Billing = () => {
                   className="mt-4 text-accenta1 bg-accenta1/10 px-5 py-3 rounded-2xl cursor-pointer text-base font-normal"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Processing..." : "Request More Credits"}
+                  {isLoading ? m.loading.processing : m.system.credit_request}
                 </button>
               </div>
             </div>
@@ -87,7 +96,7 @@ const Billing = () => {
         </div>
         <div className="mt-8">
           <div className="text-base text-hgray900 font-light">
-            Credit Request History (Latest 10)
+            {m.system.credit_history} (Latest 10)
           </div>
 
           <div className="mt-3">
@@ -106,11 +115,11 @@ const Billing = () => {
                     key={item.id}
                     className="grid grid-cols-12 items-center font-light gap-3 py-4 rounded-2xl hover:bg-white/5 transition-colors px-6 bg-white/5"
                   >
-                    <div className="col-span-8 text-white/90">
-                      <span className="text-accenta1 font-normal">
-                        {item.credit_num}
+                    <div className="flex flex-row items-center col-span-8 text-white/90 font-normal">
+                      <span className="text-accenta1">{item.credit_num}</span>
+                      <span className="text-hgray700 text-sm ml-1.5">
+                        {m.system.credits}
                       </span>
-                      <span className="text-hgray600 ml-1">Credits</span>
                     </div>
 
                     <div className="col-span-3 text-hgray900 text-sm truncate text-right pr-2">
@@ -125,14 +134,14 @@ const Billing = () => {
                             : "bg-white/10 text-white/70"
                         }`}
                       >
-                        {item.is_done ? "Done" : "Pending"}
+                        {item.is_done ? m.system.done : m.system.pending}
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="py-8 text-center text-hgray500 text-sm">
-                  No requests yet.
+                  {m.system.no_credit_request}
                 </div>
               )}
             </div>
