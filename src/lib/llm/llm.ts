@@ -88,6 +88,7 @@ export const xaiInference = async (
 };
 
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { supabase } from "../supabase";
 const gemini = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
@@ -98,27 +99,35 @@ export async function geminiInference(
   userPrompt: string,
   temperature: number = 0.7
 ): Promise<string | object> {
-  const response = await gemini.models.generateContent({
-    model: model,
-    contents: systemPrompt + "\n\n" + userPrompt,
-    config: {
-      thinkingConfig: {
-        thinkingLevel: ThinkingLevel.LOW,
+  try {
+    const response = await gemini.models.generateContent({
+      model: model,
+      contents: systemPrompt + "\n\n" + userPrompt,
+      config: {
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.LOW,
+        },
+        temperature: temperature,
       },
-      temperature: temperature,
-    },
-  });
-  // console.log("response ", response);
-  // console.log("response ", response.usageMetadata?.promptTokensDetails);
+    });
+    // console.log("response ", response);
+    // console.log("response ", response.usageMetadata?.promptTokensDetails);
 
-  const cost =
-    (response.usageMetadata?.promptTokenCount ?? 0) *
-      pricingTable[model].input +
-    (response.usageMetadata?.candidatesTokenCount ?? 0) *
-      pricingTable[model].output;
-  console.log("[GEMINI] cost ", cost * 1450, "원");
+    const cost =
+      (response.usageMetadata?.promptTokenCount ?? 0) *
+        pricingTable[model].input +
+      (response.usageMetadata?.candidatesTokenCount ?? 0) *
+        pricingTable[model].output;
 
-  return response?.text ?? "";
+    console.log("[GEMINI] cost ", cost * 1450, "원");
+
+    return response?.text ?? "";
+  } catch (e) {
+    supabase.from("landing_logs").insert({
+      type: JSON.stringify(e),
+    });
+    throw e;
+  }
 }
 
 const inference = async (

@@ -103,6 +103,7 @@ Input SQL Query:
 ${sqlQueryWithGroupBy}
 """
 `;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const outText2 = await geminiInference(
       "gemini-3-flash-preview",

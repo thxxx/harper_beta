@@ -589,25 +589,19 @@ export type Database = {
       }
       landing_logs: {
         Row: {
-          action: string | null
           created_at: string
           id: number
-          is_mobile: boolean | null
-          local_id: string | null
+          type: string | null
         }
         Insert: {
-          action?: string | null
           created_at?: string
           id?: number
-          is_mobile?: boolean | null
-          local_id?: string | null
+          type?: string | null
         }
         Update: {
-          action?: string | null
           created_at?: string
           id?: number
-          is_mobile?: boolean | null
-          local_id?: string | null
+          type?: string | null
         }
         Relationships: []
       }
@@ -639,23 +633,23 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
-          id: number
-          linkedin_id: string | null
+          linkedin_id: string
           name: string | null
+          url: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string
-          id?: number
-          linkedin_id?: string | null
+          linkedin_id: string
           name?: string | null
+          url?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string
-          id?: number
-          linkedin_id?: string | null
+          linkedin_id?: string
           name?: string | null
+          url?: string | null
         }
         Relationships: []
       }
