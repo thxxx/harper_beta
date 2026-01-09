@@ -96,7 +96,7 @@ const Home: NextPage = () => {
                   />
                 </div>
                 <div className="flex flex-row items-center justify-center gap-2 absolute right-5 bottom-5">
-                  <Tooltips text="Search by JD file or link">
+                  {/* <Tooltips text="Search by JD file or link">
                     <button
                       disabled={!canSend}
                       className={[
@@ -108,7 +108,7 @@ const Home: NextPage = () => {
                     >
                       <Plus size={20} color="white" />
                     </button>
-                  </Tooltips>
+                  </Tooltips> */}
                   <button
                     onClick={onSubmit}
                     disabled={!canSend}
