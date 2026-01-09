@@ -19,13 +19,12 @@ export const useCredits = () => {
       const { data, error } = await supabase
         .from("credits")
         .select("remain_credit, charged_credit")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
       if (error) throw error;
       return {
-        remain_credit: data?.remain_credit ?? 0,
-        charged_credit: data?.charged_credit ?? 0,
+        remain_credit: data?.[0]?.remain_credit ?? 0,
+        charged_credit: data?.[0]?.charged_credit ?? 0,
       };
     },
     staleTime: 1000 * 60 * 30, // 5분간 데이터를 신선한 것으로 간주

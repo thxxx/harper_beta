@@ -173,7 +173,7 @@ export const searchDatabase = async (
 
   if (error && error.message.includes("timeout")) {
     console.log("\n\n⚠️ 그냥 Database 쿼리 자체만 한번 더 실행 ==");
-    updateQueryStatus(queryId, userId, "🐦‍🔥 Searching Again...");
+    updateQueryStatus(queryId, userId, ko.loading.searching_again);
     const { data: data2, error: error2 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
       {
@@ -279,16 +279,12 @@ A corrected SQL query.
     return [];
   }
 
-  await updateQueryStatus(
-    queryId,
-    userId,
-    "Reading and analyzing candidates' information..."
-  );
+  await updateQueryStatus(queryId, userId, ko.loading.summarizing);
 
   const fullScore = criteria.length * 2;
   // 1. LLM 요약 및 점수 계산만 먼저 수행
   const scored: (ScoredCandidate & { summary: string })[] =
-    await mapWithConcurrency(data[0] as any[], 10, async (candidate) => {
+    await mapWithConcurrency(data[0] as any[], 17, async (candidate) => {
       const id = candidate.id as string;
       let summary: string | null = null;
       let lines: string[] = [];
@@ -518,8 +514,10 @@ export async function POST(req: NextRequest) {
 
   if (
     pageIdx === 0 &&
-    (candidateIds.length === 0 || candidateIds.length < 10) &&
-    (candidateIds.length === 50 || oneScoreCount <= 5)
+    (candidateIds.length === 0 ||
+      candidateIds.length < 10 ||
+      candidateIds.length >= 50 ||
+      oneScoreCount <= 5)
   ) {
     const message = await makeMessage(
       q.raw_input_text ?? "",

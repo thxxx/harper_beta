@@ -13,6 +13,7 @@ export const ko = {
     making_criteria: "검색 기준을 세우고 있습니다...",
     making_query: "해당하는 사람을 찾을 방법을 설계하고 있습니다...",
     searching_candidates: "전체 인재를 탐색 중입니다...",
+    searching_again: "문제가 발생하여 검색을 한번 더 시도하고 있습니다...",
     retrying_error: "문제가 발생하여 해결하고 있습니다...",
     summarizing: "후보자의 정보를 확인하고 적합성을 판단하고 있습니다...",
     return: "결과를 획득했습니다. 정리하고 반환합니다.",

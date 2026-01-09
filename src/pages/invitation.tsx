@@ -18,7 +18,7 @@ export default function LoginSuccess() {
 
   const interactiveRef = useRef<HTMLDivElement>(null);
 
-  const companyUser = useCompanyUserStore((s) => s.companyUser);
+  const { companyUser, load } = useCompanyUserStore();
 
   useEffect(() => {
     if (companyUser?.is_authenticated) {
@@ -59,6 +59,15 @@ export default function LoginSuccess() {
               is_authenticated: true,
             })
             .eq("user_id", companyUser?.user_id);
+          if (!companyUser.is_authenticated) {
+            await supabase.from("credits").insert({
+              user_id: companyUser?.user_id,
+              remain_credit: 300,
+              charged_credit: 300,
+              type: "initial",
+            });
+            await load(companyUser?.user_id);
+          }
           router.push("/my");
         } else {
           setIsShake(true);

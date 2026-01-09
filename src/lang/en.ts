@@ -13,6 +13,7 @@ export const en = {
     making_criteria: "Thinking how to get the best candidates",
     making_query: "Making SQL Query...",
     searching_candidates: "Searching Database...",
+    searching_again: "An error occurred, searching again...",
     retrying_error: "Fixing SQL Query and issues...",
     summarizing: "Reading and analyzing candidates' information..",
     return: "Got Candidates. Now organizing results for return.",

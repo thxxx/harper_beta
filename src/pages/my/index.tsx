@@ -65,103 +65,12 @@ const Home: NextPage = () => {
     router.push(`/my/c/${queryId}`);
   };
 
-  //   // (p.title ILIKE '%TTS%' OR p.title ILIKE '%Text-to-Speech%' OR p.title ILIKE '%Speech Synthesis%' OR p.title ILIKE '%Voice Synthesis%' OR p.title ILIKE '%Speech Generation%' OR p.title ILIKE '%Speech-to-Speech%' OR p.title ILIKE '%Vocoder%' OR p.title ILIKE '%WaveNet%' OR p.title ILIKE '%Tacotron%' OR p.title ILIKE '%FastSpeech%')
-  //   const testSql = async () => {
-  //     console.log("testSql");
-  //     const sqlQuery = `
-  // WITH params AS (
-  //   SELECT to_tsquery('english', '(machine <-> learning) | ML | MLE | (deep <-> learning)') AS tsq
-  // ),
-  // -- [1단계] 필터링 및 ID 확정 (Phase 1: ID-only Filtering)
-  // -- 무거운 컬럼이나 JSON 연산 없이 오직 ID와 정렬 순서만 결정합니다.
-  // identified_ids AS (
-  //   SELECT
-  //     T1.id,
-  //     ts_rank(T1.fts, params.tsq) AS fts_rank
-  //   FROM candid AS T1
-  //   CROSS JOIN params
-  //   WHERE
-  //     -- 학교 조건 1: 서울과고
-  //     EXISTS (
-  //       SELECT 1 FROM edu_user e1
-  //       WHERE e1.candid_id = T1.id
-  //         AND e1.school ILIKE ANY (ARRAY['%서울과학고%', '%서울과학고등학교%', '%Seoul Science High School%', '%SSHS%'])
-  //     )
-  //     -- 학교 조건 2: KAIST
-  //     AND EXISTS (
-  //       SELECT 1 FROM edu_user e2
-  //       WHERE e2.candid_id = T1.id
-  //         AND e2.school ILIKE ANY (ARRAY['%KAIST%', '%카이스트%', '%Korea Advanced Institute of Science and Technology%'])
-  //     )
-  //     -- 경력 및 키워드 조건
-  //     AND EXISTS (
-  //       SELECT 1 FROM experience_user ex
-  //       WHERE ex.candid_id = T1.id
-  //         AND (
-  //           ex.role ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
-  //           OR T1.headline ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
-  //           OR T1.fts @@ params.tsq
-  //         )
-  //     )
-  //   ORDER BY fts_rank DESC, T1.id
-  //   LIMIT 100 -- 여기서 100건만 남기고 나머지는 버립니다.
-  // )
-  // -- [2단계] 확정된 100건에 대해서만 상세 정보 및 JSON 집계 (Phase 2: Hydration)
-  // SELECT
-  //   to_json(i.id) AS id,
-  //   c.name,
-  //   c.headline,
-  //   c.location,
-  //   i.fts_rank,
-  //   COALESCE(edu_block.edu_rows, '[]'::jsonb) AS edu_user,
-  //   COALESCE(exp_block.experience_rows, '[]'::jsonb) AS experience_user
-  // FROM identified_ids i
-  // JOIN candid c ON c.id = i.id -- 기본 정보 조인
-  // LEFT JOIN LATERAL (
-  //   SELECT jsonb_agg(to_jsonb(e)) AS edu_rows
-  //   FROM edu_user e
-  //   WHERE e.candid_id = i.id
-  // ) edu_block ON TRUE
-  // LEFT JOIN LATERAL (
-  //   SELECT jsonb_agg(
-  //     (to_jsonb(ex) || jsonb_build_object('company_db', jsonb_build_object(
-  //       'name', comp.name,
-  //       'investors', comp.investors,
-  //       'short_description', comp.short_description
-  //     )))
-  //   ) AS experience_rows
-  //   FROM experience_user ex
-  //   LEFT JOIN company_db comp ON comp.id = ex.company_id
-  //   WHERE ex.candid_id = i.id
-  // ) exp_block ON TRUE
-  // ORDER BY i.fts_rank DESC, i.id
-  // `;
-  //     const sqlQueryWithGroupBy2 = ensureGroupBy(sqlQuery, "");
-  //     console.log("sqlQueryWithGroupBy2 === \n", sqlQueryWithGroupBy2, "\n---\n");
-
-  //     const start_time = performance.now();
-  //     const { data, error } = await supabase.rpc(
-  //       "set_timeout_and_execute_raw_sql",
-  //       {
-  //         sql_query: sqlQueryWithGroupBy2,
-  //         page_idx: 0,
-  //         limit_num: 50,
-  //       }
-  //     );
-  //     const end_time = performance.now();
-  //     console.log("time ", end_time - start_time);
-  //     console.log("data ", data, "\n\nError : ", error);
-
-  //     // const information = buildSummary(data?.[0]?.[0]);
-  //     // console.log("information ", information);
-  //   };
-
   return (
     <AppLayout>
       <main className="flex-1 flex items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
           <h1 className="text-2xl sm:text-3xl font-medium font-hedvig tracking-tight text-center leading-relaxed">
-            {m.system.hello}, {companyUser?.name.split(" ")[0]}
+            {m.system.hello}, {companyUser?.name.split(" ")[0]}님
             <div className="h-3" />
             {m.system.intro}
           </h1>
