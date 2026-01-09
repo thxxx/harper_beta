@@ -256,6 +256,8 @@ export default function Result() {
     !isLoading &&
     (queryItem?.retries ?? 1) <= 0;
 
+  const isLessThan10 = items.length < 10 && !isLoading;
+
   return (
     <AppLayout>
       {queryItem && (
@@ -383,7 +385,18 @@ export default function Result() {
       {!isQueryDetailLoading &&
         !isLoading &&
         !isNoResultAtall &&
-        !isLessResultThan10 && (
+        !isLessResultThan10 &&
+        isLessThan10 && (
+          <div className="mt-10 w-full flex flex-col gap-2 items-start justify-start text-[15px] text-hgray700 text-left pl-4">
+            추가 결과가 존재하지 않습니다.
+          </div>
+        )}
+
+      {!isQueryDetailLoading &&
+        !isLoading &&
+        !isNoResultAtall &&
+        !isLessResultThan10 &&
+        !isLessThan10 && (
           <div className="flex items-center justify-center w-full py-16 flex-col">
             <div className="text-sm text-white">
               Page {pageIdx + 1}

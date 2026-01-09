@@ -129,11 +129,11 @@ const Home: NextPage = () => {
               <div className="w-full flex flex-row items-start justify-between gap-4 mt-6">
                 <ExampleQuery
                   query="국내 과학고 졸업 후 서울대 / KAIST에 진학하여 미국 M7에서 AI / Machine Learning 경험 2년 이하 보유한 사람"
-                  onClick={() => setQuery(query)}
+                  onClick={(v) => setQuery(v)}
                 />
                 <ExampleQuery
                   query="네카라쿠배 출신 프로덕트 매니저 + 개발 역량 보유"
-                  onClick={() => setQuery(query)}
+                  onClick={(v) => setQuery(v)}
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ const ExampleQuery = ({
   onClick,
 }: {
   query: string;
-  onClick: () => void;
+  onClick: (v: string) => void;
 }) => {
   return (
     <div
@@ -167,7 +167,7 @@ const ExampleQuery = ({
         "active:translate-y-[0px] active:scale-[0.99]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
       ].join(" ")}
-      onClick={() => onClick()}
+      onClick={() => onClick(query)}
       role="button"
       tabIndex={0}
     >

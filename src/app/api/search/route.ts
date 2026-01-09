@@ -55,29 +55,30 @@ export async function parseQueryWithLLM(
   queryText: string,
   criteria: string[],
   extraInfo: string = ""
-): Promise<string> {
-  let prompt = `
+): Promise<string | any> {
+  try {
+    let prompt = `
 ${sqlPrompt2}
 Natural Language Query: ${queryText}
 Criteria: ${criteria}
 `.trim();
-  if (extraInfo) {
-    prompt += `
+    if (extraInfo) {
+      prompt += `
 Extra Info: ${extraInfo}
 `;
-  }
+    }
 
-  // Responses API + structured outputs (text.format)
-  const outText = await geminiInference(
-    "gemini-3-flash-preview",
-    "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
-    prompt,
-    0.5
-  );
-  const cleanText = (outText as string).trim().replace(/\n/g, " ").trim();
+    // Responses API + structured outputs (text.format)
+    const outText = await geminiInference(
+      "gemini-3-flash-preview",
+      "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
+      prompt,
+      0.5
+    );
+    const cleanText = (outText as string).trim().replace(/\n/g, " ").trim();
 
-  // const transformedSqlQuery = transformSql(cleanedResponse);
-  const sqlQuery = `
+    // const transformedSqlQuery = transformSql(cleanedResponse);
+    const sqlQuery = `
 SELECT DISTINCT ON (T1.id)
   to_json(T1.id) AS id,
   T1.name,
@@ -87,43 +88,47 @@ FROM
   candid AS T1
 ${cleanText}
 `;
-  const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "");
-  console.log(
-    "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n",
-    sqlQueryWithGroupBy,
-    "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n"
-  );
+    const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "");
+    console.log(
+      "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n",
+      sqlQueryWithGroupBy,
+      "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n"
+    );
 
-  const pp2 =
-    sqlExistsPrompt +
-    `
+    const pp2 =
+      sqlExistsPrompt +
+      `
 Input SQL Query: 
 """
 ${sqlQueryWithGroupBy}
 """
 `;
 
-  const outText2 = await geminiInference(
-    "gemini-3-flash-preview",
-    "You are a SQL Query refinement expert.",
-    pp2,
-    0.4
-  );
-  const cleanedResponse2 = (outText2 as string)
-    .trim()
-    .replace(/\n/g, " ")
-    .trim();
+    const outText2 = await geminiInference(
+      "gemini-3-flash-preview",
+      "You are a SQL Query refinement expert.",
+      pp2,
+      0.4
+    );
+    const cleanedResponse2 = (outText2 as string)
+      .trim()
+      .replace(/\n/g, " ")
+      .trim();
 
-  console.log(
-    "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n",
-    cleanedResponse2,
-    "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n"
-  );
+    console.log(
+      "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n",
+      cleanedResponse2,
+      "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n"
+    );
 
-  // const outJson = JSON.parse(cleanedResponse2);
-  const sqlQueryWithGroupBy2 = ensureGroupBy(cleanedResponse2, "");
+    // const outJson = JSON.parse(cleanedResponse2);
+    const sqlQueryWithGroupBy2 = ensureGroupBy(cleanedResponse2, "");
 
-  return sqlQueryWithGroupBy2;
+    return sqlQueryWithGroupBy2;
+  } catch (e) {
+    console.error("parseQueryWithLLM error ", e);
+    return e;
+  }
 }
 
 /**
@@ -357,6 +362,7 @@ export async function POST(req: NextRequest) {
 
   const nextPageIdx = pageIdx + 1;
   const cachedResults = resultsPages?.[0];
+
   console.log(pageIdx, "쿼리와 results ", cachedResults);
 
   // 이미 검색한 결과가 있다면 그대로 리턴
@@ -487,6 +493,9 @@ export async function POST(req: NextRequest) {
     });
 
     parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
+    if (typeof parsed_query !== "string") {
+      return NextResponse.json(parsed_query, { status: 404 });
+    }
   }
   // 쿼리를 만들었다.
   let searchResults = await searchDatabase(

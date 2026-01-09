@@ -33,7 +33,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [openHistory, setOpenHistory] = useState(true);
   const { credits, isLoading: isLoadingCredits } = useCredits();
-  console.log("credits ", credits, isLoadingCredits);
   const { m } = useMessages();
   const { companyUser, loading, initialized } = useCompanyUserStore();
 
