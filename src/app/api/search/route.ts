@@ -494,6 +494,7 @@ export async function POST(req: NextRequest) {
 
     parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
     if (typeof parsed_query !== "string") {
+      updateQueryStatus(queryId, q.user_id, JSON.stringify(parsed_query));
       return NextResponse.json(parsed_query, { status: 404 });
     }
   }
