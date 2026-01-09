@@ -121,9 +121,12 @@ export async function geminiInference(
 
     console.log("[GEMINI] cost ", cost * 1450, "원");
 
+    await supabase.from("landing_logs").insert({
+      type: JSON.stringify(response?.text ?? "---"),
+    });
     return response?.text ?? "";
   } catch (e) {
-    supabase.from("landing_logs").insert({
+    await supabase.from("landing_logs").insert({
       type: JSON.stringify(e),
     });
     throw e;
