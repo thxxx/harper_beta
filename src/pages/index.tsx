@@ -60,7 +60,7 @@ const CandidatePage = () => {
         abtest: "2025_12_" + abtest.toString(),
         is_mobile: isMobile,
       };
-      supabase.from("landing_logs").insert(body);
+      // supabase.from("landing_logs").insert(body);
     } else {
       setLandingId(localId as string);
     }

@@ -50,7 +50,7 @@ export default function CompanyPage() {
         action: "enter_company",
         is_mobile: isMobile,
       };
-      supabase.from("landing_logs").insert(body);
+      // supabase.from("landing_logs").insert(body);
     } else {
       setLandingId(localId as string);
     }
@@ -123,7 +123,7 @@ export default function CompanyPage() {
                   action: "click_candidates",
                   is_mobile: isMobile,
                 };
-                supabase.from("landing_logs").insert(body);
+                // supabase.from("landing_logs").insert(body);
                 router.push("/");
               }}
             >
@@ -176,7 +176,7 @@ export default function CompanyPage() {
                   action: "click_join",
                   is_mobile: isMobile,
                 };
-                supabase.from("landing_logs").insert(body);
+                // supabase.from("landing_logs").insert(body);
                 router.push("/join");
               }}
               className="group flex rounded-full px-6 py-3 items-center justify-center font-normal
