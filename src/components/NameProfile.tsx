@@ -33,7 +33,7 @@ const NameProfile = ({
       <ConfirmModal
         open={isRevealConfirmModalOpen}
         onClose={() => setIsRevealConfirmModalOpen(false)}
-        onConfirm={() => handleReveal()}
+        onConfirm={() => router.push(`/my/p/${id}`)}
         title="Are you sure you want to reveal this profile?"
         description="This action cannot be undone.<br />30 크레딧이 차감됩니다."
         confirmLabel="Reveal"
