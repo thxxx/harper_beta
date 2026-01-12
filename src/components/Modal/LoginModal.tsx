@@ -233,7 +233,7 @@ const LoginModal = ({
               {!isSignUp ? (
                 <>
                   <div className="pt-1 text-center text-sm font-light text-hgray700 mt-2">
-                    Don't have an account?{" "}
+                    계정이 없으신가요?{" "}
                     <button
                       type="button"
                       onClick={() => {
