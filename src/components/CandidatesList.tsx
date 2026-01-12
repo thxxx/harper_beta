@@ -3,7 +3,11 @@ import {
   ExperienceUserType,
 } from "@/hooks/useSearchCandidates";
 import React, { useMemo } from "react";
-import { companyEnToKo, koreaUniversityEnToKo } from "@/utils/language_map";
+import {
+  companyEnToKo,
+  degreeEnToKo,
+  koreaUniversityEnToKo,
+} from "@/utils/language_map";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile from "./NameProfile";
@@ -134,7 +138,7 @@ export default function CandidateCard({
                     {school.degree && (
                       <span className="text-hgray600 font-light">
                         {" "}
-                        &nbsp; {school.degree}
+                        &nbsp; {degreeEnToKo(school.degree)}
                       </span>
                     )}
                   </div>

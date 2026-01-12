@@ -33,7 +33,7 @@ const NameProfile = ({
       <ConfirmModal
         open={isRevealConfirmModalOpen}
         onClose={() => setIsRevealConfirmModalOpen(false)}
-        onConfirm={() => router.push(`/my/p/${id}`)}
+        onConfirm={() => handleReveal()}
         title="Are you sure you want to reveal this profile?"
         description="This action cannot be undone.<br />30 크레딧이 차감됩니다."
         confirmLabel="Reveal"
@@ -50,7 +50,7 @@ const NameProfile = ({
         <div className="flex flex-col gap-0">
           <div
             className="truncate font-medium text-lg hover:underline cursor-pointer relative"
-            onClick={() => setIsRevealConfirmModalOpen(true)}
+            onClick={() => router.push(`/my/p/${id}`)}
           >
             {/* <div className="absolute inset-0 bg-white/10 z-10 blur-xl rounded-full"></div> */}
             {name ?? id}
