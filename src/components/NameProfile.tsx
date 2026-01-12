@@ -49,10 +49,10 @@ const NameProfile = ({
       <div className="flex flex-col items-start justify-between">
         <div className="flex flex-col gap-0">
           <div
-            className="truncate font-medium text-lg hover:underline cursor-pointer relative blur-md"
+            className="truncate font-medium text-lg hover:underline cursor-pointer relative"
             onClick={() => setIsRevealConfirmModalOpen(true)}
           >
-            <div className="absolute inset-0 bg-white/10 z-10 blur-xl rounded-full"></div>
+            {/* <div className="absolute inset-0 bg-white/10 z-10 blur-xl rounded-full"></div> */}
             {name ?? id}
           </div>
 
