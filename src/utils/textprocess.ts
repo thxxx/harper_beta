@@ -274,16 +274,17 @@ export const buildSummary = (doc: any) => {
   return docSummary;
 };
 
-export const dateToFormat = (dateStr: string) => {
-  if (
-    dateStr === "Present" ||
-    dateStr === "" ||
-    dateStr === null ||
-    dateStr === undefined
-  )
-    return "";
+export const dateToFormat = (dateStr?: string | null) => {
+  if (!dateStr || dateStr === "Present") return "";
+
+  // 정확히 YYYY-01-01 인 경우 → 연도만
+  if (/^\d{4}-01-01$/.test(dateStr)) {
+    return `${dateStr.slice(0, 4)}년`;
+  }
 
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+
   return d.toLocaleString("ko-KR", {
     month: "short",
     year: "numeric",

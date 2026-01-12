@@ -27,7 +27,10 @@ export default function AuthCallback() {
       const payload = {
         user_id: user.id,
         email: user.email ?? null,
-        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+        name:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          "Anonymous",
         profile_picture: user.user_metadata?.avatar_url ?? null,
       };
 

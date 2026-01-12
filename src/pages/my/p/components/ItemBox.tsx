@@ -46,7 +46,7 @@ const ItemBox = ({
   };
 
   return (
-    <div className="rounded-2xl bg-white/5 px-6 py-4">
+    <div className="rounded-xl bg-white/5 px-6 py-[14px]">
       <div className="flex flex-row items-start justify-between">
         <div className="flex flex-row items-start justify-start gap-3">
           {!isEdu && (
@@ -64,12 +64,12 @@ const ItemBox = ({
               )}
             </div>
           )}
-          <div className="flex flex-col items-start justify-start gap-1 font-normal">
+          <div className="flex flex-col items-start justify-start gap-[2px] font-normal">
             <div className={`text-base ${isEdu ? "" : ""}`}>
               {title ? title : isEdu ? "Student" : "Employee"}
             </div>
             <div
-              className="cursor-pointer hover:underline text-base text-xgray800 flex flex-row gap-2 items-center font-light"
+              className="cursor-pointer hover:underline text-ngray600 flex flex-row gap-2 items-center font-normal text-sm"
               onClick={() => onButtonClick()}
             >
               {name} {link ? <ExternalLink size={14} /> : null}
@@ -79,16 +79,16 @@ const ItemBox = ({
         <div className="text-sm text-xgray800 font-light mt-1">
           {startDate ? (
             <span className="px-1">
-              {startDate} -{" "}
+              {startDate} ⎻{" "}
               {endDate === "" ? (
-                <span className="text-accenta1">Present</span>
+                <span className="text-accenta1">현재</span>
               ) : (
                 endDate
               )}
             </span>
           ) : null}
 
-          {typeof months === "number" ? ` (${ExperienceCal(months)})` : ""}
+          {typeof months === "number" ? ` · ${ExperienceCal(months)}` : ""}
         </div>
       </div>
       {description && (

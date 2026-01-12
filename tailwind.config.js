@@ -12,6 +12,16 @@ module.exports = {
           "linear-gradient(180deg, #F2E7AE 0%, #F1C4A6 50%, #94B8F0 100%)",
       },
       colors: {
+        gray100: "#111111",
+        gray200: "#212121", // bg2
+        gray300: "#2B2E35",
+        gray400: "#393D46",
+        gray500: "#5B606A",
+        gray600: "#868B94",
+        gray700: "#BDC8CD", // caption
+        gray800: "#DCDEE3",
+        gray900: "#E3E3E3",
+
         xgrayblack: "#1F2937",
         xprimary: "#1D9BF0",
         xmain: "#000000",
@@ -24,6 +34,7 @@ module.exports = {
         xgray600: "#657284",
         xgray700: "#4B5462",
         xdarknavy: "#0B1957",
+
         hgray100: "#111111",
         hgray200: "#212121", // bg2
         hgray300: "#2B2E35",
@@ -33,6 +44,7 @@ module.exports = {
         hgray700: "#BDC8CD", // caption
         hgray800: "#DCDEE3",
         hgray900: "#E3E3E3",
+
         brightnavy: "#0624A8",
         beige100: "#FAF9F6",
         beige200: "#F6F0E4",
@@ -44,7 +56,10 @@ module.exports = {
         bgDark500: "#292929",
         bgDark400: "#302F33",
         bgDark300: "#393939",
+
         ngray300: "#36363A",
+        ngray600: "#8A8B9D",
+
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

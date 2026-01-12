@@ -14,14 +14,15 @@ import {
   companyEnToKo,
   degreeEnToKo,
   koreaUniversityEnToKo,
+  locationEnToKo,
   majorEnToKo,
 } from "@/utils/language_map";
 
 export const ExperienceCal = (months: number) => {
   const years = Math.floor(months / 12);
   const remainingMonths = months % 12;
-  return `${years > 0 ? `${years}y ` : ""}${remainingMonths} ${
-    remainingMonths > 1 ? "m" : "m"
+  return `${years > 0 ? `${years}년 ` : ""}${remainingMonths}${
+    remainingMonths > 1 ? "개월" : "개월"
   }`;
 };
 
@@ -72,7 +73,7 @@ export default function ProfileDetailPage() {
       <div className="w-full mx-auto px-8 py-10 space-y-9">
         {/* Header */}
         <div className="flex flex-row items-start justify-between w-full">
-          <div className="flex items-start gap-6 w-[70%]">
+          <div className="flex items-start gap-8 w-[70%]">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-xlightgray border border-white/5 shrink-0">
               {c.profile_picture ? (
                 <img
@@ -89,20 +90,22 @@ export default function ProfileDetailPage() {
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 gap-1">
               <div className="text-2xl font-normal">{c.name}</div>
-              <div className="text-lg text-xlightgray font-light mt-1">
+              <div className="text-lg text-xlightgray font-light">
                 {c.headline}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-xgray800 font-light">
+              <div className="flex flex-wrap items-center gap-1 text-sm text-ngray600 font-normal">
                 {c.location && (
                   <span className="inline-flex items-center gap-1">
-                    {c.location}
+                    {locationEnToKo(c.location)}
                   </span>
                 )}
+              </div>
+              <div className="flex items-center text-sm text-ngray600 font-normal">
                 {typeof c.total_exp_months === "number" && (
-                  <span className="text-xgray600">
+                  <span className="">
                     {m.data.totalexp}: {ExperienceCal(c.total_exp_months)}
                   </span>
                 )}
@@ -226,7 +229,7 @@ const Box = ({
         {icon}
         {title}
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="mt-[10px]">{children}</div>
     </div>
   );
 };

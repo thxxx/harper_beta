@@ -128,7 +128,7 @@ export default function CandidateCard({
           )} */}
           {school && (
             <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
-              <div className="text-hgray600 text-sm w-24 pt-0.5 font-light">
+              <div className="text-hgray600 text-sm w-24 pt-0.5 font-normal">
                 {m.data.education}
               </div>
               <div className="flex flex-col gap-0.5 text-sm w-full">
@@ -208,11 +208,13 @@ const CompanyCard = ({
 
   return (
     <div className="flex flex-row items-start justify-start font-normal">
-      <div className="text-hgray600 text-sm w-24 pt-0.5 font-light">{text}</div>
+      <div className="text-hgray600 text-sm w-24 pt-0.5 font-normal">
+        {text}
+      </div>
       <div className="flex flex-col gap-1 text-sm w-full">
         <div className="flex flex-row items-center justify-between">
           <div
-            className="text-white font-light text-[15px] hover:underline cursor-pointer"
+            className="text-white font-normal text-[15px] hover:underline cursor-pointer"
             onClick={onButtonClick}
           >
             {companyEnToKo(company.company_db.name)}
