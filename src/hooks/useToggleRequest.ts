@@ -11,7 +11,6 @@ export function useToggleRequest() {
 
   return useMutation({
     mutationFn: async ({ userId, candidId }: Args) => {
-      console.log("toggle ", userId, candidId);
       // existing?
       const { data: existing, error: e1 } = await supabase
         .from("connection")

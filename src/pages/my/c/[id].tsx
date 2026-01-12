@@ -16,9 +16,9 @@ import { ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import {
   getRandomLessResultMessage,
   getRandomNoResultMessage,
-  LESS_RESULT_MESSAGES,
-  NO_RESULT_MESSAGES,
 } from "@/utils/constantkeys";
+import { useMessages } from "@/i18n/useMessage";
+import { logger } from "@/utils/logger";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -35,6 +35,7 @@ export default function Result() {
   const userId = companyUser?.user_id;
 
   const [isFirst, setIsFirst] = useState(false);
+  const { m } = useMessages();
 
   const { data: queryItem, isLoading: isQueryDetailLoading } =
     useQueryDetail(queryId);
@@ -95,7 +96,6 @@ export default function Result() {
     const capped = clamp(normalized, 0, MAX_PREFETCH_PAGES);
 
     if (pageIdxRaw !== capped) {
-      console.log("pageIdxRaw !== capped", pageIdxRaw, capped);
       // setPageInUrl(capped, "replace");
     }
   }, [router.isReady, pageIdxRaw, setPageInUrl]);
@@ -252,9 +252,19 @@ export default function Result() {
   const isLessSatisfyingThan5 =
     pageIdx === 0 &&
     items.length === 10 &&
-    queryItem?.recommendation === "no" &&
+    (queryItem?.recommendation === "no" || !queryItem?.recommendation) &&
     !isLoading &&
     (queryItem?.retries ?? 1) <= 0;
+
+  logger.log("queryItem?.recommendation ", queryItem?.recommendation);
+  logger.log(
+    "queryItem?.recommendation ",
+    isLessSatisfyingThan5,
+    pageIdx,
+    items.length,
+    isLoading,
+    (queryItem?.retries ?? 1) <= 0
+  );
 
   const isLessThan10 = items.length < 10 && !isLoading;
 
@@ -341,7 +351,7 @@ export default function Result() {
           <div className="">No results.</div>
         )} */}
         {isLessSatisfyingThan5 && (
-          <div className="flex flex-col gap-2 items-start justify-start">
+          <div className="flex flex-col gap-2 items-start justify-start mt-12">
             {queryItem?.message
               ? queryItem?.message
               : "모든 조건을 만족하는 사람을 충분히 찾지 못했어요. 한번 더 실행하면 조건에 해당하는 사람을 더 찾을 수 있어요."}{" "}

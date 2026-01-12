@@ -13,6 +13,7 @@ import {
 import { makeMessage } from "../hello/route";
 import { ko } from "@/lang/ko";
 import { notifyToSlack } from "@/lib/slack";
+import { logger } from "@/utils/logger";
 
 export const updateQueryStatus = async (
   queryId: string,
@@ -46,7 +47,7 @@ ${queryText}
 
   const cleanedResponse = (outText as string).trim().replace(/\n/g, " ").trim();
   const outJson = JSON.parse(cleanedResponse);
-  console.log("outJson ", outJson);
+  logger.log("outJson ", outJson);
 
   return outJson as any;
 }
@@ -89,7 +90,7 @@ FROM
 ${cleanText}
 `;
     const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "");
-    console.log(
+    logger.log(
       "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n",
       sqlQueryWithGroupBy,
       "\n\n-------- 🔥 cleanedResponse1 🔥 ---------\n\n"
@@ -116,7 +117,7 @@ ${sqlQueryWithGroupBy}
       .replace(/\n/g, " ")
       .trim();
 
-    console.log(
+    logger.log(
       "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n",
       cleanedResponse2,
       "\n\n-------- ⭐️ cleanedResponse2 ⭐️ ---------\n\n"
@@ -146,7 +147,7 @@ export const searchDatabase = async (
   offset: number = 0
 ) => {
   // const sqlQueryWithGroupBy = ensureGroupBy(sql_query, ""); // 다듬기
-  console.log("sqlQueryWithGroupBy === \n", sql_query, "\n---\n");
+  logger.log("sqlQueryWithGroupBy === \n", sql_query, "\n---\n");
 
   const upRes2 = await supabase.from("queries").upsert({
     query_id: queryId,
@@ -170,7 +171,7 @@ export const searchDatabase = async (
   data = data1;
   error = error1;
   const end_time = performance.now();
-  console.log(
+  logger.log(
     "\n\ntime for fetching data : ",
     end_time - start_time,
     error,
@@ -178,7 +179,7 @@ export const searchDatabase = async (
   );
 
   if (error && error.message.includes("timeout")) {
-    console.log("\n\n⚠️ 그냥 Database 쿼리 자체만 한번 더 실행 ==");
+    logger.log("\n\n⚠️ 그냥 Database 쿼리 자체만 한번 더 실행 ==");
     updateQueryStatus(queryId, userId, ko.loading.searching_again);
     const { data: data2, error: error2 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
@@ -194,7 +195,7 @@ export const searchDatabase = async (
   }
 
   if (error) {
-    console.log("\n\n⚠️ First sql query error == try second == ", error);
+    logger.log("\n\n⚠️ First sql query error == try second == ", error);
     updateQueryStatus(queryId, userId, ko.loading.retrying_error);
 
     let additional_prompt = "";
@@ -252,7 +253,7 @@ A corrected SQL query.
       1
     );
 
-    console.log("⚠️ ==== fixed_query ==== \n\n", fixed_query);
+    logger.log("⚠️ ==== fixed_query ==== \n\n", fixed_query);
     const sqlQueryWithGroupBy2 = ensureGroupBy(fixed_query as string, "");
     const upRes3 = await supabase.from("queries").upsert({
       query_id: queryId,
@@ -274,7 +275,7 @@ A corrected SQL query.
     error = error2;
   }
 
-  console.log(
+  logger.log(
     "총 가져온 지원자 data : ",
     data?.[0]?.length,
     // JSON.stringify(data?.[0]?.slice(0, 1), null, 2),
@@ -364,7 +365,7 @@ export async function POST(req: NextRequest) {
   const nextPageIdx = pageIdx + 1;
   const cachedResults = resultsPages?.[0];
 
-  console.log(pageIdx, "쿼리와 results ", cachedResults);
+  logger.log(pageIdx, "쿼리와 results ", cachedResults);
 
   // 이미 검색한 결과가 있다면 그대로 리턴
   if (cachedResults && cachedResults.candidate_ids) {
@@ -394,9 +395,9 @@ export async function POST(req: NextRequest) {
     }
     const isLoadMore =
       (prevCachedResults.candidate_ids.length + pageIdx * 10) % 50 === 0;
-    console.log("prevCachedResults ", prevCachedResults.candidate_ids?.length);
+    logger.log("prevCachedResults ", prevCachedResults.candidate_ids?.length);
     if (!isLoadMore) {
-      console.log("\n\n50의 배수가 아닌 경우 그냥 10개 리턴\n\n");
+      logger.log("\n\n50의 배수가 아닌 경우 그냥 10개 리턴\n\n");
       // 점수 순으로 나열, 앞 10개 제외하고 뒤 (N-10)개 저장, 리턴은 max(N-10, 10)개 리턴
       // 같은 쿼리를 날려봤자 50명 이하이기 때문에 똑같음.
       const candidateIds = prevCachedResults.candidate_ids.slice(10);
@@ -413,7 +414,7 @@ export async function POST(req: NextRequest) {
         { status: 200 }
       );
     } else if (isLoadMore) {
-      console.log("\n\n50의 배수인 경우\n\n");
+      logger.log("\n\n50의 배수인 경우\n\n");
       const candidateIds = prevCachedResults.candidate_ids.slice(10);
       const scoreSum = candidateIds
         .slice(0, 10)
@@ -446,7 +447,7 @@ export async function POST(req: NextRequest) {
     .eq("query_id", queryId)
     .single();
 
-  console.log("일단 쿼리 확인 : ", q);
+  logger.log("일단 쿼리 확인 : ", q);
 
   if (qErr || !q || !q.raw_input_text)
     return NextResponse.json({ error: "Query not found" }, { status: 404 });
@@ -489,7 +490,7 @@ export async function POST(req: NextRequest) {
       query_id: queryId,
       user_id: q.user_id,
       criteria: criteria,
-      thinking: rephrasing + "\n" + thinking,
+      thinking: rephrasing + " | " + thinking,
       status: ko.loading.making_query,
     });
 
@@ -510,17 +511,17 @@ export async function POST(req: NextRequest) {
     50,
     offset
   );
-  console.log(`idWithScores === ${searchResults.length} nums `, searchResults);
+  logger.log(`idWithScores === ${searchResults.length} nums `, searchResults);
 
   // score가 1점인 사람 수
   const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
-  console.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
+  logger.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
 
   const mergeCachedCandidates = deduplicateAndScore(
     searchResults,
     cachedCandidates
   );
-  console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
+  logger.log("mergeCachedCandidates ", mergeCachedCandidates.length);
   const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
 
   if (
@@ -539,16 +540,16 @@ export async function POST(req: NextRequest) {
         ? "less"
         : "more"
     );
-    console.log("message ", message);
+    logger.log("message ", message);
     if (message) {
-      console.log("들어는 옵니다. message ", message["message"]);
+      logger.log("들어는 옵니다. message ", message["message"]);
       const res = await supabase.from("queries").upsert({
         query_id: queryId,
         user_id: q.user_id,
         message: message["message"],
         recommendation: message["recommendations"]?.join("|") ?? "no",
       });
-      console.log("res ", res);
+      logger.log("res ", res);
     }
   }
   if (pageIdx === 0 && candidateIds.length === 0) {

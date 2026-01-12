@@ -1,5 +1,7 @@
 // src/lib/stt/openaiRealtimeClient.ts
 /* eslint-disable no-console */
+import { logger } from "@/utils/logger";
+
 export type STTTarget = "speaker" | "mic"; // 기존 타입과 맞춰서 쓰면 됨
 
 export type OpenAIRealtimeCallbacks = {
@@ -83,7 +85,7 @@ export class OpenAIRealtimeClient {
       };
 
       socket.onclose = () => {
-        console.log("Realtime socket closed");
+        logger.log("Realtime socket closed");
         if (this.heartbeatId !== null) {
           window.clearInterval(this.heartbeatId);
           this.heartbeatId = null;
@@ -95,7 +97,7 @@ export class OpenAIRealtimeClient {
       socket.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data as string);
-          console.log("msg", msg);
+          logger.log("msg", msg);
           //   if (msg.delta && msg.delta !== "" && msg.delta !== undefined) {
           //     this.callbacks.onDelta?.(msg.delta);
           //   }
@@ -128,7 +130,7 @@ export class OpenAIRealtimeClient {
   sendAudioStreamEnd() {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
 
-    console.log("sendAudioStreamEnd");
+    logger.log("sendAudioStreamEnd");
     this.socket.send(
       JSON.stringify({
         type: "input_audio_buffer.commit",

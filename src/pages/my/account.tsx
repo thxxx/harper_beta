@@ -28,7 +28,6 @@ const Account = () => {
   }, [companyUser]);
 
   useEffect(() => {
-    console.log("name", companyUser?.name);
     if (!companyUser) return;
     if (
       name !== (companyUser?.name ?? "") ||

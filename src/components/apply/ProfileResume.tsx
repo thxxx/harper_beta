@@ -82,8 +82,8 @@
 //     }
 
 //     const data = await response.json();
-//     console.log("--- Extracted Text (Client Side) ---");
-//     console.log(data.text.slice(0, 100), data.text.length);
+//     logger.log("--- Extracted Text (Client Side) ---");
+//     logger.log(data.text.slice(0, 100), data.text.length);
 //     setResumeText(data.text);
 
 //     if (
@@ -176,7 +176,7 @@
 //     setReadingLoading(true);
 //     const result = await extractResumeInfo(resumeText);
 //     try {
-//       console.log("addContentFromResume", result);
+//       logger.log("addContentFromResume", result);
 //       setEducations(result.education);
 //       setWorkExperiences(result.workExperiences);
 //     } catch (error) {

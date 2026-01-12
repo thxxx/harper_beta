@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { deduplicateAndScore, ScoredCandidate } from "../utils";
 import { parseQueryWithLLM, searchDatabase, updateQueryStatus } from "../route";
+import { logger } from "@/utils/logger";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     .eq("query_id", queryId)
     .single();
 
-  console.log("Run More Search 일단 쿼리 확인 : ", q);
+  logger.log("Run More Search 일단 쿼리 확인 : ", q);
 
   if (qErr || !q || !q.raw_input_text || !q.query || !q.criteria)
     return NextResponse.json({ error: "Query not found" }, { status: 404 });
@@ -90,19 +91,19 @@ ${parsed_query}
       { status: 200 }
     );
   }
-  console.log(`idWithScores === ${searchResults.length} nums `, searchResults);
+  logger.log(`idWithScores === ${searchResults.length} nums `, searchResults);
 
   // score가 1점인 사람 수
   const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
-  console.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
+  logger.log(searchResults.length, " oneScoreCount === ", oneScoreCount);
 
   const mergeCachedCandidates = deduplicateAndScore(
     searchResults,
     (cachedResults?.candidate_ids ?? []) as ScoredCandidate[]
   );
-  console.log("mergeCachedCandidates ", mergeCachedCandidates.length);
+  logger.log("mergeCachedCandidates ", mergeCachedCandidates.length);
   const candidateIds = await uploadBestTenCandidates(mergeCachedCandidates);
-  console.log("upRes2 ", upRes2);
+  logger.log("upRes2 ", upRes2);
   return NextResponse.json(
     { results: candidateIds, isNewSearch: true },
     { status: 200 }

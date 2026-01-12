@@ -131,9 +131,9 @@
 //   } = useProfileStore();
 
 //   const onSave = useCallback(() => {
-//     console.log("Save!", isDirty, isFileChanged);
+//     logger.log("Save!", isDirty, isFileChanged);
 //     if (isDirty || isFileChanged) {
-//       console.log("Upload profile!");
+//       logger.log("Upload profile!");
 //       uploadProfileMutation.mutate({
 //         name,
 //         email,

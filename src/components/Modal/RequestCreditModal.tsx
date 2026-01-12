@@ -9,6 +9,7 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { showToast } from "../toast/toast";
+import { useMessages } from "@/i18n/useMessage";
 
 interface RequestCreditModalProps {
   open: boolean;
@@ -18,15 +19,15 @@ interface RequestCreditModalProps {
 
 const CREDIT_OPTIONS = [
   {
-    label: "100 credits",
+    label: "100",
     value: 100,
   },
   {
-    label: "500 credits",
+    label: "500",
     value: 500,
   },
   {
-    label: "1000 credits",
+    label: "1000",
     value: 1000,
   },
 ];
@@ -39,6 +40,8 @@ const RequestCreditModal = ({
   const [selectedCredit, setSelectedCredit] = useState(100);
   const [sentRequest, setSentRequest] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { m } = useMessages();
 
   if (!open) return null;
 
@@ -60,25 +63,21 @@ const RequestCreditModal = ({
         }
       }}
       isLoading={isLoading}
-      confirmLabel={sentRequest ? "Confirm" : "Submit Request"}
+      confirmLabel={sentRequest ? m.system.close : m.system.submit_request}
       isCloseButton={!sentRequest}
     >
       <div className="flex flex-col items-start justify-center gap-4">
         {sentRequest ? (
           <div className="text-base text-hgray900 font-light">
             <div className="text-lg font-normal mb-2">
-              Your request has been submitted
+              {m.system.credit_request_submitted}
             </div>
-            <div>
-              Thank you for requesting! Your credit increase is being reviewed,
-              and a decision will be made soon. If opted in, you’ll receive
-              updates on the status via email.
-            </div>
+            <div>{m.system.credit_request_submitted_description}</div>
           </div>
         ) : (
           <>
             <div className="text-lg text-hgray900 font-normal">
-              Request More Credit
+              {m.system.credit_request}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -92,7 +91,9 @@ const RequestCreditModal = ({
                     "hover:bg-white/10 focus:outline-white/5 focus:ring-white/10",
                   ].join(" ")}
                 >
-                  <div>{selectedCredit} Credits</div>
+                  <div>
+                    {selectedCredit} {m.system.credits}
+                  </div>
                   <div>
                     <ChevronDown size={24} strokeWidth={1} />
                   </div>
@@ -111,7 +112,7 @@ const RequestCreditModal = ({
                         setSelectedCredit(option.value);
                       }}
                     >
-                      {option.label}
+                      {option.label} {m.system.credits}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuGroup>

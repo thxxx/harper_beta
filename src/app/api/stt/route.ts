@@ -18,7 +18,6 @@ export async function POST(req: Request) {
   try {
     // 1) Decode audio base64 to Buffer
     const audioBuffer = Buffer.from(audio, "base64");
-    console.log("audioBuffer", audioBuffer.length / 16000);
 
     // 2) Deepgram에 raw linear16 + sample_rate 명시
     // const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
@@ -35,12 +34,12 @@ export async function POST(req: Request) {
     // const transcript =
     //   result?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
 
-    // console.log(
+    // logger.log(
     //   "result",
     //   result?.results?.channels?.[0]?.alternatives?.[0]?.paragraphs
     // );
-    // console.log("transcript", transcript);
-    // console.log("error", error);
+    // logger.log("transcript", transcript);
+    // logger.log("error", error);
 
     return NextResponse.json(
       {

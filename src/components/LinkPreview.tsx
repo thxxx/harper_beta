@@ -24,7 +24,7 @@ const LinkPreview = ({ url }: { url: string }) => {
       ) : isFetched ? (
         <>
           <div className="text-xs text-hgray500">{url.slice(0, 26)}..</div>
-          <div className="mt-0.5">{title}</div>
+          <div className="mt-0.5 font-normal">{title}</div>
           <div className="text-sm truncate text-hgray600 mt-1">
             {description}
           </div>

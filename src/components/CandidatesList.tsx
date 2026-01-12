@@ -3,7 +3,7 @@ import {
   ExperienceUserType,
 } from "@/hooks/useSearchCandidates";
 import React, { useMemo } from "react";
-import { koreaUniversityEnToKo } from "@/utils/language_map";
+import { companyEnToKo, koreaUniversityEnToKo } from "@/utils/language_map";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile from "./NameProfile";
@@ -59,21 +59,28 @@ export default function CandidateCard({
   const { m } = useMessages();
   const queryId = queryItem?.query_id;
   const candidId = c.id;
+  const synthesizedSummary =
+    JSON.parse(c.synthesized_summary?.[0]?.text ?? "[]").map((item: any) => {
+      return {
+        reason: item,
+        score: item.split(",")[0] ?? "",
+      };
+    }) ?? null;
+  // logger.log("summaryText ", synthesizedSummary);
+  // const { data: summaryRow, isLoading: isLoadingSummary } =
+  //   useSynthesizedSummary({
+  //     queryId,
+  //     candidId,
+  //     doc: c,
+  //     criteria: queryItem?.criteria ?? [],
+  //     raw_input_text: queryItem?.raw_input_text ?? null,
+  //     enabled: !!queryItem && !!queryItem.criteria?.length,
+  //     text: c.synthesized_summary?.[0]?.text ?? null,
+  //   });
 
-  const { data: summaryRow, isLoading: isLoadingSummary } =
-    useSynthesizedSummary({
-      queryId,
-      candidId,
-      doc: c,
-      criteria: queryItem?.criteria ?? [],
-      raw_input_text: queryItem?.raw_input_text ?? null,
-      enabled: !!queryItem && !!queryItem.criteria?.length,
-      text: c.synthesized_summary?.[0]?.text ?? null,
-    });
-
-  const synthesizedSummary = useMemo(() => {
-    if (summaryRow) return parseSummaryText(summaryRow);
-  }, [summaryRow]);
+  // const synthesizedSummary = useMemo(() => {
+  //   if (summaryRow) return parseSummaryText(summaryRow);
+  // }, [summaryRow]);
 
   const exps = asArr(c.experience_user ?? []);
   const edus = asArr(c.edu_user ?? []);
@@ -101,12 +108,14 @@ export default function CandidateCard({
         </div>
 
         <div className="mt-0 flex flex-col gap-3 w-[70%]">
-          {!isOnlyOneCompany && latestCompany && (
+          {/* {!isOnlyOneCompany && latestCompany && ( */}
+          {latestCompany && (
             <CompanyCard
               company={latestCompany}
               text={m.data.currentExperience}
             />
           )}
+          {/* )} */}
           {/* {firstCompany && (
             <CompanyCard
               company={firstCompany}
@@ -137,11 +146,11 @@ export default function CandidateCard({
       </div>
 
       <div className="mt-8 text-hgray700 leading-relaxed font-light">
-        {isLoadingSummary ? (
-          <div className="text-[15px]">{m.data.generating}</div>
+        {!synthesizedSummary || synthesizedSummary.length === 0 ? (
+          <>{/* <div className="text-[15px]">{m.data.generating}</div> */}</>
         ) : (
           <div>
-            {synthesizedSummary?.map((item, index) => (
+            {synthesizedSummary?.map((item: any, index: number) => (
               <MemoizedSummaryBox
                 key={index}
                 reason={item.reason}
@@ -202,11 +211,11 @@ const CompanyCard = ({
             className="text-white font-light text-[15px] hover:underline cursor-pointer"
             onClick={onButtonClick}
           >
-            {company.company_db.name}
+            {companyEnToKo(company.company_db.name)}
           </div>
           <div className="text-xgray800 text-[13px] font-light">
             {startDate} -{" "}
-            {endDate ? endDate : <span className="text-accenta1">Present</span>}
+            {endDate ? endDate : <span className="text-accenta1">현재</span>}
           </div>
         </div>
         <div className="flex flex-row items-center justify-between text-hgray600 font-light">
@@ -263,15 +272,17 @@ const CriteriaBox = ({
         </div>
       </Tooltips>
       {/* </Tooltips> */}
-      <div
-        className="mt-2 text-[14px] font-normal"
-        dangerouslySetInnerHTML={{
-          __html: reason.replace(
-            /strong>/g,
-            'span class="text-white font-normal">'
-          ),
-        }}
-      />
+      {reason && (
+        <div
+          className="mt-2 text-[14px] font-normal"
+          dangerouslySetInnerHTML={{
+            __html: reason.replace(
+              /strong>/g,
+              'span class="text-white font-normal">'
+            ),
+          }}
+        />
+      )}
     </div>
   );
 };

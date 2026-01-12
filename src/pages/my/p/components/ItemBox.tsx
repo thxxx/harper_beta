@@ -34,7 +34,6 @@ const ItemBox = ({
   const endDate = useMemo(() => {
     return dateToFormat(end_date);
   }, [end_date]);
-  console.log(startDate, endDate, title);
 
   const handleOpenCompany = useCompanyModalStore((s) => s.handleOpenCompany);
   const qc = useQueryClient();

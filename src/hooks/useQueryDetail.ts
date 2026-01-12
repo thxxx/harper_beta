@@ -63,7 +63,6 @@ export function useQueryDetail(queryId?: string) {
       )
       .subscribe((status) => {
         // Optional: if you want to react to subscription state
-        console.log("realtime status:", status);
       });
 
     return () => {

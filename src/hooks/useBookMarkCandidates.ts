@@ -25,7 +25,6 @@ export function useCandidatesByConnectionTyped(
     queryKey: connectionsKey(userId, typed, pageIdx, pageSize),
     enabled: !!userId && !isLoading,
     queryFn: async () => {
-      console.log("useBookMarkCandidates ", userId, typed, pageIdx, pageSize);
       setIsLoading(true);
       if (!userId) {
         setIsLoading(false);

@@ -1,6 +1,7 @@
 import { locationEnToKo } from "@/utils/language_map";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useState } from "react";
+import ConfirmModal from "./Modal/ConfirmModal";
 
 const NameProfile = ({
   id,
@@ -16,16 +17,42 @@ const NameProfile = ({
   location: string;
 }) => {
   const router = useRouter();
+  const [isRevealConfirmModalOpen, setIsRevealConfirmModalOpen] =
+    useState(false);
+
+  const handleReveal = () => {
+    if (isRevealConfirmModalOpen) {
+      setIsRevealConfirmModalOpen(false);
+    } else {
+      setIsRevealConfirmModalOpen(true);
+    }
+  };
+
   return (
     <div className="flex flex-row flex-1 items-start gap-4">
-      <Avatar url={profile_picture} name={name} size="lg" />
+      <ConfirmModal
+        open={isRevealConfirmModalOpen}
+        onClose={() => setIsRevealConfirmModalOpen(false)}
+        onConfirm={() => handleReveal()}
+        title="Are you sure you want to reveal this profile?"
+        description="This action cannot be undone.<br />30 크레딧이 차감됩니다."
+        confirmLabel="Reveal"
+        cancelLabel="Cancel"
+      />
+      <div
+        onClick={() => router.push(`/my/p/${id}`)}
+        className="cursor-pointer rounded-full hover:border-accenta1/80 border border-transparent transition-colors duration-100"
+      >
+        <Avatar url={profile_picture} name={name} size="lg" />
+      </div>
 
       <div className="flex flex-col items-start justify-between">
         <div className="flex flex-col gap-0">
           <div
-            className="truncate font-medium text-lg hover:underline cursor-pointer"
-            onClick={() => router.push(`/my/p/${id}`)}
+            className="truncate font-medium text-lg hover:underline cursor-pointer relative blur-md"
+            onClick={() => setIsRevealConfirmModalOpen(true)}
           >
+            <div className="absolute inset-0 bg-white/10 z-10 blur-xl rounded-full"></div>
             {name ?? id}
           </div>
 

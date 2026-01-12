@@ -4,8 +4,6 @@ import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export async function fetchCompanyDb(companyId: number) {
-  console.log("fetchCompanyDb", companyId);
-
   const { data, error } = await supabase
     .from("company_db")
     .select("*")
@@ -62,7 +60,6 @@ export const useCompanyModalStore = create<ModalState>((set, get) => ({
         staleTime: 1000 * 60 * 30,
         gcTime: 1000 * 60 * 60 * 6,
       });
-      console.log("data", data, data && data.founded_year);
 
       // 3. 결과에 따른 분기
       if (

@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   try {
     // 1) Decode audio base64 to Buffer
     const audioBuffer = Buffer.from(audio, "base64");
-    console.log("audioBuffer", audioBuffer.length / 16000);
+    logger.log("audioBuffer", audioBuffer.length / 16000);
 
     // 2) Deepgram STT
     const dgRes = await fetch(
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     const transcript: string =
       dgJson?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "";
 
-    console.log("transcript", transcript);
+    logger.log("transcript", transcript);
 
     if (!transcript) {
       return NextResponse.json(

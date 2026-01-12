@@ -108,8 +108,8 @@
 //     const { script: _script, callTime: _callTime } = await endCall();
 //     setScript(_script);
 //     setCallTime(_callTime);
-//     console.log("script", _script);
-//     console.log("callTime", _callTime);
+//     logger.log("script", _script);
+//     logger.log("callTime", _callTime);
 //   };
 
 //   const handleSaveCallHistory = async () => {
@@ -120,7 +120,7 @@
 //       resume_id: userProfile?.resume_id,
 //     };
 //     const { data, error } = await supabase.from("calls").insert(body);
-//     console.log("저장 완료!", data);
+//     logger.log("저장 완료!", data);
 //     alert("저장 완료!");
 //     router.push("/app");
 //   };
@@ -144,13 +144,13 @@
 //     setWrongCount(0);
 //     setTextScript("");
 //     await startTest();
-//     console.log("startTest");
+//     logger.log("startTest");
 //     setIsTestLoading(false);
 //     setIsTest(true);
 //   };
 
 //   const checkTestCall = async () => {
-//     console.log("checkTest");
+//     logger.log("checkTest");
 //     setIsTestDone(true);
 //     endTest();
 //     // setIsTest(false);
@@ -183,7 +183,7 @@
 
 //   const onStop = async () => {
 //     const timeout = setTimeout(() => {
-//       console.log("User transcript: ", userTranscript);
+//       logger.log("User transcript: ", userTranscript);
 //       sendAudioCommit();
 //     }, 1500);
 //     return () => clearTimeout(timeout);

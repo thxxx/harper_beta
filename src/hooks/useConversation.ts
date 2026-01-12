@@ -54,17 +54,17 @@
 
 //     const callbacks: OpenAIRealtimeCallbacks = {
 //       onDelta: (text) => {
-//         console.log("onDelta", text);
+//         logger.log("onDelta", text);
 //       },
 //       onFinal: (text) => {
 //         setUserTranscript((prev) => prev + " " + text);
-//         console.log("onFinal", text);
+//         logger.log("onFinal", text);
 //       },
 //       onError: (err) => {
 //         console.error("Realtime STT error:", err);
 //       },
 //       onClose: () => {
-//         console.log("onClose");
+//         logger.log("onClose");
 //       },
 //     };
 
@@ -75,7 +75,7 @@
 //       });
 
 //       clientRef.current = client;
-//       console.log("Connected to STT socket", client);
+//       logger.log("Connected to STT socket", client);
 //     } catch (err) {
 //       console.error("Error connecting to STT socket:", err);
 //     }
@@ -151,7 +151,7 @@
 //             if (isLast && opts?.onBeforeLast) {
 //               await opts.onBeforeLast();
 //             }
-//             console.log(`[Chunk ${index + 1}] 생성 요청 시작:`, chunk);
+//             logger.log(`[Chunk ${index + 1}] 생성 요청 시작:`, chunk);
 
 //             const res = await fetch("/api/tts", {
 //               method: "POST",
@@ -162,7 +162,7 @@
 //               throw new Error(`Failed to fetch TTS for chunk ${index}`);
 
 //             const blob = await res.blob();
-//             console.log(`[Chunk ${index + 1}] 생성 완료`);
+//             logger.log(`[Chunk ${index + 1}] 생성 완료`);
 
 //             return { blob, isLast, index, chunk };
 //           };
@@ -215,7 +215,7 @@
 //             audioRef.current.src = "";
 //           }
 
-//           console.log(`[Chunk ${index + 1}] 재생 시작`);
+//           logger.log(`[Chunk ${index + 1}] 재생 시작`);
 //           setHarperSaying((prev) => prev + " " + chunk);
 //           sayingRef.current += " " + chunk;
 
@@ -257,7 +257,7 @@
 
 //               if (isLast) {
 //                 await opts?.onAfterLast?.();
-//                 console.log("harperSaying", harperSaying);
+//                 logger.log("harperSaying", harperSaying);
 //                 setAssistantTexts((prev) => [...prev, sayingRef.current]);
 
 //                 setHarperSaying("");
@@ -278,7 +278,7 @@
 //             });
 //           });
 
-//           console.log(`[Chunk ${index + 1}] 재생 완료`);
+//           logger.log(`[Chunk ${index + 1}] 재생 완료`);
 //           if (isLast) break;
 //         }
 //       } catch (err) {
@@ -334,15 +334,15 @@
 
 //   const sendAudioCommit = async () => {
 //     // 현재까지 유저가 말한걸 보내기.
-//     console.log("\nuserTranscriptRef: ", userTranscriptRef.current);
-//     console.log("\nuserTranscript: ", userTranscript);
+//     logger.log("\nuserTranscriptRef: ", userTranscriptRef.current);
+//     logger.log("\nuserTranscript: ", userTranscript);
 //     // audio 끊고
 //     await stopMicAndScripting();
 //     if (
 //       userTranscript.trim() === "" &&
 //       userTranscriptRef.current.trim() === ""
 //     ) {
-//       console.log("userTranscript is empty");
+//       logger.log("userTranscript is empty");
 //       showToast({
 //         message: "Nothing recorded",
 //         variant: "white",

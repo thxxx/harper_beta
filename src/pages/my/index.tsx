@@ -44,15 +44,12 @@ const Home: NextPage = () => {
       return;
     }
 
-    console.log("submit:", { query });
-
     const response = await fetch("/api/search/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ queryText: query, userId: companyUser.user_id }),
     });
     const data = await response.json();
-    console.log("data ", data);
 
     if (data.error) {
       alert(data.error);

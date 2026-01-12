@@ -11,6 +11,7 @@ import { replaceName } from "@/utils/textprocess";
 import { useMemo } from "react";
 import { useMessages } from "@/i18n/useMessage";
 import {
+  companyEnToKo,
   degreeEnToKo,
   koreaUniversityEnToKo,
   majorEnToKo,
@@ -33,7 +34,6 @@ export default function ProfileDetailPage() {
   const userId = companyUser?.user_id;
 
   const { data, isLoading, error } = useCandidateDetail(userId, candidId);
-  console.log(data);
 
   const c: any = data;
 
@@ -52,8 +52,6 @@ export default function ProfileDetailPage() {
     }
     return [];
   }, [c]);
-
-  console.log(links);
 
   if (!candidId) return <AppLayout>Loading...</AppLayout>;
   if (!userId) return <AppLayout>Loading...</AppLayout>;
@@ -154,7 +152,7 @@ export default function ProfileDetailPage() {
                   key={idx}
                   title={e.role}
                   company_id={e.company_id}
-                  name={e.company_db.name}
+                  name={companyEnToKo(e.company_db.name)}
                   start_date={e.start_date}
                   end_date={e.end_date}
                   link={e.company_db.linkedin_url}

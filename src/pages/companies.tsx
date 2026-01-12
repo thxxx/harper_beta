@@ -11,6 +11,8 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { FallingTags } from "@/components/landing/FallingTags";
 import GradientBackground from "@/components/landing/GradientBackground";
 import Header from "@/components/landing/Header";
+import LoginModal from "@/components/Modal/LoginModal";
+import { logger } from "@/utils/logger";
 
 export const isValidCompanyEmail = (email: string): boolean => {
   const trimmed = email.trim();
@@ -39,6 +41,7 @@ export const isValidCompanyEmail = (email: string): boolean => {
 
 export default function CompanyPage() {
   const [landingId, setLandingId] = useState("");
+  const [isOpenLoginModal, setIsOpenLoginModal] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -117,17 +120,43 @@ export default function CompanyPage() {
         ? `${window.location.origin}/auth/callback`
         : undefined;
 
-    console.log("redirectTo : ", redirectTo);
+    logger.log("redirectTo : ", redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectTo,
       },
     });
-    console.log(data);
+    logger.log(data);
 
     if (error) throw error;
     return data;
+  };
+
+  const customLogin = async (email: string, password: string) => {
+    logger.log("customLogin : ", email, password);
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : undefined;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      logger.log("성공 ", data);
+
+      if (data.user?.user_metadata.email_verified) {
+        setIsOpenLoginModal(false);
+        router.push("/invitation");
+        // return data;
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
   };
 
   return (
@@ -195,14 +224,7 @@ export default function CompanyPage() {
             >
               <div
                 onClick={() => {
-                  login();
-                  // const body = {
-                  //   local_id: landingId,
-                  //   action: "click_join",
-                  //   is_mobile: isMobile,
-                  // };
-                  // supabase.from("landing_logs").insert(body);
-                  // router.push("/invitation");
+                  setIsOpenLoginModal(true);
                 }}
                 className="group flex rounded-full h-12 md:h-16 px-5 md:px-10 items-center justify-center font-medium text-sm md:text-lg
             cursor-pointer text-black bg-white transition-all duration-300 gap-2 active:scale-95"
@@ -243,6 +265,12 @@ export default function CompanyPage() {
           </div>
         </Animate>
       </div>
+      <LoginModal
+        open={isOpenLoginModal}
+        onClose={() => setIsOpenLoginModal(false)}
+        onGoogle={login}
+        onConfirm={customLogin}
+      />
     </main>
   );
 }

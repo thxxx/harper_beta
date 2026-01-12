@@ -61,6 +61,7 @@ async function fetchCandidatesByIds(
         id,
         headline,
         location,
+        bio,
         name,
         profile_picture,
         edu_user (
@@ -81,6 +82,10 @@ async function fetchCandidatesByIds(
             investors,
             short_description
           )
+        ),
+        publications (
+          title,
+          published_at
         ),
         connection (
           user_id,

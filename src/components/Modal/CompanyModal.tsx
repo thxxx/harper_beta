@@ -49,6 +49,16 @@ export default function CompanyModalRoot() {
       .slice(0, 12);
   }, [company?.specialities]);
 
+  const links = useMemo(() => {
+    if (company)
+      return [
+        company.linkedin_url ?? "",
+        company.website_url ?? "",
+        company.funding_url ?? "",
+      ];
+    else return [];
+  }, [company]);
+
   return (
     <AnimatePresence>
       {isOpen && payload && company ? (
@@ -112,17 +122,20 @@ export default function CompanyModalRoot() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <LinkChips
-                      links={[
-                        company.linkedin_url ?? "",
-                        company.website_url ?? "",
-                        company.funding_url ?? "",
-                      ]}
-                    />
+                    <LinkChips links={links} />
                   </div>
                 </div>
               </div>
             </div>
+
+            {company.short_description && (
+              <div className="mt-2 mb-6 px-5">
+                <div className="text-accenta1 text-sm">한 줄 설명</div>
+                <div className="mt-2 text-base text-hgray900">
+                  {company.short_description}
+                </div>
+              </div>
+            )}
 
             {/* Body */}
             <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-12">
@@ -147,10 +160,10 @@ export default function CompanyModalRoot() {
                 </div>
               </Section>
 
-              {company.short_description || company.description ? (
+              {!company.short_description && company.description ? (
                 <Section title={m.company.description}>
                   <p className="mt-2 text-sm leading-6 whitespace-pre-wrap font-light">
-                    {company.short_description ?? company.description}
+                    {company.description}
                   </p>
                   <div className="mt-6 flex flex-wrap gap-2">
                     {tags.map((t) => (

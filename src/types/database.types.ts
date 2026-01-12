@@ -824,6 +824,42 @@ export type Database = {
           },
         ]
       }
+      reveal: {
+        Row: {
+          candid_id: string | null
+          company_user_id: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          candid_id?: string | null
+          company_user_id?: string | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          candid_id?: string | null
+          company_user_id?: string | null
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reveal_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reveal_company_user_id_fkey"
+            columns: ["company_user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       synthesized_summary: {
         Row: {
           candid_id: string | null

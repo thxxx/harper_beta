@@ -43,6 +43,10 @@ export const ko = {
     close_sidebar: "사이드바 닫기",
     open_sidebar: "사이드바 열기",
     search: "검색",
+    submit_request: "제출하기",
+    credit_request_submitted: "요청이 성공적으로 접수되었습니다.",
+    credit_request_submitted_description:
+      "신청해 주셔서 감사합니다. 현재 크레딧 증액 요청을 검토 중이며, 곧 결과가 안내될 예정입니다. 알림 수신에 동의하신 경우, 진행 상황을 이메일로 받아보실 수 있습니다.",
   },
   company: {
     information: "회사 정보",

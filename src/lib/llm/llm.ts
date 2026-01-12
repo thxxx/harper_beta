@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+import { logger } from "@/utils/logger";
 
 if (typeof window !== "undefined") {
   throw new Error("llm.ts was bundled into the client!");
@@ -82,7 +83,7 @@ export const xaiInference = async (
     usage.completion_tokens * outputTokenPrice +
     (usage.completion_tokens_details?.reasoning_tokens ?? 0) * outputTokenPrice;
 
-  // console.log("cost ", cost * 1450, "원");
+  // logger.log("cost ", cost * 1450, "원");
 
   return content ?? "";
 };
@@ -105,13 +106,13 @@ export async function geminiInference(
       contents: systemPrompt + "\n\n" + userPrompt,
       config: {
         thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW,
+          thinkingLevel: ThinkingLevel.MEDIUM,
         },
         temperature: temperature,
       },
     });
-    // console.log("response ", response);
-    // console.log("response ", response.usageMetadata?.promptTokensDetails);
+    // logger.log("response ", response);
+    // logger.log("response ", response.usageMetadata?.promptTokensDetails);
 
     const cost =
       (response.usageMetadata?.promptTokenCount ?? 0) *
@@ -119,11 +120,8 @@ export async function geminiInference(
       (response.usageMetadata?.candidatesTokenCount ?? 0) *
         pricingTable[model].output;
 
-    console.log("[GEMINI] cost ", cost * 1450, "원");
+    logger.log("[GEMINI] cost ", cost * 1450, "원");
 
-    await supabase.from("landing_logs").insert({
-      type: JSON.stringify(response?.text ?? "---"),
-    });
     return response?.text ?? "";
   } catch (e) {
     await supabase.from("landing_logs").insert({
@@ -145,7 +143,7 @@ const inference = async (
       { role: "user", content: userPrompt },
     ],
   });
-  console.log("response ", response.usage);
+  logger.log("response ", response.usage);
 
   const content = response.choices[0]?.message?.content;
   return content ?? "";
@@ -156,9 +154,9 @@ export const makeQuestion = async (
   userInfo: string,
   resumeText: string
 ): Promise<string> => {
-  console.log("conversationHistory", conversationHistory);
-  console.log("userInfo", userInfo);
-  console.log("resumeText", resumeText);
+  logger.log("conversationHistory", conversationHistory);
+  logger.log("userInfo", userInfo);
+  logger.log("resumeText", resumeText);
 
   const userPrompt = `
 헤드헌터라고 생각하고, 이 사람이 원하는 것, 어떤 회사랑 매칭시켜주면 좋을지를 알아내기 위해 대화를 하고있어. 질문과 답변을 고려해서 필요한 추가질문이 있으면 해도 돼. 없으면 일단 이 순서를 따라해도 돼.
@@ -334,7 +332,7 @@ Now extract all information and output JSON only. Do not include \`\`\`json or \
   });
 
   const content = response.choices[0]?.message?.content;
-  console.log("extractResumeInfo", content);
+  logger.log("extractResumeInfo", content);
   return parseResumeJson(content ?? "");
 }
 

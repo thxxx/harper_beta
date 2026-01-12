@@ -26,6 +26,11 @@ export const BRAND_MAP = [
     label: "scholar.google.com",
     icon: "https://scholar.google.com/favicon.ico",
   },
+  {
+    match: (h: string) => h.toLowerCase().includes("cv.pdf"),
+    label: "cv.pdf",
+    icon: "/svgs/file.svg",
+  },
 ];
 
 type Props = {
@@ -34,6 +39,7 @@ type Props = {
 
 function LinkChips({ links }: Props) {
   if (!links?.length) return null;
+  // logger.log(links.map((l) => l.toLowerCase().includes("cv.pdf")));
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -47,7 +53,7 @@ function LinkChips({ links }: Props) {
           host = new URL(url).hostname.replace("www.", "");
         } catch {}
 
-        const brand = BRAND_MAP.find((b) => b.match(host)) ?? {
+        const brand = BRAND_MAP.find((b) => b.match(url)) ?? {
           label: host,
           icon: `/svgs/chain.svg`,
         };

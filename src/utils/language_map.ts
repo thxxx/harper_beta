@@ -48,6 +48,18 @@ function normKey(s: string) {
 
 const COUNTRY_MAP: CountryMap = {
   // Korea
+  "seoul, south korea": "대한민국 서울",
+  "seoul, korea": "대한민국 서울",
+  "incheon, south korea": "대한민국 인천",
+  "incheon, korea": "대한민국 인천",
+  "busan, south korea": "대한민국 부산",
+  "busan, korea": "대한민국 부산",
+  "daejeon, south korea": "대한민국 대전",
+  "daejeon, korea": "대한민국 대전",
+  "gwangju, south korea": "대한민국 광주",
+  "gwangju, korea": "대한민국 광주",
+  "ulsan, south korea": "대한민국 울산",
+  "ulsan, korea": "대한민국 울산",
   "south korea": "대한민국",
   "republic of korea": "대한민국",
   "korea republic of": "대한민국",
@@ -528,4 +540,202 @@ export const DEGREE_MAP: DegreeMap = {
 export function degreeEnToKo(input: string): string {
   const key = normUniKey(input);
   return DEGREE_MAP[key] ?? input;
+}
+
+export type CompanyMap = Record<string, string>;
+
+/**
+ * 한국 주요 대기업 및 IT 기업 영-한 매핑 테이블
+ * (그룹사, 주요 계열사, 빅테크 포함)
+ */
+export const COMPANY_MAP: CompanyMap = {
+  // --- Samsung Group ---
+  samsung: "삼성",
+  "samsung electronics": "삼성전자",
+  "samsung sds": "삼성SDS",
+  "samsung display": "삼성디스플레이",
+  "samsung sdi": "삼성SDI",
+  "samsung electro-mechanics": "삼성전기",
+  "samsung biologics": "삼성바이오로직스",
+  "samsung c&t": "삼성물산",
+  "samsung life insurance": "삼성생명",
+  "samsung fire & marine insurance": "삼성화재",
+  "samsung heavy industries": "삼성중공업",
+  "samsung securities": "삼성증권",
+
+  // --- Hyundai Motor Group ---
+  hyundai: "현대",
+  "hyundai motor company": "현대자동차",
+  "hyundai motor": "현대자동차",
+  kia: "기아",
+  "hyundai mobis": "현대모비스",
+  "hyundai steel": "현대제철",
+  "hyundai engineering": "현대엔지니어링",
+  "hyundai e&c": "현대건설",
+  "hyundai glovis": "현대글로비스",
+  "hyundai rotem": "현대로템",
+  "hyundai card": "현대카드",
+
+  // --- SK Group ---
+  sk: "SK",
+  "sk hynix": "SK하이닉스",
+  "sk telecom": "SK텔레콤",
+  "sk innovation": "SK이노베이션",
+  "sk on": "SK온",
+  "sk e&s": "SK E&S",
+  "sk square": "SK스퀘어",
+  "sk networks": "SK네트웍스",
+  "sk chemicals": "SK케미칼",
+  "sk bioscience": "SK바이오사이언스",
+  "sk c&c": "SK C&C",
+
+  // --- LG Group ---
+  lg: "LG",
+  "lg electronics": "LG전자",
+  "lg energy solution": "LG에너지솔루션",
+  "lg display": "LG디스플레이",
+  "lg chem": "LG화학",
+  "lg chemical": "LG화학",
+  "lg uplus": "LG유플러스",
+  "lg u+": "LG유플러스",
+  "lg cns": "LG CNS",
+  "lg household & health care": "LG생활건강",
+  "lg innotek": "LG이노텍",
+  naver: "네이버",
+  "naver cloud": "네이버클라우드",
+  "naver webtoon": "네이버웹툰",
+  "naver financial": "네이버파이낸셜",
+
+  kakao: "카카오",
+  "kakao bank": "카카오뱅크",
+  "kakao pay": "카카오페이",
+  "kakao mobility": "카카오모빌리티",
+  "kakao games": "카카오게임즈",
+  "kakao entertainment": "카카오엔터테인먼트",
+  "kakao enterprise": "카카오엔터프라이즈",
+  "kakao brain": "카카오브레인",
+
+  line: "라인",
+  "line plus": "라인플러스",
+  "line financial": "라인파이낸셜",
+  "line studio": "라인스튜디오",
+  "line next": "라인넥스트",
+
+  coupang: "쿠팡",
+  "coupang pay": "쿠팡페이",
+  "coupang eats": "쿠팡이츠",
+
+  "woowahan brothers": "우아한형제들",
+  "woowa brothers": "우아한형제들",
+  baemin: "배달의민족",
+
+  karrot: "당근",
+  "karrot pay": "당근 페이",
+  "karrot market": "당근",
+  danggeun: "당근",
+
+  "viva republica": "비바리퍼블리카",
+  toss: "토스",
+  "toss pay": "토스 페이",
+  "toss bank": "토스뱅크",
+  "toss securities": "토스증권",
+  "toss payments": "토스페이먼츠",
+
+  // --- Gaming (3N + Major Players) ---
+  nexon: "넥슨",
+  "nexon korea": "넥슨코리아",
+  "nexon games": "넥슨게임즈",
+  ncsoft: "엔씨소프트",
+  nc: "엔씨소프트",
+  netmarble: "넷마블",
+  "netmarble neo": "넷마블네오",
+
+  krafton: "크래프톤",
+  bluehole: "블루홀",
+  smilegate: "스마일게이트",
+  "smilegate rpg": "스마일게이트RPG",
+  "pearl abyss": "펄어비스",
+  com2us: "컴투스",
+  "com2us holdings": "컴투스홀딩스",
+  neowiz: "네오위즈",
+  devsisters: "데브시스터즈",
+  wemade: "위메이드",
+  "shift up": "시프트업",
+
+  // --- Unicorns & Lifestyle Platforms ---
+  yanolja: "야놀자",
+  kurly: "컬리",
+  "market kurly": "마켓컬리",
+  musinsa: "무신사",
+  bucketplace: "버킷플레이스",
+  ohouse: "오늘의집",
+  ably: "에이블리",
+  "ably corporation": "에이블리코퍼레이션",
+  zigbang: "직방",
+  socar: "쏘카",
+  "tmap mobility": "티맵모빌리티",
+  kream: "크림",
+
+  // --- Fintech & Blockchain ---
+  dunamu: "두나무",
+  upbit: "업비트",
+  bithumb: "빗썸",
+  coinone: "코인원",
+  "korea credit data": "한국신용데이터",
+  sentbe: "센트비",
+
+  // --- AI, SaaS & B2B Tech ---
+  sendbird: "센드버드",
+  "megazone cloud": "메가존클라우드",
+  "bespin global": "베스핀글로벌",
+  upstage: "업스테이지",
+  "wrtn technologies": "뤼튼테크놀로지",
+  wrtn: "뤼튼",
+  riiid: "뤼이드",
+  elice: "엘리스",
+  "elice group": "엘리스그룹",
+  class101: "클래스101",
+  "42dot": "포티투닷",
+  moloco: "몰로코",
+  fadu: "파두",
+  deepx: "딥엑스",
+  furiosaai: "퓨리오사AI",
+  lunit: "루닛",
+  vuno: "뷰노",
+  wantedlab: "원티드랩",
+  wanted: "원티드",
+
+  // --- Other Major Groups ---
+  posco: "포스코",
+  "posco holdings": "포스코홀딩스",
+  "posco future m": "포스코퓨처엠",
+  lotte: "롯데",
+  "lotte shopping": "롯데쇼핑",
+  "lotte chemical": "롯데케미칼",
+  cj: "CJ",
+  "cj cheiljedang": "CJ제일제당",
+  "cj enm": "CJ ENM",
+  "cj logistics": "CJ대한통운",
+  hanwha: "한화",
+  "hanwha solutions": "한화솔루션",
+  "hanwha aerospace": "한화에어로스페이스",
+  "hanwha ocean": "한화오션",
+  gs: "GS",
+  "gs caltex": "GS칼텍스",
+  "gs retail": "GS리테일",
+  "gs e&c": "GS건설",
+  shinsegae: "신세계",
+  emart: "이마트",
+  kt: "KT",
+  "kt corp": "KT",
+  "kt corporation": "KT",
+};
+
+/**
+ * 회사 영문명을 한글명으로 변환하는 함수
+ */
+export function companyEnToKo(input: string): string {
+  if (!input) return "";
+  const key = normUniKey(input); // 기존 코드에 정의된 정규화 함수 사용 가정
+  return COMPANY_MAP[key] ?? input;
 }

@@ -5,5 +5,4 @@ export const notifyToSlack = async (message: string) => {
     body: JSON.stringify({ message: message }),
   });
   const data = await response.json();
-  console.log("data ", data);
 };

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import BaseModal from "./BaseModal";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -41,36 +42,23 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+    <BaseModal
+      onClose={onClose}
+      onConfirm={async () => onConfirm()}
+      isLoading={isLoading}
+      confirmLabel={confirmLabel}
+      isCloseButton={true}
+      size="sm"
+    >
+      {title && <div className="text-lg font-normal">{title}</div>}
 
-      <div className="relative z-50 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        {title && (
-          <div className="text-base font-medium text-gray-900">{title}</div>
-        )}
-
-        {description && (
-          <p className="mt-2 text-base text-xgray600">{description}</p>
-        )}
-
-        <div className="w-full mt-8 flex flex-row justify-end gap-2">
-          <button
-            className="w-full inline-flex items-center justify-center rounded-md border border-xgray300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            className="w-full inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-70"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
-            {isLoading ? "Processing..." : confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+      {description && (
+        <p
+          className="mt-4 text-base text-hgray900 font-normal"
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
+      )}
+    </BaseModal>
   );
 };
 

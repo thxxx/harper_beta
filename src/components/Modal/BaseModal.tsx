@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import React from "react";
+import { useMessages } from "@/i18n/useMessage";
 
 const BaseModal = ({
   children,
@@ -8,6 +9,7 @@ const BaseModal = ({
   confirmLabel,
   isCloseButton = true,
   isLoading = false,
+  size = "md",
 }: {
   children: React.ReactNode;
   onClose: () => void;
@@ -15,7 +17,15 @@ const BaseModal = ({
   confirmLabel: string;
   isCloseButton?: boolean;
   isLoading?: boolean;
+  size?: "sm" | "md" | "lg";
 }) => {
+  const sizeClass = {
+    sm: "max-w-[480px]",
+    md: "max-w-[600px]",
+    lg: "max-w-[720px]",
+  }[size];
+  const { m } = useMessages();
+
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center px-4 w-full
@@ -27,9 +37,10 @@ const BaseModal = ({
       />
 
       <div
-        className={`relative z-50 w-full max-w-[600px] rounded-[28px] bg-ngray300 p-6 shadow-sm border border-white/10
-  transition-[max-width,padding] duration-300 ease-in-out
-  ${isCloseButton ? "max-w-[600px] p-6" : "max-w-[520px] p-6"}`}
+        className={`relative z-50 w-full rounded-[28px] bg-ngray300 p-6 shadow-sm border border-white/10
+  transition-[max-width,padding] duration-300 ease-in-out ${
+    isCloseButton ? `${sizeClass}` : "max-w-[520px]"
+  }`}
       >
         {children}
 
@@ -45,7 +56,7 @@ const BaseModal = ({
               `}
               onClick={onClose}
             >
-              Close
+              {m.system.close}
             </button>
           )}
           <button

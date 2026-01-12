@@ -24,8 +24,6 @@ export default function AuthCallback() {
       }
 
       // 3) company_users upsert (RLS 정책 + user_id unique 전제)
-      console.log("user ", user);
-
       const payload = {
         user_id: user.id,
         email: user.email ?? null,

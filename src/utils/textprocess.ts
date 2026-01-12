@@ -109,8 +109,6 @@ export function highlightDifferences(
     const originalWord = originalWords[originIndex];
     const newWord = newWords[newIndex];
 
-    console.log(originalWord, newWord);
-
     if (originalWord === newWord) {
       result.push(newWord);
       originIndex += 1;
@@ -202,7 +200,6 @@ export function highlightDifferences2(originalText: string, newText: string) {
     if (op.type === "substitute")
       return `<span class="text-red-700">${op.hyp}</span>`;
   });
-  console.log("결과 : ", result.join(" "));
 
   return result.join(" ");
 }

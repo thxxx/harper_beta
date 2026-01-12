@@ -19,7 +19,6 @@ export default function MyPage() {
   const { companyUser } = useCompanyUserStore();
   const userId = useMemo(() => companyUser?.user_id, [companyUser]);
   const { data } = useConnectionCounts(userId);
-  console.log("data ", data);
 
   const title = useMemo(() => {
     return TABS.find((t) => t.key === currentPage)?.label ?? "마이페이지";

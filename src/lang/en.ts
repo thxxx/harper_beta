@@ -43,6 +43,10 @@ export const en = {
     close_sidebar: "close sidebar",
     open_sidebar: "open sidebar",
     search: "Search",
+    submit_request: "Submit Request",
+    credit_request_submitted: "Your request has been submitted.",
+    credit_request_submitted_description:
+      "Thank you for requesting! Your credit increase is being reviewed, and a decision will be made soon. If opted in, you’ll receive updates on the status via email.",
   },
   company: {
     information: "Company Information",

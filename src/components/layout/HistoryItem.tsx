@@ -79,7 +79,6 @@ const HistoryItem = ({
               className="text-red-500 cursor-pointer p-2"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("delete queryItem", queryItem);
                 onDelete(queryItem.query_id);
               }}
             >

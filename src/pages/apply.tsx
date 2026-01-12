@@ -86,7 +86,7 @@
 //       return;
 //     }
 
-//     console.log(selected);
+//     logger.log(selected);
 //     readPdf(selected);
 //     setFileName(selected.name);
 //     setFileSize(selected.size);
@@ -111,14 +111,14 @@
 //     }
 
 //     const data = await response.json();
-//     console.log("--- Extracted Text (Client Side) ---");
-//     console.log(data.text.slice(0, 100), data.length);
+//     logger.log("--- Extracted Text (Client Side) ---");
+//     logger.log(data.text.slice(0, 100), data.length);
 //     setResumeText(data.text);
 
 //     // 내용 뽑아달라고 하기
 
 //     // const result = await askGpt(data.text);
-//     // console.log("result ", result);
+//     // logger.log("result ", result);
 //   };
 
 //   const handleChangeLink = (index: number, value: string) => {

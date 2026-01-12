@@ -97,7 +97,7 @@
 //         work_experiences: workExperiences,
 //         educations: educations,
 //       };
-//       console.log("body", body);
+//       logger.log("body", body);
 
 //       const resUser = await supabase.from("users").upsert(body);
 //       if (resUser.status !== 200 && resUser.status !== 201) {
@@ -107,7 +107,7 @@
 //       return { userId, resumeId };
 //     },
 //     onSuccess: () => {
-//       console.log("upload profile success");
+//       logger.log("upload profile success");
 //       // router.push("/call");
 //     },
 //   });

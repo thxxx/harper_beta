@@ -132,7 +132,6 @@ const Onboard: React.FC = () => {
 
     if (isDirty) {
       setLoading(true);
-      console.log("Upload profile!");
       const res = await supabase.from("harper_waitlist_company").upsert({
         name: name,
         email,
@@ -145,14 +144,12 @@ const Onboard: React.FC = () => {
         additional: additional,
         expect: value.length > 0 ? value.join(", ") : null,
       });
-      console.log("res", res);
       setIsDirty(false);
       setLoading(false);
     }
 
     if (isLastStep) {
       setSubmitLoading(true);
-      console.log("Submit form");
       setTimeout(() => {
         setSubmitLoading(false);
         setStep(8);
@@ -160,7 +157,6 @@ const Onboard: React.FC = () => {
       return;
     }
 
-    console.log("Next step", step);
     setStep((prev) => Math.min(prev + 1, steps.length - 1));
   }, [
     isLastStep,
@@ -196,7 +192,6 @@ const Onboard: React.FC = () => {
       if (target.tagName === "TEXTAREA") return;
 
       e.preventDefault();
-      console.log("Enter key pressed");
 
       handleNext();
 

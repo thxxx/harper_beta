@@ -42,7 +42,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     if (!initialized) return; // ✅ 로드 완료 전엔 아무 것도 하지 않음
 
     if (!companyUser || !companyUser.is_authenticated) {
-      console.log("companyUser ", companyUser, "여기서 팅깁니다.");
       router.replace("/companies"); // push보다 replace 추천 (뒤로가기로 돌아오는거 방지)
     }
   }, [initialized, companyUser]);

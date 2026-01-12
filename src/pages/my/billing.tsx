@@ -38,8 +38,6 @@ const Billing = () => {
     return true;
   };
 
-  console.log("creditRequestHistory ", creditRequestHistory);
-
   return (
     <AppLayout>
       <RequestCreditModal

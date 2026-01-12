@@ -47,7 +47,6 @@ export const useOnboarding = ({
       if (target.tagName === "TEXTAREA") return;
 
       e.preventDefault();
-      console.log("Enter key pressed");
 
       handleNext();
 

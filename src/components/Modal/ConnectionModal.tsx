@@ -9,6 +9,7 @@ import NameProfile from "../NameProfile";
 import { dateToFormatLong } from "@/utils/textprocess";
 import { showToast } from "../toast/toast";
 import { notifyToSlack } from "@/lib/slack";
+import { useMessages } from "@/i18n/useMessage";
 
 interface ConnectionModalProps {
   open: boolean;
@@ -36,9 +37,8 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
   const [text, setText] = useState("");
   const [requestText, setRequestText] = useState("");
   const [requestDate, setRequestDate] = useState("");
-
   const [requestSent, setRequestSent] = useState(false);
-
+  const { m } = useMessages();
   const { companyUser } = useCompanyUserStore.getState();
 
   useEffect(() => {
@@ -110,7 +110,6 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
         })
         .eq("user_id", companyUser.user_id)
         .eq("candid_id", candidId);
-      console.log("error ", error);
       showToast({ message: "Request canceled.", variant: "white" });
       onConfirm();
       onClose();
@@ -197,7 +196,7 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
                 className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium text-white hover:bg-white/5"
                 onClick={onClose}
               >
-                Close
+                {m.system.close}
               </button>
               <button
                 className="inline-flex items-center justify-center rounded-xl bg-accenta1 px-6 py-3 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-70"
@@ -207,7 +206,7 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({
                   "Cancel Request"
                 ) : (
                   <div>
-                    Request Connection{" "}
+                    {m.data.request}{" "}
                     <span className="ml-1 text-[10px] font-light text-hgray900 border border-white/10 rounded-md px-1 py-0.5">
                       BETA
                     </span>
