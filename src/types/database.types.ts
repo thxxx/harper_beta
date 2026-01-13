@@ -87,6 +87,7 @@ export type Database = {
         Row: {
           code: string | null
           company: string | null
+          count: number
           created_at: string
           domain: string | null
           id: string
@@ -94,6 +95,7 @@ export type Database = {
         Insert: {
           code?: string | null
           company?: string | null
+          count?: number
           created_at?: string
           domain?: string | null
           id?: string
@@ -101,6 +103,7 @@ export type Database = {
         Update: {
           code?: string | null
           company?: string | null
+          count?: number
           created_at?: string
           domain?: string | null
           id?: string

@@ -6,11 +6,13 @@ import { LoaderCircle } from "lucide-react";
 import GradientBackground from "@/components/landing/GradientBackground";
 import Header from "@/components/landing/Header";
 import { handleContactUs } from "@/utils/info";
-import router from "next/router";
+import { useRouter } from "next/navigation";
+
 import { supabase } from "@/lib/supabase";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 
 export default function LoginSuccess() {
+  const router = useRouter();
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [invalidMessage, setInvalidMessage] = useState("");
@@ -49,7 +51,6 @@ export default function LoginSuccess() {
       .from("company_code")
       .select("*")
       .eq("code", code)
-      .eq("domain", domain)
       .single()
       .then(async (res) => {
         if (res.data) {
@@ -65,6 +66,10 @@ export default function LoginSuccess() {
               remain_credit: 300,
               charged_credit: 300,
               type: "initial",
+            });
+            await supabase.from("company_code").upsert({
+              code: code,
+              count: res.data.count + 1,
             });
             await load(companyUser?.user_id);
           }
