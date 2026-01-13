@@ -65,7 +65,7 @@ export const ko = {
     saved: "저장됨",
     totalexp: "총 경력",
     publications: "저술 및 발표",
-    summary: "요약 설명",
+    summary: "한줄 설명",
     request: "연결 요청",
     request_cancel: "연결 요청 취소",
     generating: "후보자를 파악하는 중입니다...",

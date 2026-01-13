@@ -43,7 +43,8 @@ async function fetchCandidateDetail(id: string, userId?: string) {
       connection (
         user_id,
         typed
-      )
+      ),
+      s:summary ( text )
     `
     )
     .eq("id", id)

@@ -860,6 +860,35 @@ export type Database = {
           },
         ]
       }
+      summary: {
+        Row: {
+          candid_id: string | null
+          created_at: string
+          id: number
+          text: string | null
+        }
+        Insert: {
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          text?: string | null
+        }
+        Update: {
+          candid_id?: string | null
+          created_at?: string
+          id?: number
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summary_candid_id_fkey"
+            columns: ["candid_id"]
+            isOneToOne: false
+            referencedRelation: "candid"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synthesized_summary: {
         Row: {
           candid_id: string | null
@@ -917,6 +946,7 @@ export type Database = {
         }
         Returns: Json[]
       }
+      reset_org_db_seq: { Args: never; Returns: undefined }
       set_timeout_and_execute_raw_sql: {
         Args: {
           limit_num: number

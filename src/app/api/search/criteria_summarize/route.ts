@@ -1,5 +1,6 @@
 import { xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/utils/logger";
 import { buildSummary } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,11 +47,64 @@ Output:
   return summary;
 };
 
+export const generateOneLineSummary = async (doc: string) => {
+  const information = buildSummary(doc);
+  logger.log("information ", information);
+
+  const systemPrompt = `You are a helpful assistant.`;
+
+  const userPrompt = `
+나는 아래에 한 사람에 대한 정보를 길게 디테일하게 줄거야.
+- 그걸 읽고, 이 사람이 어떤 사람인지 한 문장으로 요약해줘. 단어로는 40단어 이하.
+- 보통 채용을 하는 사람들이 볼거기 때문에, 그걸 고려해서, 채용이란 단어를 쓰진 말고 어떤 정보를 한문장으로 요약하는게 좋을지 니가 판단해서 리턴해야해.
+- 꼭 한글로 작성해줘. 지칭할 때는 직접 이름을 쓰지 말고 <name>님 이라고 태그와 name이라는 변수로 해줘.
+- 적히진 않은 내용을 만들어내거나 지나치게 띄워주는 말은 하지마. 차세대 인재이자 리더라던가 등등 이런 과장된거 하지마. 적혀있으면 몰라도.
+- 중요한 기술적 키워드 같은건 영어가 더 정확한 표현이라면 영어로 해도 됨.
+
+## 예시
+Information : 생략
+Output: <name>님은 이미지 생성(Diffusion, GANs)과 이미지 탐지/분할 분야에 관심이 있는 Research Scientist로, 카이스트 전기전자공학부 학사를 졸업하고 4개의 회사에서 2년간 근무했습니다.
+
+## 입력
+Information : """${information}"""
+\n\n
+Output: 
+`;
+
+  const summary = await xaiInference(
+    "grok-4-fast-reasoning",
+    systemPrompt,
+    userPrompt
+  );
+
+  return summary;
+};
+
 export async function POST(req: NextRequest) {
   if (req.method !== "POST")
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 
   const body = await req.json();
+
+  logger.log("body ", body);
+  if (body.is_one_line) {
+    const { doc } = body as {
+      doc: any;
+      is_one_line: boolean;
+    };
+    const summary = await generateOneLineSummary(doc);
+
+    const { error: insErr } = await supabase.from("summary").insert({
+      candid_id: doc.id,
+      text: summary as string,
+    });
+
+    return NextResponse.json(
+      { result: summary, success: true },
+      { status: 200 }
+    );
+  }
+
   const { doc, queryId, criteria, raw_input_text } = body as {
     doc: any;
     queryId: string;

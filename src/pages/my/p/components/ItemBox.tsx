@@ -1,8 +1,8 @@
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { dateToFormat } from "@/utils/textprocess";
 import { useQueryClient } from "@tanstack/react-query";
-import { ExternalLink } from "lucide-react";
-import React, { useMemo } from "react";
+import { ChevronDown, ExternalLink } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import { ExperienceCal } from "../[id]";
 
 const ItemBox = ({
@@ -28,12 +28,11 @@ const ItemBox = ({
   months?: string;
   company_id?: string;
 }) => {
-  const startDate = useMemo(() => {
-    return dateToFormat(start_date);
-  }, [start_date]);
-  const endDate = useMemo(() => {
-    return dateToFormat(end_date);
-  }, [end_date]);
+  const startDate = useMemo(() => dateToFormat(start_date), [start_date]);
+  const endDate = useMemo(() => dateToFormat(end_date), [end_date]);
+
+  const hasDescription = Boolean(description && description.trim().length > 0);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleOpenCompany = useCompanyModalStore((s) => s.handleOpenCompany);
   const qc = useQueryClient();
@@ -45,10 +44,15 @@ const ItemBox = ({
     });
   };
 
+  const toggleDesc = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen((v) => !v);
+  };
+
   return (
-    <div className="rounded-xl bg-white/5 px-6 py-[14px]">
-      <div className="flex flex-row items-start justify-between">
-        <div className="flex flex-row items-start justify-start gap-3">
+    <div className="rounded-xl bg-white/5 relative">
+      <div className="flex flex-row items-start justify-between gap-4 relative px-6 py-[14px]">
+        <div className="flex flex-row items-start justify-start gap-3 min-w-0">
           {!isEdu && (
             <div onClick={() => onButtonClick()} className="">
               {logo_url ? (
@@ -64,38 +68,82 @@ const ItemBox = ({
               )}
             </div>
           )}
-          <div className="flex flex-col items-start justify-start gap-[2px] font-normal">
-            <div className={`text-base ${isEdu ? "" : ""}`}>
+
+          <div className="flex flex-col items-start justify-start gap-[2px] font-normal min-w-0">
+            <div className="text-base truncate">
               {title ? title : isEdu ? "Student" : "Employee"}
             </div>
+
             <div
-              className="cursor-pointer hover:underline text-ngray600 flex flex-row gap-2 items-center font-normal text-sm"
+              className="cursor-pointer hover:underline text-hgray700 flex flex-row gap-2 items-center font-normal text-[15px]"
               onClick={() => onButtonClick()}
             >
-              {name} {link ? <ExternalLink size={14} /> : null}
+              <span className="truncate">{name}</span>
+              {link ? <ExternalLink size={14} /> : null}
+            </div>
+            <div className="text-sm text-ngray600 font-normal mt-1 whitespace-nowrap flex flex-row items-center gap-2">
+              {startDate ? (
+                <div className="flex flex-row items-center gap-2">
+                  <span>{startDate}</span>
+                  <span>⎻</span>
+                  {endDate === "" ? (
+                    <span className="text-accenta1">현재</span>
+                  ) : (
+                    <span>{endDate}</span>
+                  )}
+                </div>
+              ) : null}
+              {months && (
+                <div className="flex flex-row items-center gap-1">
+                  <span> · </span>
+                  <span>
+                    {typeof months === "number"
+                      ? `${ExperienceCal(months)}`
+                      : ""}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="text-sm text-xgray800 font-light mt-1">
-          {startDate ? (
-            <span className="px-1">
-              {startDate} ⎻{" "}
-              {endDate === "" ? (
-                <span className="text-accenta1">현재</span>
-              ) : (
-                endDate
-              )}
-            </span>
-          ) : null}
 
-          {typeof months === "number" ? ` · ${ExperienceCal(months)}` : ""}
-        </div>
+        {hasDescription ? (
+          <div
+            className={`flex flex-row gap-2 shrink-0 absolute right-0 top-0 w-24 h-full items-center justify-center hover:bg-white/5 transition-all cursor-pointer ${
+              isOpen ? "rounded-tr-xl" : "rounded-r-xl"
+            }`}
+            onClick={toggleDesc}
+          >
+            <button
+              type="button"
+              aria-label={isOpen ? "Hide description" : "Show description"}
+              aria-expanded={isOpen}
+              className="p-1 rounded-md "
+            >
+              <ChevronDown
+                size={28}
+                strokeWidth={1.3}
+                className={`transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
+          </div>
+        ) : null}
       </div>
-      {description && (
-        <div className="mt-3 text-sm text-xgray500 font-light whitespace-pre-wrap">
-          {description}
+
+      {hasDescription ? (
+        <div
+          className={[
+            "overflow-hidden transition-all duration-200 ease-out px-6",
+            isOpen ? "max-h-[600px] opacity-100 pb-[20px]" : "h-0 opacity-0",
+          ].join(" ")}
+        >
+          <div className="mt-3 text-[15px] text-hgray900 font-normal whitespace-pre-wrap">
+            {description}
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
