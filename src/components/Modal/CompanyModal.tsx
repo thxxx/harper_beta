@@ -1,7 +1,14 @@
 import React, { useEffect, useMemo } from "react";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import LinkChips from "@/pages/my/p/components/LinkChips";
-import { XIcon } from "lucide-react";
+import {
+  Calendar,
+  Globe,
+  House,
+  Linkedin,
+  MapPinHouse,
+  XIcon,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import LinkPreview from "../LinkPreview";
 import { useMessages } from "@/i18n/useMessage";
@@ -109,7 +116,7 @@ export default function CompanyModalRoot() {
             </div>
 
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 px-5 py-4 pt-20">
+            <div className="flex items-start justify-between gap-4 px-5 py-4 pt-16">
               <div className="flex flex-row gap-6 items-start justify-start">
                 <img
                   src={company.logo ?? ""}
@@ -138,31 +145,40 @@ export default function CompanyModalRoot() {
             )}
 
             {/* Body */}
-            <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-12">
+            <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-8">
               <Section title={m.company.information}>
-                <div className="mt-3 space-y-2 text-sm">
+                <div className="space-y-2 text-sm">
                   <Row
-                    label={m.company.hq}
+                    label={<MapPinHouse className="w-4 h-4 text-hgray700" />}
+                    // label={m.company.hq}
                     value={countryEnToKo(company.location ?? "")}
                   />
                   {company.founded_year !== null &&
                     company.founded_year !== undefined &&
                     company.founded_year > 1000 && (
                       <Row
-                        label={m.company.established}
+                        label={<Calendar className="w-4 h-4 text-hgray700" />}
                         value={company.founded_year}
                       />
                     )}
                   {company.website_url && (
-                    <Row label="Home page" value={company.website_url} isLink />
+                    <Row
+                      label={<Globe className="w-4 h-4 text-hgray700" />}
+                      value={company.website_url}
+                      isLink
+                    />
                   )}
-                  <Row label="LinkedIn" value={company.linkedin_url} isLink />
+                  <Row
+                    label={<Linkedin className="w-4 h-4 text-hgray700" />}
+                    value={company.linkedin_url}
+                    isLink
+                  />
                 </div>
               </Section>
 
               {!company.short_description && company.description ? (
                 <Section title={m.company.description}>
-                  <p className="mt-2 text-sm leading-6 whitespace-pre-wrap font-light">
+                  <p className="text-sm leading-6 whitespace-pre-wrap font-light">
                     {company.description}
                   </p>
                   <div className="mt-6 flex flex-wrap gap-2">
@@ -180,7 +196,7 @@ export default function CompanyModalRoot() {
 
               {company.investors && (
                 <Section title={m.company.investors}>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {company.investors.split(",").map((i) => (
                       <span
                         key={i}
@@ -195,13 +211,15 @@ export default function CompanyModalRoot() {
 
               {company.related_links && (
                 <Section title={m.company.news}>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {company.related_links.map((l) => (
                       <LinkPreview key={l} url={l} />
                     ))}
                   </div>
                 </Section>
               )}
+              <br />
+              <br />
             </div>
           </motion.aside>
         </motion.div>
@@ -215,15 +233,15 @@ function Row({
   value,
   isLink,
 }: {
-  label: string;
+  label: string | React.ReactNode;
   value: any;
   isLink?: boolean;
 }) {
   const v = value ? String(value) : "—";
 
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="">{label}</div>
+    <div className="flex items-center justify-start gap-4">
+      <div className="flex items-center justify-center">{label}</div>
       <div className="text-right break-all max-w-[70%]">
         {isLink && v !== "—" ? (
           <a
@@ -252,7 +270,7 @@ const Section = ({
   return (
     <div className="flex flex-col gap-2 w-full max-w-full">
       <div className="text-lg text-hgray900 font-normal">{title}</div>
-      <div className="text-hgray900 max-w-full overflow-x-hidden">
+      <div className="text-hgray900 max-w-full overflow-x-hidden mt-[10px]">
         {children}
       </div>
     </div>
