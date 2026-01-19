@@ -21,9 +21,6 @@ export default function ResultHeader({
   // const { data: runDetail } = useRunDetail(runId);
   // console.log("runDetail ======================== ", runDetail);
   const q = useRunDetail(runId);
-  console.log("data", q.data);
-  console.log("isFetching", q.isFetching, "fetchStatus", q.fetchStatus);
-  console.log("isStale", q.isStale, "dataUpdatedAt", q.dataUpdatedAt);
 
   const statusMessage = useMemo(() => {
     return q.data?.status;
