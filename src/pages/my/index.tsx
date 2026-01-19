@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { NextPage } from "next";
-import { ArrowUp, Plus, SendHorizonal } from "lucide-react";
+import { ArrowUp, Loader2, Plus, SendHorizonal } from "lucide-react";
 import AppLayout from "@/components/layout/app";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useRouter } from "next/router";
@@ -59,11 +59,35 @@ const Home: NextPage = () => {
   };
 
   const testSqlQuery = async () => {
-    console.log("testSqlQuery");
-    const sql = `
-WITH params AS (   SELECT to_tsquery('english', 'founder | ceo | co <-> founder | cofounder') AS tsq ), identified_ids AS (   SELECT     T1.id,     ts_rank(T1.fts, params.tsq) AS fts_rank   FROM candid AS T1   CROSS JOIN params   WHERE     EXISTS (       SELECT 1        FROM experience_user ex       JOIN company_db c ON c.id = ex.company_id       WHERE ex.candid_id = T1.id         AND c.investors ILIKE ANY (ARRAY['%Krew Capital%'])         AND (           ex.role ILIKE ANY (ARRAY['%Founder%', '%CEO%', '%Co-founder%', '%Cofounder%', '%Founding%', '%Representative%'])           OR T1.headline ILIKE ANY (ARRAY['%Founder%', '%CEO%', '%Co-founder%', '%Cofounder%'])           OR T1.fts @@ params.tsq         )     )   ORDER BY fts_rank DESC, T1.id ), hydrated_data AS (   SELECT     to_json(i.id) AS id,     c.name,     c.headline,     c.location,     i.fts_rank,     COALESCE(exp_block.experience_rows, '[]'::jsonb) AS experience_user   FROM identified_ids i   JOIN candid c ON c.id = i.id   LEFT JOIN LATERAL (     SELECT jsonb_agg(       (to_jsonb(ex) || jsonb_build_object('company_db', jsonb_build_object(         'name', comp.name,         'investors', comp.investors,         'short_description', comp.short_description       )))     ) AS experience_rows     FROM experience_user ex     LEFT JOIN company_db comp ON comp.id = ex.company_id     WHERE ex.candid_id = i.id   ) exp_block ON TRUE ) SELECT * FROM hydrated_data
-
-ORDER BY fts_rank DESC`;
+    const start = performance.now();
+    console.log("testSqlQuery start");
+    const sql = `SELECT count(*) AS total_count
+FROM candid T1
+WHERE 
+  -- 1. 고등학교 조건 (과학고)
+  EXISTS (
+    SELECT 1 FROM edu_user ed1
+    WHERE ed1.candid_id = T1.id
+      AND ed1.school ILIKE ANY (ARRAY['%Science High School%', '%과학고%', '%과학고등학교%'])
+  )
+  
+  -- 2. 대학교 조건 (서울대/KAIST)
+  AND EXISTS (
+    SELECT 1 FROM edu_user ed2
+    WHERE ed2.candid_id = T1.id
+      AND ed2.school ILIKE ANY (ARRAY['%Seoul National University%', '%SNU%', '%서울대%', '%서울대학교%', '%KAIST%', '%카이스트%', '%Korea Advanced Institute of Science and Technology%'])
+  )
+  
+  -- 3. 경력 조건 (빅테크 기업 근무 경험)
+  AND EXISTS (
+    SELECT 1 FROM experience_user ex 
+    LEFT JOIN company_db c ON c.id = ex.company_id 
+    WHERE ex.candid_id = T1.id 
+      AND (
+        c.name ILIKE ANY (ARRAY['%Apple%', '%Microsoft%', '%Alphabet%', '%Google%', '%Amazon%', '%Meta%', '%Facebook%', '%NVIDIA%', '%Tesla%']) 
+        OR ex.role ILIKE ANY (ARRAY['%Apple%', '%Microsoft%', '%Alphabet%', '%Google%', '%Amazon%', '%Meta%', '%Facebook%', '%NVIDIA%', '%Tesla%'])
+      )
+  );`;
 
     const { data: data1, error: error1 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
@@ -76,6 +100,8 @@ ORDER BY fts_rank DESC`;
     );
 
     console.log(data1, error1);
+    const end = performance.now();
+    console.log("testSqlQuery time", end - start);
   };
 
   return (
@@ -138,7 +164,11 @@ ORDER BY fts_rank DESC`;
                     ].join(" ")}
                     aria-label="Send"
                   >
-                    <ArrowUp size={20} />
+                    {isLoading ? (
+                      <Loader2 size={20} className="animate-spin" />
+                    ) : (
+                      <ArrowUp size={20} />
+                    )}
                   </button>
                 </div>
               </div>

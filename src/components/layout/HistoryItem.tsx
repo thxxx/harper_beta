@@ -35,8 +35,12 @@ const HistoryItem = ({
       key={queryItem.query_id}
       onClick={() => router.push(`/my/c/${queryItem.query_id}`)}
     >
-      <div className="flex flex-col items-start w-full max-w-[85%] font-normal">
-        <div className="truncate text-[13px] max-w-[100%]">
+      <div
+        className={`flex flex-col items-start w-full font-normal ${
+          collapsed ? "max-w-full" : "max-w-[85%]"
+        }`}
+      >
+        <div className="truncate text-[13px] w-full">
           {queryItem.query_keyword ?? queryItem.raw_input_text}
         </div>
         {!collapsed && (

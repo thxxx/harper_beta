@@ -3,8 +3,8 @@ import { dateToFormat } from "@/utils/textprocess";
 import { useQueryClient } from "@tanstack/react-query";
 import { Building2, ChevronDown, ExternalLink, SchoolIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import { ExperienceCal } from "../[id]";
 import { getSchoolLogo } from "@/utils/school_logo";
+import { ExperienceCal } from "../CandidateProfile";
 
 const ItemBox = ({
   title,
@@ -37,7 +37,6 @@ const ItemBox = ({
     }
     return logo_url;
   }, [link, isEdu]);
-  console.log(logoUrl, link, title);
 
   const hasDescription = Boolean(description && description.trim().length > 0);
   const [isOpen, setIsOpen] = useState(false);

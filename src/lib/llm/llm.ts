@@ -98,7 +98,8 @@ export async function geminiInference(
   model: "gemini-3-flash-preview",
   systemPrompt: string,
   userPrompt: string,
-  temperature: number = 0.7
+  temperature: number = 0.7,
+  thinkingLevel: ThinkingLevel = ThinkingLevel.LOW
 ): Promise<string | object> {
   try {
     const response = await gemini.models.generateContent({
@@ -106,7 +107,7 @@ export async function geminiInference(
       contents: systemPrompt + "\n\n" + userPrompt,
       config: {
         thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW,
+          thinkingLevel: thinkingLevel,
         },
         temperature: temperature,
       },

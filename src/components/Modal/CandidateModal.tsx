@@ -4,10 +4,15 @@ import { useCandidateModalStore } from "@/store/useCandidateModalStore";
 import CandidateProfileDetailPage from "@/pages/my/p/CandidateProfile";
 import { ExpandIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/router";
+import { useCompanyUserStore } from "@/store/useCompanyUserStore";
+import { useCandidateDetail } from "@/hooks/useCandidateDetail";
 
 const CandidateModalRoot = () => {
   const router = useRouter();
   const { isOpen, payload, close } = useCandidateModalStore();
+  const { companyUser } = useCompanyUserStore();
+  const userId = companyUser?.user_id;
+  const candidId = payload?.candidId;
   useEffect(() => {
     if (!isOpen) return;
     history.pushState({ modal: "candidate" }, "");
@@ -19,6 +24,7 @@ const CandidateModalRoot = () => {
       window.removeEventListener("popstate", onPopState);
     };
   }, [isOpen, close]);
+  const { data, isLoading, error } = useCandidateDetail(userId, candidId);
 
   return (
     <AnimatePresence>
@@ -49,10 +55,15 @@ const CandidateModalRoot = () => {
             </button>
           </div>
           <div className="h-4" />
-          {payload.candidId && (
-            <CandidateProfileDetailPage candidId={payload.candidId} />
+          {payload.candidId && data && (
+            <CandidateProfileDetailPage
+              candidId={payload.candidId}
+              data={data}
+              isLoading={isLoading}
+              error={error}
+            />
           )}
-          {!payload.candidId && <div>로딩중입니다.</div>}
+          {(!payload.candidId || isLoading) && <div>로딩중입니다.</div>}
         </motion.div>
       )}
     </AnimatePresence>

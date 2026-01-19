@@ -9,6 +9,7 @@ import { mapWithConcurrency } from "./utils";
 import { generateSummary } from "./criteria_summarize/utils";
 import { sumScore } from "./utils";
 import { ko } from "@/lang/ko";
+import { ThinkingLevel } from "@google/genai";
 
 export async function parseQueryWithLLM(
   queryText: string,
@@ -26,15 +27,26 @@ export async function parseQueryWithLLM(
 
     if (extraInfo) prompt += `Extra Info: ${extraInfo}`;
 
-    const outText = await geminiInference(
-      "gemini-3-flash-preview",
-      "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
-      prompt,
-      0.5
-    );
-
+    const start1 = performance.now();
+    let outText = "";
+    let count = 0;
+    while (outText.trim().length === 0 && count < 2) {
+      if (count > 1) {
+        const end = performance.now();
+        logger.log(`\n\n 🍊 재시도 합니다 재시도!! [${end - start1}ms] \n\n`);
+      }
+      outText = (await geminiInference(
+        "gemini-3-flash-preview",
+        "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
+        prompt,
+        0.6,
+        ThinkingLevel.MEDIUM
+      )) as string;
+      count += 1;
+    }
+    const end1 = performance.now();
     const cleanText = (outText as string).trim().replace(/\n/g, " ").trim();
-    logger.log("🔥 First query: ", cleanText);
+    logger.log(`🔥 First query [${end1 - start1}ms] : `, cleanText);
 
     const sqlQuery = `
   SELECT DISTINCT ON (T1.id)
@@ -51,18 +63,29 @@ export async function parseQueryWithLLM(
     const refinePrompt =
       sqlExistsPrompt + `\n Input SQL Query: """${sqlQueryWithGroupBy}"""`;
 
-    const outText2 = await geminiInference(
-      "gemini-3-flash-preview",
-      "You are a SQL Query refinement expert, for stable and fast search.",
-      refinePrompt,
-      0.4
-    );
-
+    const start = performance.now();
+    let outText2 = "";
+    count = 0;
+    while (outText2.trim().length === 0 && count < 2) {
+      if (count > 1) {
+        const end = performance.now();
+        logger.log(`\n\n 🍊 재시도 합니다 재시도!! [${end - start}ms] \n\n`);
+      }
+      outText2 = (await geminiInference(
+        "gemini-3-flash-preview",
+        "You are a SQL Query refinement expert, for stable and fast search.",
+        refinePrompt,
+        0.7,
+        ThinkingLevel.THINKING_LEVEL_UNSPECIFIED
+      )) as string;
+      count += 1;
+    }
+    const end = performance.now();
     const cleanedResponse2 = (outText2 as string)
       .trim()
       .replace(/\n/g, " ")
       .trim();
-    logger.log("🥬 Second query: ", cleanedResponse2);
+    logger.log(`🥬 Second query [${end - start}ms] : `, cleanedResponse2);
     const sqlQueryWithGroupBy2 = ensureGroupBy(cleanedResponse2, "");
 
     return sqlQueryWithGroupBy2;
@@ -206,12 +229,20 @@ export const searchDatabase = async (
       run.id,
       `Error: ${String(error.message || error)}` || "Error"
     );
-    return [];
+    return {
+      data: [],
+      status: `검색 도중 에러가 발생했습니다. Error message : ${String(
+        error.message || error
+      )}`,
+    };
   }
 
   if (!data || !data[0] || data[0].length === 0) {
     await updateRunStatus(run.id, "No data found");
-    return [];
+    return {
+      data: [],
+      status: "no data found",
+    };
   }
 
   await updateRunStatus(run.id, ko.loading.summarizing);
@@ -219,32 +250,36 @@ export const searchDatabase = async (
   const fullScore = criteria.length * 2;
 
   const scored: (ScoredCandidate & { summary: string })[] =
-    await mapWithConcurrency(data[0] as any[], 17, async (candidate) => {
-      const id = candidate.id as string;
+    await mapWithConcurrency(
+      data[0].slice(0, 50) as any[],
+      17,
+      async (candidate) => {
+        const id = candidate.id as string;
 
-      let summary = "";
-      let lines: string[] = [];
-      try {
-        summary = (await generateSummary(
-          candidate,
-          criteria,
-          query_text
-        )) as string;
-        lines = JSON.parse(summary);
-      } catch {
-        summary = "";
-        lines = [];
+        let summary = "";
+        let lines: string[] = [];
+        try {
+          summary = (await generateSummary(
+            candidate,
+            criteria,
+            query_text
+          )) as string;
+          lines = JSON.parse(summary);
+        } catch {
+          summary = "";
+          lines = [];
+        }
+
+        const score = sumScore(lines);
+
+        return {
+          id,
+          score:
+            fullScore !== 0 ? Math.round((score / fullScore) * 100) / 100 : 1,
+          summary,
+        };
       }
-
-      const score = sumScore(lines);
-
-      return {
-        id,
-        score:
-          fullScore !== 0 ? Math.round((score / fullScore) * 100) / 100 : 1,
-        summary,
-      };
-    });
+    );
 
   logger.log("💠 전체 스코어링 완료: ", scored);
   // Bulk upsert synthesized summaries
@@ -271,5 +306,8 @@ export const searchDatabase = async (
 
   await updateRunStatus(run.id, "Done");
 
-  return scored;
+  return {
+    data: scored,
+    status: "search done.",
+  };
 };

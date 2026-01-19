@@ -8,16 +8,24 @@ import React, {
 } from "react";
 import ChatMessageList from "@/components/chat/ChatMessageList";
 import ChatComposer from "@/components/chat/ChatComposer";
-import { useChatSessionDB } from "@/hooks/chat/useChatSession"; // ✅ useChatSessionDB
+import { useChatSessionDB } from "@/hooks/chat/useChatSession";
 import { ArrowDown, ArrowLeft, Loader2, ScreenShareIcon } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { useCandidateModalStore } from "@/store/useCandidateModalStore";
+import { Tooltips } from "../ui/tooltip";
+import { useRouter } from "next/router";
+
+export type ChatScope =
+  | { type: "query"; queryId: string }
+  | { type: "candid"; candidId: string };
 
 type Props = {
   title: string;
-  queryId?: string;
+  scope?: ChatScope;
   userId?: string;
+
   onSearchFromConversation: (messageId: number) => Promise<void>;
+
   disabled?: boolean;
   isNewSearch?: boolean;
 };
@@ -27,7 +35,7 @@ const AUTO_SCROLL_THROTTLE_MS = 120;
 
 export default function ChatPanel({
   title,
-  queryId,
+  scope,
   userId,
   onSearchFromConversation,
   disabled,
@@ -36,43 +44,45 @@ export default function ChatPanel({
   const [isSearchSyncing, setIsSearchSyncing] = useState(false);
   const [stickToBottom, setStickToBottom] = useState(true);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
-  const { isOpen, payload, close } = useCandidateModalStore();
-
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const chat = useChatSessionDB({ queryId, userId });
-  // ✅ auto-start if there is only one user message
+
+  const chat = useChatSessionDB({ scope, userId }); // ✅ 바뀐 부분
   const autoStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (autoStartedRef.current) return;
+  const isQueryScope = scope?.type === "query";
 
-    // history 아직 로딩 중이면 대기
+  // ✅ auto-start: query scope에서만
+  useEffect(() => {
+    if (!isQueryScope) return;
+
     if (!chat.ready) return;
     if (chat.isLoadingHistory) return;
 
-    // 이미 스트리밍/검색 중이면 대기
-    if (chat.isStreaming) return;
-    if (isSearchSyncing) return;
-
-    // 메시지가 1개이고, 그게 user라면 자동 시작
     if (chat.messages.length !== 1) return;
     if (chat.messages[0]?.role !== "user") return;
 
-    logger.log("\n 자동 시작 메시지: ", chat.messages[0]);
-
+    if (autoStartedRef.current) return;
     autoStartedRef.current = true;
+    logger.log("\n 자동 시작 메시지: ", chat.messages);
+
     void chat.send(chat.messages[0].content ?? "");
   }, [
+    isQueryScope,
     chat.ready,
     chat.isLoadingHistory,
-    chat.isStreaming,
     chat.messages,
-    isSearchSyncing,
     chat.send,
   ]);
 
+  // ✅ scope가 바뀌면 autoStarted도 리셋 (중요)
   useEffect(() => {
-    chat.reload();
+    autoStartedRef.current = false;
+  }, [scope?.type, isQueryScope ? scope?.queryId : scope?.candidId]);
+
+  useEffect(() => {
+    if (!isNewSearch) return;
+    void chat.reload();
   }, [isNewSearch]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -92,9 +102,12 @@ export default function ChatPanel({
     setShowJumpToBottom(!atBottom);
   }, []);
 
-  // ✅ load history once when ready
+  const loadedOnceRef = useRef(false);
+
   useEffect(() => {
     if (!chat.ready) return;
+    if (loadedOnceRef.current) return;
+    loadedOnceRef.current = true;
     void chat.loadHistory();
   }, [chat.ready, chat.loadHistory]);
 
@@ -120,7 +133,6 @@ export default function ChatPanel({
     lastAutoScrollTsRef.current = now;
 
     const id = requestAnimationFrame(() => {
-      // streaming 중 smooth는 멀미/읽기 방해될 때가 많아서 auto 권장
       scrollToBottom(chat.isStreaming ? "auto" : "smooth");
     });
     return () => cancelAnimationFrame(id);
@@ -137,22 +149,26 @@ export default function ChatPanel({
     requestAnimationFrame(() => scrollToBottom("auto"));
   }, [chat.isLoadingHistory, chat.messages.length, scrollToBottom]);
 
-  // 현재 검색 가능한 상태인지 아닌지
+  // ✅ 검색 가능한 상태인지 (query scope에서만)
   const canSearch = useMemo(() => {
+    if (!isQueryScope) return false;
+
     if (disabled) return false;
-    if (!queryId || !userId) return false;
+    if (!scope || scope.type !== "query") return false;
+    if (!userId) return false;
     if (isSearchSyncing || chat.isStreaming) return false;
 
     return (
       chat.messages.length > 0 && chat.messages.some((m) => m.role === "user")
     );
   }, [
+    isQueryScope,
     disabled,
+    scope,
+    userId,
     isSearchSyncing,
     chat.isStreaming,
     chat.messages,
-    queryId,
-    userId,
   ]);
 
   const onClickSearch = async (messageId: number) => {
@@ -170,11 +186,16 @@ export default function ChatPanel({
     }
   };
 
+  // logger.log("chatPanel 렌더링 : ", scope);
+
   return (
     <div className="w-full min-w-[390px] max-w-[460px] lg:w-[30%] border-r border-white/10 flex flex-col min-h-0 h-full">
       {/* Header (fixed) */}
       <div className="flex items-center justify-between flex-none h-14 px-4 text-hgray900">
-        <div className="text-sm font-medium flex items-center gap-1.5 hover:gap-2 cursor-pointer hover:text-hgray900 transition-all duration-200">
+        <div
+          onClick={() => router.back()}
+          className="text-sm font-medium flex items-center gap-1.5 hover:gap-2 cursor-pointer hover:text-hgray900 transition-all duration-200"
+        >
           <ArrowLeft className="w-3.5 h-3.5 text-hgray600" />
           <div>{title}</div>
         </div>
@@ -200,7 +221,7 @@ export default function ChatPanel({
             messages={chat.messages}
             isStreaming={chat.isStreaming}
             error={chat.error}
-            onConfirmCriteriaCard={onClickSearch}
+            onConfirmCriteriaCard={isQueryScope ? onClickSearch : undefined} // ✅ query scope에서만
             onChangeCriteriaCard={(args) => {
               logger.log("\n onChangeCriteriaCard in ChatPanel", args);
               void chat.patchAssistantUiBlock(
@@ -227,13 +248,17 @@ export default function ChatPanel({
         )}
       </div>
 
-      {isOpen && payload && (
-        <div className="px-2 py-1 bg-blue-600 text-white">
-          <div className="text-xs font-medium">
-            {payload.name}님에 대해서 질문합니다. (이거 아직 구현 안했어요. UI도
-            수정 예정. 대화해도 효과 없음)
+      {scope?.type === "candid" && (
+        <Tooltips
+          text="현재 화면에서는 검색이 아니라 프로필에 대해서 질문할 수 있습니다. 검색을 하시기 위해서는 다시 검색 화면으로 돌아가주시기 바랍니다."
+          side="top"
+        >
+          <div className="px-2 py-1 mx-4 bg-blue-600/60 text-white rounded-lg mb-1">
+            <div className="text-xs font-medium">
+              {title}에 대해 질문할 수 있습니다.
+            </div>
           </div>
-        </div>
+        </Tooltips>
       )}
 
       {/* Composer (fixed) */}

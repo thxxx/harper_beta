@@ -1,4 +1,4 @@
-import { geminiInference, xaiInference } from "@/lib/llm/llm";
+import { xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { deduplicateAndScore, UI_END, UI_START } from "../utils";
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 6) Run search
-  const searchResults = await searchDatabase(
+  const { data: searchResults, status: searchStatus } = await searchDatabase(
     query_text,
     criteria,
     page,
@@ -176,24 +176,36 @@ export async function POST(req: NextRequest) {
   const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
   const merged = deduplicateAndScore(searchResults, cachedCandidates);
 
-  const defaultMsg = `전체 후보자들 중 ${searchResults.length}명을 선정하고, 기준을 만족하는지 검사했습니다. ${oneScoreCount}명이 모든 기준을 만족했습니다.
-${UI_START}{"type": "search_result", "text": "검색 결과", "run_id": "${runId}"}${UI_END}`;
+  let defaultMsg = `전체 후보자들 중 ${searchResults.length}명을 선정하고, 기준을 만족하는지 검사했습니다. ${oneScoreCount}명이 모든 기준을 만족했습니다.`;
+  if (searchResults.length > 0) {
+    defaultMsg += `\n${UI_START}{"type": "search_result", "text": "검색 결과 ${oneScoreCount}/${searchResults.length}", "run_id": "${runId}"}${UI_END}`;
+  }
 
   const msg = await xaiInference(
     "grok-4-fast-reasoning",
-    "You are a helpful assistant.",
-    `찾으려는 사람은 ${run.query_text}입니다.
-  지금 1) 검색 조건에 걸린 사람은 ${merged.length}명, 기준은 ${criteria?.join(
-      ", "
-    )}인데 각 사람의 정보를 읽어보았을 때, 2) 모든 기준을 만족하는 사람은 ${oneScoreCount}명입니다.
-  1) 검색 조건은 검색에 맞는 SQL 쿼리를 LLM이 생성한 뒤 DB에 사용했을 때 출력된 결과로, 최대 50명으로 제한했습니다. 2) 모든 기준을 만족하는 사람은 각 사람별로 디테일한 정보를 가져온 후, 직접 assistant가 읽어보고 판단한 결과입니다.
-  이 때, 유저에게 출력할 안내메세지를 짧게 작성하세요.
+    "You are a helpful assistant agent, named Harper.",
+    `You are Harper’s “search completion messenger”.
+Write ONLY the additional message that will be appended after the default message.
 
-  정보: SQL 쿼리는 LLM이 작성하기 때문에 해당 부분에서 오류가 발생했을 수도 있다. limit을 50으로 걸었기 때문에 검색 조건에 걸린게 50명이라는 뜻은, 실제로 DB에는 해당 쿼리를 만족하는게 50명 이상이라는 뜻이다. 
-위 정보를 항상 유저에게 말하라는건 아니고, 혹시 필요하면 참고해도 됨.
-아래 기본 출력 메세지는 항상 유저에게 리턴되는 값으로, 이 뒤에 추가로 출력할 내용만 작성하세요. 절대 기본 출력 메세지를 반복하지 마세요.
+Hard rules:
+- Do NOT repeat or paraphrase the default message.
+- Output must be Korean.
+- Keep it short: 1–3 sentences (max 280 characters).
+- Be helpful and action-oriented: suggest what the user can do next.
+- Do not mention internal implementation details (SQL, LLM, limit=50, merged, oneScoreCount) unless it is necessary to clarify confusing results.
+- If status is ERROR, do not reveal technical details. Tell them the search failed, credits were not deducted, and suggest trying again.
 
-기본 출력 메세지: ${defaultMsg}`,
+Context (facts you may use):
+- user_query: "${run.query_text}"
+- search_status: "${searchStatus}"  // e.g., SUCCESS | PARTIAL | ERROR
+- candidates_matched: ${merged.length}   // count from SQL-filtered set (max 50)
+- candidates_fully_satisfied: ${oneScoreCount}  // count judged by assistant reading details
+- criteria: ${criteria?.join(", ")}
+
+Default message (already shown to user; never repeat):
+${defaultMsg}
+
+Now write the additional message:`,
     0.7,
     1
   );

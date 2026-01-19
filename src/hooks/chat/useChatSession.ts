@@ -1,16 +1,22 @@
 // hooks/chat/useChatSession.ts
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import type { ChatMessage } from "@/types/chat";
 import {
   fetchMessages,
   insertMessage,
   updateMessageContent,
 } from "@/lib/message";
+import { logger } from "@/utils/logger";
+import { useCandidateDetail } from "../useCandidateDetail";
 
-const CHAT_MODEL = "grok-4-fast-non-reasoning";
+const CHAT_MODEL = "grok-4-fast-reasoning";
 
 export const UI_START = "<<UI>>";
 export const UI_END = "<<END_UI>>";
+
+export type ChatScope =
+  | { type: "query"; queryId: string }
+  | { type: "candid"; candidId: string };
 
 export type UiSegment =
   | { type: "text"; content: string }
@@ -23,7 +29,7 @@ export function replaceUiBlockInText(rawText: string, modifiedBlockObj: any) {
   if (start === -1 || end === -1 || end <= start) return rawText;
 
   const before = rawText.slice(0, start + UI_START.length);
-  const after = rawText.slice(end); // END_UI 포함해서 유지
+  const after = rawText.slice(end); // keep END_UI
 
   const json = JSON.stringify(modifiedBlockObj);
   return `${before}\n${json}\n${after}`;
@@ -31,14 +37,12 @@ export function replaceUiBlockInText(rawText: string, modifiedBlockObj: any) {
 
 export function extractUiSegments(text: string): { segments: UiSegment[] } {
   const segments: UiSegment[] = [];
-
   let cursor = 0;
 
   while (true) {
     const start = text.indexOf(UI_START, cursor);
     if (start === -1) break;
 
-    // UI_START 이전 텍스트
     const before = text.slice(cursor, start);
     if (before) segments.push({ type: "text", content: before });
 
@@ -76,14 +80,32 @@ export function buildConversationText(messages: ChatMessage[]) {
     .join("\n");
 }
 
+// ✅ scope -> insert/fetch payload로 바꿔주는 헬퍼
+function scopeToDbArgs(scope: ChatScope) {
+  return scope.type === "query"
+    ? ({ queryId: scope.queryId } as const)
+    : ({ candidId: scope.candidId } as const);
+}
+
 export function useChatSessionDB(args: {
-  queryId?: string;
+  scope?: ChatScope;
   userId?: string;
   apiPath?: string;
   model?: string;
 }) {
-  const { queryId, userId } = args;
+  const { scope, userId } = args;
   const apiPath = args.apiPath ?? "/api/chat";
+  let candidDoc = {};
+  if (scope?.type === "candid") {
+    const {
+      data: candidData,
+      isLoading,
+      error: candidateError,
+    } = useCandidateDetail(userId, scope?.candidId);
+    if (candidData) {
+      candidDoc = candidData;
+    }
+  }
   const model = args.model ?? CHAT_MODEL;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -94,7 +116,13 @@ export function useChatSessionDB(args: {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  const ready = !!queryId && !!userId;
+  // ✅ 최신 messages 참조 (클로저 stale 방지)
+  const messagesRef = useRef<ChatMessage[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  const ready = !!scope && !!userId;
 
   const loadHistory = useCallback(async () => {
     if (!ready) return;
@@ -102,20 +130,26 @@ export function useChatSessionDB(args: {
 
     setIsLoadingHistory(true);
     setError(null);
+
     try {
-      const rows = await fetchMessages(queryId!, userId!);
-      const hydrated = rows.map((m) => {
+      const rows = await fetchMessages({
+        ...scopeToDbArgs(scope!),
+        userId: userId!,
+      });
+
+      const hydrated = rows.map((m: any) => {
         const raw = (m as any).rawContent ?? m.content ?? "";
         const { segments } = extractUiSegments(raw);
         return { ...m, rawContent: raw, segments };
       });
+
       setMessages(hydrated);
     } catch {
       setError("대화 기록을 불러오지 못했습니다.");
     } finally {
       setIsLoadingHistory(false);
     }
-  }, [ready, queryId, userId]);
+  }, [ready, isLoadingHistory, scope, userId]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -131,6 +165,7 @@ export function useChatSessionDB(args: {
   const send = useCallback(
     async (content?: string) => {
       if (!ready) return;
+
       const trimmed = content?.trim() ?? input.trim();
       if (!trimmed) return;
       if (isStreaming) return;
@@ -139,24 +174,33 @@ export function useChatSessionDB(args: {
       setIsStreaming(true);
 
       try {
-        // 1) user msg insert
+        const baseDbArgs = scopeToDbArgs(scope!);
+
+        // 1) insert user message
         const userMsg = await insertMessage({
-          queryId: queryId!,
+          ...baseDbArgs,
           userId: userId!,
           role: "user",
           content: trimmed,
         });
+
+        // UI 반영: content를 직접 호출했을 때도 userMsg는 화면에 보여줘야 자연스러움
+        // (원래 코드는 content 인자로 호출하면 화면에 안 붙는 케이스가 생김)
         if (!content) {
           setMessages((prev) => [
             ...prev,
-            { ...userMsg, segments: [{ type: "text", content: trimmed }] },
+            {
+              ...userMsg,
+              rawContent: trimmed,
+              segments: [{ type: "text", content: trimmed }],
+            },
           ]);
         }
-        setInput("");
+        if (!content) setInput("");
 
         // 2) assistant placeholder insert (DB row 확보)
         const assistantPlaceholder = await insertMessage({
-          queryId: queryId!,
+          ...baseDbArgs,
           userId: userId!,
           role: "assistant",
           content: "",
@@ -168,16 +212,23 @@ export function useChatSessionDB(args: {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        const baseMessagesForModel = [...messages, userMsg].map((m) => ({
+        // ✅ 최신 messages를 기준으로 모델 대화 구성
+        const historyForModel = [...messagesRef.current, userMsg].map((m) => ({
           role: m.role,
-          content: m.content,
+          content: (m as any).rawContent ?? m.content ?? "",
         }));
 
-        console.log("\n baseMessagesForModel가 뭔데? ", baseMessagesForModel);
         const res = await fetch(apiPath, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model, messages: baseMessagesForModel }),
+          body: JSON.stringify({
+            model,
+            messages: historyForModel,
+            scope: scope,
+            doc: candidDoc,
+            // scope도 서버에 필요하면 같이 보낼 수 있음
+            // scope,
+          }),
           signal: controller.signal,
         });
 
@@ -211,6 +262,7 @@ export function useChatSessionDB(args: {
             return updated;
           });
         }
+
         await updateMessageContent({
           id: assistantPlaceholder.id!,
           content: assistantText,
@@ -223,26 +275,30 @@ export function useChatSessionDB(args: {
         setIsStreaming(false);
       }
     },
-    [ready, input, isStreaming, queryId, userId, apiPath, model, messages]
+    [ready, input, isStreaming, scope, userId, apiPath, model]
   );
 
   const reload = useCallback(async () => {
     if (!ready) return;
     setError(null);
+
     try {
-      const rows = await fetchMessages(queryId!, userId!);
-      const hydrated = rows.map((m) => {
+      const rows = await fetchMessages({
+        ...scopeToDbArgs(scope!),
+        userId: userId!,
+      });
+
+      const hydrated = rows.map((m: any) => {
         const raw = (m as any).rawContent ?? m.content ?? "";
         const { segments } = extractUiSegments(raw);
         return { ...m, rawContent: raw, segments };
       });
-      console.log("\n hydrated가 뭔데? ", hydrated);
 
       setMessages(hydrated);
     } catch {
       setError("대화 기록을 새로고침하지 못했습니다.");
     }
-  }, [ready, queryId, userId]);
+  }, [ready, scope, userId]);
 
   const addAssistantMessage = useCallback(
     async (content: string) => {
@@ -251,11 +307,12 @@ export function useChatSessionDB(args: {
       if (!trimmed) return null;
 
       const assistantMsg = await insertMessage({
-        queryId: queryId!,
+        ...scopeToDbArgs(scope!),
         userId: userId!,
         role: "assistant",
         content: trimmed,
       });
+
       const { segments } = extractUiSegments(trimmed);
 
       setMessages((prev) => [
@@ -265,7 +322,7 @@ export function useChatSessionDB(args: {
 
       return assistantMsg;
     },
-    [ready, queryId, userId]
+    [ready, scope, userId]
   );
 
   const patchAssistantUiBlock = useCallback(

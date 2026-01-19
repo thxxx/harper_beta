@@ -8,56 +8,56 @@ const ROLE_ID = {
   assistant: 1 as const,
 } as const;
 
-export async function fetchMessages(queryId: string, userId: string) {
-  const { data, error } = await supabase
+type ScopeParams =
+  | { queryId: string; candidId?: never }
+  | { candidId: string; queryId?: never };
+
+type FetchMessageParams = ScopeParams & { userId: string };
+
+export async function fetchMessages(params: FetchMessageParams) {
+  let q = supabase
     .from("messages")
     .select("id, role, content, created_at")
-    .eq("query_id", queryId)
-    .eq("user_id", userId)
+    .eq("user_id", params.userId)
     .order("created_at", { ascending: true });
 
+  if ("queryId" in params && params.queryId)
+    q = q.eq("query_id", params.queryId);
+  if ("candidId" in params && params.candidId)
+    q = q.eq("candid_id", params.candidId);
+
+  const { data, error } = await q;
   if (error) throw error;
 
-  const mapped: ChatMessage[] =
-    data?.map((r: any) => {
-      const role = ID_ROLE[r.role ?? 0];
-      const raw = r.content ?? "";
-
-      // ✅ assistant만 파싱해서 blocks 복원
-      if (role === "assistant") {
-        return {
-          id: r.id,
-          role,
-          content: raw,
-          createdAt: r.created_at,
-        };
-      }
-
-      return {
-        id: r.id,
-        role,
-        content: raw,
-        createdAt: r.created_at,
-      };
-    }) ?? [];
-
-  return mapped;
+  return (
+    data?.map((r: any) => ({
+      id: r.id,
+      role: ID_ROLE[r.role ?? 0],
+      content: r.content ?? "",
+      createdAt: r.created_at,
+    })) ?? []
+  );
 }
 
-export async function insertMessage(args: {
-  queryId: string;
+type InsertMessageParams = ScopeParams & {
   userId: string;
   role: "user" | "assistant";
   content: string;
-}) {
+};
+
+export async function insertMessage(args: InsertMessageParams) {
+  const payload: any = {
+    user_id: args.userId,
+    role: ROLE_ID[args.role],
+    content: args.content,
+  };
+
+  if ("queryId" in args) payload.query_id = args.queryId;
+  if ("candidId" in args) payload.candid_id = args.candidId;
+
   const { data, error } = await supabase
     .from("messages")
-    .insert({
-      query_id: args.queryId,
-      user_id: args.userId,
-      role: ROLE_ID[args.role],
-      content: args.content,
-    })
+    .insert(payload)
     .select("id, role, content, created_at")
     .single();
 

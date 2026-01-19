@@ -19,7 +19,6 @@ import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useCredits } from "@/hooks/useCredit";
 import HistoryItem, { NavItem } from "./HistoryItem";
 import { Tooltips } from "../ui/tooltip";
-import QueryHistories from "./QueryHistories";
 import {
   DropdownMenu,
   DropdownMenuContent,

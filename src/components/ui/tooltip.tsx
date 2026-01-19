@@ -45,7 +45,11 @@ export function Tooltips({
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         {text && (
-          <TooltipContent side={side} align="start" className="mb-[1px]">
+          <TooltipContent
+            side={side}
+            align="start"
+            className="mb-[1px] max-w-[400px] whitespace-pre-wrap break-words"
+          >
             <p>{text}</p>
           </TooltipContent>
         )}

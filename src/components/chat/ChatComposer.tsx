@@ -33,9 +33,10 @@ export default function ChatComposer({
   );
 
   return (
-    <div className="flex flex-col gap-2 p-2">
+    <div className="flex flex-col gap-2 px-2 pb-2">
       <div className="relative flex items-end">
         <textarea
+          autoFocus
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}

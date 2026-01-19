@@ -13,7 +13,6 @@ import router from "next/router";
 import { Avatar } from "./NameProfile";
 import { Tooltips } from "./ui/tooltip";
 import SummaryCell, { SynthItem } from "./information/SummaryCell";
-import { useCandidateModalStore } from "@/store/useCandidateModalStore";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -48,7 +47,6 @@ function CandidateRow({
   criterias: string[];
   gridTemplateColumns: string;
 }) {
-  const { handleOpenProfile } = useCandidateModalStore();
   const candidId = c.id;
 
   const exps = asArr(c.experience_user ?? []);
@@ -66,7 +64,7 @@ function CandidateRow({
     <div className="w-full">
       <div
         role="row"
-        onClick={() => handleOpenProfile({ candidId, name: c.name ?? "" })}
+        onClick={() => router.push(`/my/p/${candidId}`)}
         // onClick={() => router.push(`/my/p/${candidId}`)}
         className="group relative w-full border-b border-white/5 hover:bg-[#242424] transition-colors cursor-pointer"
       >

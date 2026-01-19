@@ -2,7 +2,7 @@
 import AppLayout from "@/components/layout/app";
 import ResultHeader from "./ResultHeader";
 import ResultBody from "./ResultBody";
-import ChatPanel from "@/components/chat/ChatPanel";
+import ChatPanel, { ChatScope } from "@/components/chat/ChatPanel";
 
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -227,6 +227,11 @@ export default function ResultPage() {
     return queryItem.runs[0].criteria ?? [];
   }, [queryItem]);
 
+  const scope = useMemo(
+    () => ({ type: "query", queryId: queryId ?? "" } as ChatScope),
+    [queryId]
+  );
+
   if (!queryId) return <AppLayout>Loading...</AppLayout>;
 
   return (
@@ -234,7 +239,7 @@ export default function ResultPage() {
       <div className="w-full flex flex-row min-h-screen items-start justify-between">
         <ChatPanel
           title={queryItem?.query_keyword ?? ""}
-          queryId={queryId}
+          scope={scope}
           userId={userId}
           onSearchFromConversation={onSearchFromConversation}
           isNewSearch={isNewSearch}

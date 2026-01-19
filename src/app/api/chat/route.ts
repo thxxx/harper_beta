@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { xaiClient } from "@/lib/llm/llm";
+import { ChatScope } from "@/hooks/chat/useChatSession";
+import { buildSummary } from "@/utils/textprocess";
+import { logger } from "@/utils/logger";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -59,8 +62,8 @@ publications
 3. criteria와 thinking은 영어 키워드를 제외하면 한글로 작성해야한다.
 
 ### [Criteria Output Rules]
-- criteria는 최소 1개 이상, 최대 4개 이하여야 한다. 각 기준은 명확히 다르고 겹치지 않아야 한다. 특정 키워드를 제외하고는 한글로 작성해야 한다.
-- 가능한 3개 이하로 해보고, 전체 검색 내용을 커버하기 위해 필요하면 4개로 늘려도 좋다.
+- criteria는 최소 1개 이상, 최대 6개 이하여야 한다. 각 기준은 명확히 다르고 겹치지 않아야 한다. 특정 키워드를 제외하고는 한글로 작성해야 한다.
+- 가능한 4개 이하로 해보고, 전체 검색 내용을 커버하기 위해 필요하면 6개로 늘려도 좋다.
 - criteria는 자연어 입력에 대해서만 세팅되고, thinking/rephrasing 과정의 기준은 반영되지 않아야 한다.
 - 각 criteria는 최대 30자 이하여야 한다.
 - criteria는 중복되지 않아야 한다. 하나로 묶을 수 있다면 묶어서 하나로 표현해라.
@@ -73,7 +76,17 @@ JSON 예시 1)
 JSON 예시 2)
 유저: "stanford grad working in ai startup"
 {"type":"criteria_card","thinking": "인공지능을 핵심 제품으로 개발하고 있는 고성장 스타트업에서 현재 근무 중인 스탠퍼드 대학교 졸업생을 찾겠습니다.", "criteria": ["Stanford 졸업생", "AI/ML에 대한 전문성", "고성장 스타트업 근무"]}
+`;
 
+const CANDID_SYSTEM_PROMPT = `
+너는 채용 담당자를 돕는 AI 어시스턴트 Harper야.
+너의 목표는 유저가 채용/커피챗/조사 등의 목적으로 어떤 사람에 대해서 정보를 알고 판단을 하고 싶을 때 그걸 도와주는거야.
+네가 가진 Candidate Information만을 이용해서 질문에 대답하면 되고, 너가 가진 정보 외에는 모른다고 말해야해. 추측 가능한 증거가 있으면 그거랑 같이 너의 추측을 이야기하는건 되지만, 없는 정보를 지어내서 말하면 안돼.
+검색해달라던가 찾아달라던가 하는 말에는 수행할 수 없다고 대답해야해. Harper의 후보자 검색 시스템을 이용하고 싶으면 기존의 검색 화면으로 돌아가라고 말하면 됨.
+
+유저가 후보자와 연결하거나 이메일을 달라고 하면 화면 우측 상단의 '연결 요청'버튼을 클릭하라고 해줘.
+
+출력은 마크다운 말고 string으로 해야해. 대신 <strong> 같은 태그는 사용해도 됨
 `;
 
 function sleep(ms: number) {
@@ -88,9 +101,11 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
     model?: string;
     messages?: ChatMessage[];
+    scope?: ChatScope;
+    doc?: any;
   };
 
-  const model = "grok-4-fast-reasoning";
+  const model = body.model ?? "grok-4-fast-reasoning";
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (!messages.length) {
@@ -137,11 +152,25 @@ export async function POST(req: NextRequest) {
     //
   }
 
+  let systemPrompt = "";
+  if (body.scope?.type === "candid") {
+    const information = buildSummary(body.doc);
+    logger.log("information ", information);
+    systemPrompt =
+      CANDID_SYSTEM_PROMPT +
+      `### Candidate Information
+${information}
+`;
+  }
+  if (body.scope?.type === "query") {
+    systemPrompt = SYSTEM_PROMPT;
+  }
+
   console.log("LLM이 호출됩니다. ");
   const stream = await xaiClient.chat.completions.create({
     model,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       ...messages.map((message) => ({
         role: message.role,
         content: message.content,

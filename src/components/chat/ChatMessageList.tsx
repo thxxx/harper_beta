@@ -7,16 +7,10 @@ import React, {
   useState,
 } from "react";
 import type { ChatMessage, CriteriaCardBlock } from "@/types/chat";
-import {
-  Bolt,
-  Check,
-  FileSearchIcon,
-  FileSpreadsheet,
-  Loader2,
-  Plus,
-} from "lucide-react";
+import { Bolt, Check, FileSpreadsheet, Loader2, Plus } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 type CriteriaItemProps = {
   criteria: string;
@@ -211,16 +205,17 @@ function CriteriaCard({
   };
 
   return (
-    <div className="mt-4">
-      <div className="text-[13px] text-hgray600 font-extralight flex flex-row items-center gap-1.5">
+    <div className="mt-2">
+      <div className="text-xs text-hgray600 font-extralight flex flex-row items-center gap-1.5">
         <span>
-          <img
+          {/* <img
             src="/svgs/logo.svg"
             alt="Harper"
             className="w-[9px] h-[9px] text-hgray600"
-          />
+          /> */}
+          <Bolt className="w-2.5 h-2.5 text-hgray600" />
         </span>
-        Harper Search Agent
+        Search
       </div>
       <div
         className={`mt-2 rounded-3xl border border-white/10 bg-white/5 px-2 py-4 transition-all duration-200
@@ -311,6 +306,9 @@ const CriteriaLoading = () => {
 
 const SearchResultCard = ({ text, runId }: { text: string; runId: string }) => {
   const router = useRouter();
+  const firstText = text.split(" ").slice(0, 2).join(" ");
+  const restText = text.split(" ").slice(2).join(" ");
+
   return (
     <div>
       <div
@@ -328,7 +326,8 @@ const SearchResultCard = ({ text, runId }: { text: string; runId: string }) => {
       >
         <div className="text-sm text-hgray900 font-normal flex flex-row items-center gap-2">
           <FileSpreadsheet className="w-4 h-4 text-green-500" />
-          {text}
+          <span className="">{firstText}</span>
+          {/* <span className="text-hgray600 text-xs">{restText}</span> */}
         </div>
       </div>
       <div className="text-xs text-green-500 flex flex-row items-center gap-1 px-0 mt-2">
@@ -385,11 +384,18 @@ export default function ChatMessageList({
               }`}
             >
               {isUser ? (
-                "User"
+                "me"
               ) : (
-                <div className="flex flex-row items-center justify-start gap-1">
+                <div className="flex flex-row items-center justify-start gap-1.5">
                   <span className="text-xs text-ngray600">
-                    <Bolt className="w-3 h-3" />
+                    {/* <Bolt className="w-3 h-3" /> */}
+                    <Image
+                      src="/svgs/logo.svg"
+                      alt="Harper"
+                      width={9}
+                      height={9}
+                      className="text-hgray600"
+                    />
                   </span>
                   <span>Harper</span>
                 </div>
@@ -402,7 +408,10 @@ export default function ChatMessageList({
                 {m.segments?.map((s, si) => {
                   if (s.type === "text") {
                     return (
-                      <div key={`text-${idx}-${si}`}>
+                      <div
+                        key={`text-${idx}-${si}`}
+                        className="whitespace-pre-wrap break-words"
+                      >
                         {s.content}
                         {!isUser &&
                           isStreaming &&
