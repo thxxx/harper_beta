@@ -1,33 +1,26 @@
-import { geminiInference, xaiClient, xaiInference } from "@/lib/llm/llm";
+import { geminiInference, xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
 import { buildSummary, ensureGroupBy, replaceName } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
-import { criteriaPrompt, sqlPrompt2, sqlExistsPrompt } from "./prompt";
+import {
+  criteriaPrompt,
+  sqlPrompt2,
+  sqlExistsPrompt,
+} from "../../../lib/prompt";
 import { generateSummary } from "./criteria_summarize/route";
 import {
   deduplicateAndScore,
   mapWithConcurrency,
   ScoredCandidate,
   sumScore,
+  updateRunStatus,
 } from "./utils";
 import { makeMessage } from "../hello/route";
 import { ko } from "@/lang/ko";
 import { notifyToSlack } from "@/lib/slack";
 import { logger } from "@/utils/logger";
 
-export const updateQueryStatus = async (
-  queryId: string,
-  userId: string,
-  status: string
-) => {
-  await supabase.from("queries").upsert({
-    query_id: queryId,
-    user_id: userId,
-    status: status,
-  });
-};
-
-export async function parseCriteria(
+async function parseCriteria(
   queryText: string
 ): Promise<{ criteria: string[]; rephrasing: string; thinking: string }> {
   const prompt = `
@@ -136,7 +129,7 @@ ${sqlQueryWithGroupBy}
 /**
  * raw_input_text, criteria를 받아서 SQL 쿼리를 만들고, 50명을 검색하고, 요약을 만들고, 만족하는 10명을 점수와 함께 리턴하는 함수
  */
-export const searchDatabase = async (
+const searchDatabase = async (
   raw_input_text: string,
   criteria: string[],
   pageIdx: number,
@@ -180,7 +173,7 @@ export const searchDatabase = async (
 
   if (error && error.message.includes("timeout")) {
     logger.log("\n\n⚠️ 그냥 Database 쿼리 자체만 한번 더 실행 ==");
-    updateQueryStatus(queryId, userId, ko.loading.searching_again);
+    await updateRunStatus(queryId, ko.loading.searching_again);
     const { data: data2, error: error2 } = await supabase.rpc(
       "set_timeout_and_execute_raw_sql",
       {
@@ -196,7 +189,7 @@ export const searchDatabase = async (
 
   if (error) {
     logger.log("\n\n⚠️ First sql query error == try second == ", error);
-    updateQueryStatus(queryId, userId, ko.loading.retrying_error);
+    await updateRunStatus(queryId, ko.loading.retrying_error);
 
     let additional_prompt = "";
     if (error.message.includes("timeout")) {
@@ -286,7 +279,7 @@ A corrected SQL query.
     return [];
   }
 
-  await updateQueryStatus(queryId, userId, ko.loading.summarizing);
+  await updateRunStatus(queryId, ko.loading.summarizing);
 
   const fullScore = criteria.length * 2;
   // 1. LLM 요약 및 점수 계산만 먼저 수행
@@ -455,9 +448,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query not found" }, { status: 404 });
 
   const uploadBestTenCandidates = async (fullCandidates: any[]) => {
-    updateQueryStatus(
+    await updateRunStatus(
       queryId,
-      q.user_id,
       "Got Best 10 Candidates. Now organizing results."
     );
     const candidates = fullCandidates.map((r: any) => ({
@@ -481,7 +473,7 @@ export async function POST(req: NextRequest) {
   let criteria = q.criteria;
 
   if (!parsed_query) {
-    updateQueryStatus(queryId, q.user_id, ko.loading.making_criteria);
+    await updateRunStatus(queryId, ko.loading.making_criteria);
     const {
       criteria: criteria1,
       rephrasing,
@@ -499,7 +491,7 @@ export async function POST(req: NextRequest) {
 
     parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
     if (typeof parsed_query !== "string") {
-      updateQueryStatus(queryId, q.user_id, JSON.stringify(parsed_query));
+      await updateRunStatus(queryId, JSON.stringify(parsed_query));
       return NextResponse.json(parsed_query, { status: 404 });
     }
   }

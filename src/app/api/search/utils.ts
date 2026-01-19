@@ -12,6 +12,9 @@
  * - ILIKE 문자열 리터럴 안에 ' 가 들어가거나(escape), 아주 복잡한 경우는 추가 보강 필요할 수 있어요.
  */
 
+import { supabase } from "@/lib/supabase";
+import { logger } from "@/utils/logger";
+
 function ensurePercentLike(token: string): string {
   let t = token.trim();
   if (!t.startsWith("%")) t = "%" + t;
@@ -136,3 +139,8 @@ export function deduplicateAndScore(
 
   return deduped;
 }
+
+export const updateRunStatus = async (runId: string, status: string) => {
+  logger.log("\n updateRunStatus: ", runId, status);
+  await supabase.from("runs").update({ status }).eq("id", runId);
+};
