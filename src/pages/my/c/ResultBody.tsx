@@ -1,7 +1,6 @@
 // components/result/ResultBody.tsx
 import React, { useMemo } from "react";
 import CandidateViews from "@/components/CandidateViews";
-import { useRunDetail } from "@/hooks/useRunDetail";
 
 type Props = {
   searchEnabled: boolean;
@@ -51,8 +50,6 @@ export default function ResultBody(props: Props) {
       </div>
     );
   }
-  // const { data: runDetail } = useRunDetail(runId);["
-  // const criterias = useMemo(() => runDetail?.criteria, [runDetail]);
 
   const isNoResultAtall = pageIdx === 0 && items.length === 0 && !isLoading;
 

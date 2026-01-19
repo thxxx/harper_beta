@@ -17,9 +17,6 @@ export default function ResultHeader({
   isLoading,
   runId,
 }: Props) {
-  if (!queryItem) return null;
-  // const { data: runDetail } = useRunDetail(runId);
-  // console.log("runDetail ======================== ", runDetail);
   const q = useRunDetail(runId);
 
   const statusMessage = useMemo(() => {

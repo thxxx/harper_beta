@@ -14,7 +14,6 @@ import { MIN_CREDITS_FOR_SEARCH } from "@/utils/constantkeys";
 import { useCredits } from "@/hooks/useCredit";
 import { showToast } from "@/components/toast/toast";
 import CandidateModalRoot from "@/components/Modal/CandidateModal";
-import { useCandidateModalStore } from "@/store/useCandidateModalStore";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
