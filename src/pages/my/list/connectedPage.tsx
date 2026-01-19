@@ -19,7 +19,7 @@ const ConnectedPage = () => {
         {data?.items && (
           <div className="space-y-3">
             {data.items.map((c) => (
-              <CandidateCard key={c.id} c={c} userId={userId} />
+              <CandidateCard key={c.id} c={c} userId={userId} criterias={[]} />
             ))}
           </div>
         )}
