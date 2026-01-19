@@ -521,3 +521,7 @@
 //     </AppLayout>
 //   );
 // }
+
+export default function ResultPage() {
+  return "";
+}
