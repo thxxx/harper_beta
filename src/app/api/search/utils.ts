@@ -1,19 +1,8 @@
-/**
- * 1) "<lhs> ILIKE '<...|...|...>'" 형태에서 따옴표 내부를 "|"로 분리해
- *    "(lhs ILIKE '%a%' OR lhs ILIKE '%b%' ...)" 로 확장
- *    - 각 토큰은 %로 감싸져있지 않으면 자동으로 %...%로 보정
- *
- * 2) 첫 번째 to_tsquery('english', '<QUERY>') 를 찾아
- *    마지막에 다음을 붙임:
- *      ORDER BY ts_rank(fts, to_tsquery('english', '<QUERY>')) DESC
- *
- * NOTE:
- * - 입력 SQL이 완전한 파서가 아니라 "문자열 기반 변환"입니다.
- * - ILIKE 문자열 리터럴 안에 ' 가 들어가거나(escape), 아주 복잡한 경우는 추가 보강 필요할 수 있어요.
- */
-
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/utils/logger";
+
+export const UI_START = "<<UI>>";
+export const UI_END = "<<END_UI>>";
 
 function ensurePercentLike(token: string): string {
   let t = token.trim();

@@ -8,14 +8,13 @@ import {
   mapWithConcurrency,
   ScoredCandidate,
   sumScore,
+  UI_END,
+  UI_START,
 } from "../utils";
 import { ko } from "@/lang/ko";
 import { logger } from "@/utils/logger";
 import { updateRunStatus } from "../utils";
 import { parseQueryWithLLM } from "../parse";
-
-export const UI_START = "<<UI>>";
-export const UI_END = "<<END_UI>>";
 
 type RunRow = {
   id: string;
