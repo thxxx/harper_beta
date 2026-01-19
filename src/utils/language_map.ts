@@ -555,6 +555,10 @@ export type CompanyMap = Record<string, string>;
  * (그룹사, 주요 계열사, 빅테크 포함)
  */
 export const COMPANY_MAP: CompanyMap = {
+  "yonsei university": "연세대학교",
+  "seoul national university": "서울대학교",
+  "korea university": "고려대학교",
+  "korea advanced institute of science and technology": "카이스트",
   // --- Samsung Group ---
   samsung: "삼성",
   "samsung electronics": "삼성전자",

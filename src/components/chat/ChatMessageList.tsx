@@ -223,14 +223,11 @@ function CriteriaCard({
         Harper Search Agent
       </div>
       <div
-        className={`
-      mt-2 rounded-3xl border border-white/10 bg-white/5 px-2 py-4
-      transition-all duration-200
-      ${disabled ? "pointer-events-none cursor-default" : ""}
-    `}
+        className={`mt-2 rounded-3xl border border-white/10 bg-white/5 px-2 py-4 transition-all duration-200
+      ${disabled ? "pointer-events-none cursor-default" : ""}`}
       >
         <div className="text-sm text-hgray900 font-semibold flex items-center gap-2">
-          Need to Deep Reason
+          검색 방법
         </div>
 
         {draft.thinking && (

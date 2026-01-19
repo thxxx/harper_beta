@@ -3,12 +3,7 @@ import {
   ExperienceUserType,
 } from "@/hooks/useSearchCandidates";
 import React, { useMemo } from "react";
-import {
-  companyEnToKo,
-  degreeEnToKo,
-  koreaUniversityEnToKo,
-  locationEnToKo,
-} from "@/utils/language_map";
+import { companyEnToKo, locationEnToKo } from "@/utils/language_map";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile, { Avatar } from "./NameProfile";

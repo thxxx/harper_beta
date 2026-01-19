@@ -221,8 +221,7 @@ export default function ResultPage() {
   }, [data]);
 
   const currentRunCriterias = useMemo(() => {
-    if (!queryItem) return [];
-    if (!queryItem.runs) return [];
+    if (!queryItem || !queryItem.runs || queryItem.runs.length === 0) return [];
 
     return queryItem.runs[0].criteria ?? [];
   }, [queryItem]);

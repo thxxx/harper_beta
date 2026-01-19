@@ -171,7 +171,7 @@ export default function ChatPanel({
   };
 
   return (
-    <div className="w-full min-w-[360px] max-w-[440px] lg:w-[30%] border-r border-white/10 flex flex-col min-h-0 h-full">
+    <div className="w-full min-w-[390px] max-w-[460px] lg:w-[30%] border-r border-white/10 flex flex-col min-h-0 h-full">
       {/* Header (fixed) */}
       <div className="flex items-center justify-between flex-none h-14 px-4 text-hgray900">
         <div className="text-sm font-medium flex items-center gap-1.5 hover:gap-2 cursor-pointer hover:text-hgray900 transition-all duration-200">
@@ -204,7 +204,7 @@ export default function ChatPanel({
             onChangeCriteriaCard={(args) => {
               logger.log("\n onChangeCriteriaCard in ChatPanel", args);
               void chat.patchAssistantUiBlock(
-                Number(args.messageId),
+                args.messageId,
                 args.modifiedBlock
               );
             }}
