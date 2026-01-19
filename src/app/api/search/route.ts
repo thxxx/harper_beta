@@ -52,7 +52,7 @@ ${queryText}
   return outJson as any;
 }
 
-export async function parseQueryWithLLM(
+async function parseQueryWithLLM(
   queryText: string,
   criteria: string[],
   extraInfo: string = ""
@@ -402,6 +402,7 @@ export async function POST(req: NextRequest) {
       // 같은 쿼리를 날려봤자 50명 이하이기 때문에 똑같음.
       const candidateIds = prevCachedResults.candidate_ids.slice(10);
       await supabase.from("query_pages").insert({
+        message_id: 0,
         query_id: queryId,
         page_idx: pageIdx,
         candidate_ids: candidateIds,
@@ -421,6 +422,7 @@ export async function POST(req: NextRequest) {
         .reduce((acc: number, curr: any) => acc + curr.score, 0);
       if (scoreSum >= 10) {
         await supabase.from("query_pages").insert({
+          message_id: 0,
           query_id: queryId,
           page_idx: pageIdx,
           candidate_ids: candidateIds,
@@ -467,6 +469,7 @@ export async function POST(req: NextRequest) {
       query_id: queryId,
       page_idx: pageIdx,
       candidate_ids: candidates,
+      message_id: 0,
     });
 
     return candidates.slice(0, 10).map((r: any) => r.id);

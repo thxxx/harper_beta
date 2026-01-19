@@ -10,20 +10,11 @@ import {
   ScoredCandidate,
   sumScore,
 } from "../utils";
-import { makeMessage } from "../../hello/route";
 import { ko } from "@/lang/ko";
 import { logger } from "@/utils/logger";
 
 export const UI_START = "<<UI>>";
 export const UI_END = "<<END_UI>>";
-
-/**
- * IMPORTANT:
- * - This route is now "run-aware".
- * - Input: { queryId, runId, pageIdx }
- * - Cache table: runs_pages (instead of query_pages)
- * - Criteria/SQL are stored per run (runs.criteria, runs.sql_query, etc.)
- */
 
 type RunRow = {
   id: string;
@@ -33,13 +24,13 @@ type RunRow = {
   query_text?: string | null;
 };
 
-export const updateRunStatus = async (runId: string, status: string) => {
+const updateRunStatus = async (runId: string, status: string) => {
   // If you also want to update queries.status, do it separately.
   logger.log("\n updateRunStatus: ", runId, status);
   await supabase.from("runs").update({ status }).eq("id", runId);
 };
 
-export async function parseQueryWithLLM(
+async function parseQueryWithLLM(
   queryText: string,
   criteria: string[],
   extraInfo: string = ""
