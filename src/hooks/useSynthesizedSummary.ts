@@ -30,49 +30,6 @@ async function fetchSynthesizedSummary(queryId: string, candidId: string) {
   return (data as SynthesizedSummaryRow | null) ?? null;
 }
 
-async function upsertSynthesizedSummary(row: SynthesizedSummaryRow) {
-  // DB에 unique(query_id, candid_id) 제약이 있다고 가정하고 upsert
-  const { data, error } = await supabase
-    .from("synthesized_summary")
-    .upsert(row, { onConflict: "query_id,candid_id" })
-    .select("text, candid_id, query_id")
-    .single();
-
-  if (error) throw error;
-  return data.text;
-}
-
-async function generateSynthesizedSummary(args: {
-  doc: CandidateDetail;
-  queryId: string;
-  candidId: string;
-  criteria: string[];
-  raw_input_text?: string | null;
-}) {
-  logger.log("generateSynthesizedSummary ");
-  const res = await fetch("/api/search/criteria_summarize", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      doc: args.doc,
-      queryId: args.queryId,
-      criteria: args.criteria,
-      raw_input_text: args.raw_input_text,
-    }),
-  });
-
-  if (!res.ok) throw new Error("Make synthesized_summary api failed");
-  const data = await res.json();
-
-  // 기존 로직 기준: data.result가 string(JSON)이라고 가정
-  const text = (data?.result ?? null) as string | null;
-  return {
-    text,
-    candid_id: args.candidId,
-    query_id: args.queryId,
-  } satisfies SynthesizedSummaryRow;
-}
-
 export function useSynthesizedSummary(params?: {
   queryId?: string;
   candidId?: string;
