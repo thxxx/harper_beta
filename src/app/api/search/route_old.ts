@@ -1,13 +1,9 @@
 import { geminiInference, xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
-import { buildSummary, ensureGroupBy, replaceName } from "@/utils/textprocess";
+import { ensureGroupBy } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  criteriaPrompt,
-  sqlPrompt2,
-  sqlExistsPrompt,
-} from "../../../lib/prompt";
-import { generateSummary } from "./criteria_summarize/route";
+import { criteriaPrompt, sqlPrompt2, sqlExistsPrompt } from "@/lib/prompt";
+import { generateSummary } from "./criteria_summarize/utils";
 import {
   deduplicateAndScore,
   mapWithConcurrency,
@@ -15,10 +11,10 @@ import {
   sumScore,
   updateRunStatus,
 } from "./utils";
-import { makeMessage } from "../hello/route";
+import { makeMessage } from "../hello/utils";
 import { ko } from "@/lang/ko";
-import { notifyToSlack } from "@/lib/slack";
 import { logger } from "@/utils/logger";
+import { notifyToSlack } from "@/lib/slack";
 
 async function parseCriteria(
   queryText: string
