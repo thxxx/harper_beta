@@ -269,7 +269,7 @@ export function useChatSessionDB(args: {
   );
 
   const patchAssistantUiBlock = useCallback(
-    async (messageId: string, modifiedBlock: any) => {
+    async (messageId: number, modifiedBlock: any) => {
       let nextRawForDb = "";
 
       setMessages((prev) => {

@@ -155,7 +155,7 @@ export default function ChatPanel({
     userId,
   ]);
 
-  const onClickSearch = async (messageId: string | number) => {
+  const onClickSearch = async (messageId: number) => {
     if (!canSearch) return;
     if (!messageId) return;
 
@@ -164,7 +164,7 @@ export default function ChatPanel({
       await chat.addAssistantMessage(
         "검색을 시작하겠습니다. 최대 1~2분이 소요될 수 있습니다."
       );
-      await onSearchFromConversation(messageId as number);
+      await onSearchFromConversation(messageId);
     } finally {
       setIsSearchSyncing(false);
     }
@@ -204,7 +204,7 @@ export default function ChatPanel({
             onChangeCriteriaCard={(args) => {
               logger.log("\n onChangeCriteriaCard in ChatPanel", args);
               void chat.patchAssistantUiBlock(
-                args.messageId,
+                Number(args.messageId),
                 args.modifiedBlock
               );
             }}

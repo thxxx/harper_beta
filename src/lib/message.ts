@@ -67,12 +67,11 @@ export async function insertMessage(args: {
     id: data.id,
     role: ID_ROLE[data.role ?? 0],
     content: data.content ?? "",
-    createdAt: data.created_at,
   } satisfies ChatMessage;
 }
 
 export async function updateMessageContent(args: {
-  id: string | number;
+  id: number;
   content: string;
 }) {
   const { error } = await supabase

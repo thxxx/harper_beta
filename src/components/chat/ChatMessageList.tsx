@@ -346,9 +346,9 @@ type Props = {
   isStreaming: boolean;
   error?: string | null;
 
-  onConfirmCriteriaCard?: (messageId: string | number) => void;
+  onConfirmCriteriaCard?: (messageId: number) => void;
   onChangeCriteriaCard?: (args: {
-    messageId: string;
+    messageId: number;
     modifiedBlock: CriteriaCardBlock;
   }) => void;
 };
@@ -427,13 +427,13 @@ export default function ChatMessageList({
                           block={s.content as CriteriaCardBlock}
                           onChange={(modifiedBlock) => {
                             onChangeCriteriaCard?.({
-                              messageId: m.id as string,
+                              messageId: m.id as number,
                               modifiedBlock,
                             });
                             logger.log("onChangeCriteriaCard", modifiedBlock);
                           }}
                           onConfirm={() =>
-                            onConfirmCriteriaCard?.(m.id as number)
+                            onConfirmCriteriaCard?.(Number(m.id))
                           }
                           disabled={false}
                           // disabled={idx < lastBlockMessageIdx}
