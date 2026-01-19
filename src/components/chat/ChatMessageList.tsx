@@ -362,7 +362,6 @@ export default function ChatMessageList({
       m.segments?.some((s) => s.type === "block")
     );
   }, [messages]);
-  logger.log("lastBlockMessageIdx ", lastBlockMessageIdx);
 
   return (
     <div className="flex-1 overflow-y-auto pr-2 space-y-8">

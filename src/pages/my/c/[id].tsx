@@ -221,6 +221,7 @@ export default function ResultPage() {
   }, [data]);
 
   const currentRunCriterias = useMemo(() => {
+    logger.log("currentRunCriterias: ", queryItem);
     if (!queryItem || !queryItem.runs || queryItem.runs.length === 0) return [];
 
     return queryItem.runs[0].criteria ?? [];

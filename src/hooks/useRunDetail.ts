@@ -6,15 +6,11 @@ import { logger } from "@/utils/logger";
 export const runKey = (id?: string) => ["run", id] as const;
 
 async function fetchRunDetail(id: string) {
-  console.log("[재사용 ] start", id, Date.now());
-
   const { data, error } = await supabase
     .from("runs")
     .select("*")
     .eq("id", id)
     .maybeSingle();
-
-  console.log("[재사용 ] done", id, Date.now(), data);
 
   if (error) throw error;
   return data;
@@ -45,7 +41,6 @@ export function useRunDetail(runId?: string) {
           filter: `id=eq.${runId}`,
         },
         () => {
-          logger.log("\n\n[재사용 ] invalidateQueries", runId, "\n\n");
           qc.refetchQueries({
             queryKey: runKey(runId),
             exact: true,

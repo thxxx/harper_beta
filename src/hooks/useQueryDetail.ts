@@ -26,7 +26,8 @@ async function fetchQueryDetail(id: string) {
       *,
       runs (
         id,
-        created_at
+        created_at,
+        criteria
       ),
       company_users (
         user_id,
