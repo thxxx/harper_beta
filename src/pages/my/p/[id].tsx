@@ -38,7 +38,7 @@ export default function ProfileDetailPage() {
   return (
     <AppLayout>
       {candidId && <CandidateProfileDetailPage candidId={candidId} />}
-      {!candidId && <div>로딩중입니다.</div>}
+      {!candidId && <div>로딩중입니다</div>}
     </AppLayout>
   );
 }
