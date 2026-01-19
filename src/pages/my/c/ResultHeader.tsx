@@ -23,6 +23,8 @@ export default function ResultHeader({
     return q.data?.status;
   }, [q.data]);
 
+  if (!queryItem) return null;
+
   return (
     <>
       <div className="w-full py-2 flex flex-row items-center justify-between px-4">
