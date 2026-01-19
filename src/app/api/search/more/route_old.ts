@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { deduplicateAndScore, ScoredCandidate } from "../utils";
 import { updateRunStatus } from "../utils";
-import { parseQueryWithLLM } from "../parse";
+import { parseQueryWithLLM, searchDatabase } from "../parse";
 import { logger } from "@/utils/logger";
 
 export async function POST(req: NextRequest) {
@@ -72,10 +72,9 @@ ${parsed_query}
     pageIdx,
     queryId,
     q.user_id,
-    parsed_query,
-    50,
-    0
+    50
   );
+
   const upRes2 = await supabase.from("queries").upsert({
     query_id: queryId,
     user_id: q.user_id,

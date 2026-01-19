@@ -2,7 +2,7 @@ import { geminiInference, xaiInference } from "@/lib/llm/llm";
 import { supabase } from "@/lib/supabase";
 import { ensureGroupBy } from "@/utils/textprocess";
 import { NextRequest, NextResponse } from "next/server";
-import { generateSummary } from "../criteria_summarize/route";
+import { generateSummary } from "../criteria_summarize/utils";
 import {
   deduplicateAndScore,
   mapWithConcurrency,
