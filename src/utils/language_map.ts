@@ -48,6 +48,8 @@ function normKey(s: string) {
 
 const COUNTRY_MAP: CountryMap = {
   // Korea
+  "mapo-gu district, south korea": "대한민국 서울 마포구",
+  "seongnam, south korea": "대한민국 성남",
   "seoul, south korea": "대한민국 서울",
   "seoul, korea": "대한민국 서울",
   "incheon, south korea": "대한민국 인천",
@@ -481,6 +483,7 @@ export const MAJOR_MAP: MajorMap = {
 };
 
 export function majorEnToKo(input: string): string {
+  if (!input) return "";
   const key = normUniKey(input);
   return MAJOR_MAP[key] ?? input;
 }
@@ -501,6 +504,7 @@ export const DEGREE_MAP: DegreeMap = {
   bsc: "학사",
 
   // Master
+  "master's degree": "석사",
   "master of arts": "석사",
   "master of science": "석사",
   "master of engineering": "석사",
@@ -530,6 +534,7 @@ export const DEGREE_MAP: DegreeMap = {
   mfa: "전문석사",
 
   // Post
+  "doctor of philosophy - phd": "박사",
   postdoc: "박사후연구원",
   "post doctoral researcher": "박사후연구원",
   "postdoctoral researcher": "박사후연구원",
@@ -538,6 +543,7 @@ export const DEGREE_MAP: DegreeMap = {
 };
 
 export function degreeEnToKo(input: string): string {
+  if (!input) return "";
   const key = normUniKey(input);
   return DEGREE_MAP[key] ?? input;
 }

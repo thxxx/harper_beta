@@ -1,5 +1,14 @@
 /* LIQUID GLASS STYLES */
 
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("/fonts/pretendard/PretendardVariable.woff2")
+    format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 .liquidGlass-wrapper {
   display: flex;
   font-weight: 600;

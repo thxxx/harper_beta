@@ -106,7 +106,7 @@ export async function geminiInference(
       contents: systemPrompt + "\n\n" + userPrompt,
       config: {
         thinkingConfig: {
-          thinkingLevel: ThinkingLevel.MEDIUM,
+          thinkingLevel: ThinkingLevel.LOW,
         },
         temperature: temperature,
       },

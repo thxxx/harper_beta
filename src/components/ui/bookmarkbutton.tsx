@@ -9,11 +9,13 @@ const Bookmarkbutton = ({
   candidId,
   connection,
   isText = true,
+  size = "md",
 }: {
   userId: string;
   candidId: string;
   connection: { typed: number }[];
   isText?: boolean;
+  size?: "sm" | "md" | "lg";
 }) => {
   const { m } = useMessages();
   const [isBookmarked, setIsBookmarked] = useState(
@@ -32,7 +34,13 @@ const Bookmarkbutton = ({
   return (
     <button
       onClick={toggleBookmark}
-      className="cursor-pointer text-sm h-10 px-4 rounded-xl bg-white/10 text-white flex flex-row items-center gap-2"
+      className={`cursor-pointer text-sm rounded-xl  text-white flex flex-row items-center gap-2 ${
+        size === "sm"
+          ? "h-8 px-2 text-xs bg-hgray500/20 hover:bg-hgray500/30"
+          : size === "lg"
+          ? "h-12 px-6 text-lg bg-white/10 hover:bg-white/5"
+          : "h-10 px-4 text-sm bg-white/10 hover:bg-white/5"
+      }`}
     >
       {isBookmarked ? (
         <Bookmark className="w-4 h-4 text-white" fill="white" />
@@ -44,4 +52,4 @@ const Bookmarkbutton = ({
   );
 };
 
-export default Bookmarkbutton;
+export default React.memo(Bookmarkbutton);

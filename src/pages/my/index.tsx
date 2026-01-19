@@ -6,14 +6,10 @@ import { useCompanyUserStore } from "@/store/useCompanyUserStore";
 import { useRouter } from "next/router";
 import { useQueryClient } from "@tanstack/react-query";
 import { refreshQueriesHistory } from "@/hooks/useSearchHistory";
-import { Tooltips } from "@/components/ui/tooltip";
 import { useCredits } from "@/hooks/useCredit";
 import { MIN_CREDITS_FOR_SEARCH } from "@/utils/constantkeys";
 import { showToast } from "@/components/toast/toast";
-import { buildSummary, ensureGroupBy } from "@/utils/textprocess";
 import { supabase } from "@/lib/supabase";
-import { transformSql } from "@/app/api/search/utils";
-import { xaiInference } from "@/lib/llm/llm";
 import { useMessages } from "@/i18n/useMessage";
 
 const Home: NextPage = () => {
@@ -62,11 +58,34 @@ const Home: NextPage = () => {
     router.push(`/my/c/${queryId}`);
   };
 
+  const testSqlQuery = async () => {
+    console.log("testSqlQuery");
+    const sql = `
+WITH params AS (   SELECT to_tsquery('english', 'founder | ceo | co <-> founder | cofounder') AS tsq ), identified_ids AS (   SELECT     T1.id,     ts_rank(T1.fts, params.tsq) AS fts_rank   FROM candid AS T1   CROSS JOIN params   WHERE     EXISTS (       SELECT 1        FROM experience_user ex       JOIN company_db c ON c.id = ex.company_id       WHERE ex.candid_id = T1.id         AND c.investors ILIKE ANY (ARRAY['%Krew Capital%'])         AND (           ex.role ILIKE ANY (ARRAY['%Founder%', '%CEO%', '%Co-founder%', '%Cofounder%', '%Founding%', '%Representative%'])           OR T1.headline ILIKE ANY (ARRAY['%Founder%', '%CEO%', '%Co-founder%', '%Cofounder%'])           OR T1.fts @@ params.tsq         )     )   ORDER BY fts_rank DESC, T1.id ), hydrated_data AS (   SELECT     to_json(i.id) AS id,     c.name,     c.headline,     c.location,     i.fts_rank,     COALESCE(exp_block.experience_rows, '[]'::jsonb) AS experience_user   FROM identified_ids i   JOIN candid c ON c.id = i.id   LEFT JOIN LATERAL (     SELECT jsonb_agg(       (to_jsonb(ex) || jsonb_build_object('company_db', jsonb_build_object(         'name', comp.name,         'investors', comp.investors,         'short_description', comp.short_description       )))     ) AS experience_rows     FROM experience_user ex     LEFT JOIN company_db comp ON comp.id = ex.company_id     WHERE ex.candid_id = i.id   ) exp_block ON TRUE ) SELECT * FROM hydrated_data
+
+ORDER BY fts_rank DESC`;
+
+    const { data: data1, error: error1 } = await supabase.rpc(
+      "set_timeout_and_execute_raw_sql",
+      {
+        sql_query: sql,
+        page_idx: 0,
+        limit_num: 50,
+        offset_num: 0,
+      }
+    );
+
+    console.log(data1, error1);
+  };
+
   return (
     <AppLayout>
-      <main className="flex-1 flex items-center justify-center px-6 w-full">
+      <main className="flex-1 flex font-sans items-center justify-center px-6 w-full">
         <div className="w-full flex flex-col items-center">
-          <h1 className="text-2xl sm:text-3xl font-medium font-hedvig tracking-tight text-center leading-relaxed">
+          <h1
+            className="text-2xl sm:text-3xl font-medium tracking-tight text-center leading-relaxed"
+            onClick={testSqlQuery}
+          >
             {m.system.hello}, {companyUser?.name.split(" ")[0]}님
             <div className="h-3" />
             {m.system.intro}

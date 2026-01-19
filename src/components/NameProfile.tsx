@@ -99,6 +99,16 @@ export function Avatar({
 }) {
   const sizeClass = SIZE_CLASS[size];
 
+  if (url?.includes("media.licdn.com")) {
+    return (
+      <div
+        className={`${sizeClass} rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center font-semibold ring-1 ring-black/10`}
+      >
+        {initials(name)}
+      </div>
+    );
+  }
+
   return url ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img

@@ -4,6 +4,8 @@ import CandidateCard from "@/components/CandidatesList";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import PrevNextButtons from "./components/PrevNextButtons";
+import CandidateTable from "@/components/CandidatesListTable";
+import CandidateViews from "@/components/CandidateViews";
 
 export default function BookmarksPage() {
   const { companyUser } = useCompanyUserStore();
@@ -15,17 +17,11 @@ export default function BookmarksPage() {
   if (error) return <div>Error</div>;
 
   return (
-    <div>
-      <div className="w-full space-y-2">
-        {data?.items && (
-          <div className="space-y-3">
-            {data.items.map((c) => (
-              <CandidateCard key={c.id} c={c} userId={userId} />
-            ))}
-          </div>
-        )}
-      </div>
-      <PrevNextButtons />
-    </div>
+    <CandidateViews
+      items={data?.items ?? []}
+      userId={userId}
+      queryItem={null}
+      isMyList={true}
+    />
   );
 }

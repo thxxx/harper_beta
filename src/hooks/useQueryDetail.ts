@@ -2,8 +2,14 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { QueryType } from "@/types/type";
+import { logger } from "@/utils/logger";
 
 type QueryTypeWithCompanyUser = QueryType & {
+  runs?: {
+    id: string;
+    created_at: string;
+    criteria: string[];
+  }[];
   company_users: {
     user_id: string;
     name: string;
@@ -18,6 +24,10 @@ async function fetchQueryDetail(id: string) {
     .select(
       `
       *,
+      runs (
+        id,
+        created_at
+      ),
       company_users (
         user_id,
         name
@@ -26,7 +36,14 @@ async function fetchQueryDetail(id: string) {
     )
     .eq("query_id", id)
     .eq("is_deleted", false)
+    .order("created_at", {
+      referencedTable: "runs",
+      ascending: false,
+    })
+    .limit(1, { referencedTable: "runs" })
     .maybeSingle();
+
+  logger.log("fetchQueryDetail: ", data);
 
   if (error) throw error;
   return data as QueryTypeWithCompanyUser | null;

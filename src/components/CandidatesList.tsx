@@ -7,18 +7,19 @@ import {
   companyEnToKo,
   degreeEnToKo,
   koreaUniversityEnToKo,
+  locationEnToKo,
 } from "@/utils/language_map";
 import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
-import NameProfile from "./NameProfile";
+import NameProfile, { Avatar } from "./NameProfile";
 import Bookmarkbutton from "./ui/bookmarkbutton";
-import Requestbutton from "./ui/requestbutton";
 import { QueryType } from "@/types/type";
 import { dateToFormat } from "@/utils/textprocess";
-import { useSynthesizedSummary } from "@/hooks/useSynthesizedSummary";
 import { Tooltips } from "./ui/tooltip";
 import { Check, Dot, X } from "lucide-react";
 import { useMessages } from "@/i18n/useMessage";
+import { useRouter } from "next/navigation";
+import { RoleBox, SchoolBox } from "./CandidatesListTable";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -49,19 +50,20 @@ function parseSummaryText(
   }
 }
 
-export default function CandidateCard({
+function CandidateCard({
   c,
   userId,
+  criterias,
   isMyList = false,
-  queryItem = null,
 }: {
   c: CandidateTypeWithConnection;
   userId: string;
   isMyList?: boolean;
-  queryItem?: QueryType | null;
+  criterias: string[];
 }) {
+  const router = useRouter();
   const { m } = useMessages();
-  const queryId = queryItem?.query_id;
+
   const candidId = c.id;
   const synthesizedSummary =
     JSON.parse(c.synthesized_summary?.[0]?.text ?? "[]").map((item: any) => {
@@ -70,63 +72,92 @@ export default function CandidateCard({
         score: item.split(",")[0] ?? "",
       };
     }) ?? null;
-  // logger.log("summaryText ", synthesizedSummary);
-  // const { data: summaryRow, isLoading: isLoadingSummary } =
-  //   useSynthesizedSummary({
-  //     queryId,
-  //     candidId,
-  //     doc: c,
-  //     criteria: queryItem?.criteria ?? [],
-  //     raw_input_text: queryItem?.raw_input_text ?? null,
-  //     enabled: !!queryItem && !!queryItem.criteria?.length,
-  //     text: c.synthesized_summary?.[0]?.text ?? null,
-  //   });
-
-  // const synthesizedSummary = useMemo(() => {
-  //   if (summaryRow) return parseSummaryText(summaryRow);
-  // }, [summaryRow]);
 
   const exps = asArr(c.experience_user ?? []);
   const edus = asArr(c.edu_user ?? []);
 
-  const firstCompany = exps[exps.length - 1];
   const latestCompany = exps[0];
   const school = useMemo(() => edus[0], [edus]);
 
-  const isOnlyOneCompany = exps.length === 1;
+  const startDate = useMemo(
+    () => (latestCompany ? dateToFormat(latestCompany.start_date ?? "") : ""),
+    [latestCompany]
+  );
+  const endDate = useMemo(
+    () => (latestCompany ? dateToFormat(latestCompany.end_date ?? "") : ""),
+    [latestCompany]
+  );
 
   return (
     <div
       key={c.id}
-      className="w-full rounded-[28px] max-w-[980px] text-white bg-white/5 p-6"
+      onClick={() => {
+        router.push(`/my/p/${candidId}`);
+      }}
+      className="group relative w-full rounded-[28px] max-w-[980px] text-white bg-white/5 p-6 cursor-pointer hover:bg-[#FFFFFF0a]"
     >
       <div className="flex flex-row flex-1 items-start gap-4">
         <div className="w-[40%]">
-          <NameProfile
-            id={c.id}
-            profile_picture={c.profile_picture ?? ""}
-            name={c.name ?? ""}
-            headline={c.headline ?? ""}
-            location={c.location ?? ""}
-          />
+          <div className="flex flex-row flex-1 items-start gap-4">
+            <div
+              onClick={() => router.push(`/my/p/${candidId}`)}
+              className="cursor-pointer rounded-full hover:border-accenta1/80 border border-transparent transition-colors duration-100"
+            >
+              <Avatar url={c.profile_picture} name={c.name} size="lg" />
+            </div>
+
+            <div className="flex flex-col items-start justify-between">
+              <div className="flex flex-col gap-0">
+                <div
+                  className="truncate font-medium text-lg hover:underline cursor-pointer relative"
+                  onClick={() => router.push(`/my/p/${candidId}`)}
+                >
+                  {c.name ?? "None"}
+                </div>
+                {c.location && (
+                  <div className="text-sm text-hgray600 font-normal">
+                    {locationEnToKo(c.location)}
+                  </div>
+                )}
+                {/* {c.links && c.links.length > 0 && (
+                  <div className="mt-3">
+                    <LinkChips links={c.links} size="sm" />
+                  </div>
+                )} */}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-0 flex flex-col gap-3 w-[70%]">
-          {/* {!isOnlyOneCompany && latestCompany && ( */}
+        <div className="mt-0 flex flex-col gap-3 w-[60%]">
           {latestCompany && (
+            <RoleBox
+              company={latestCompany.company_db.name ?? ""}
+              role={latestCompany.role}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          )}
+          {school && (
+            <SchoolBox
+              school={school.school}
+              role={school.degree}
+              field={school.field}
+            />
+          )}
+          {/* {latestCompany && (
             <CompanyCard
               company={latestCompany}
               text={m.data.currentExperience}
             />
-          )}
-          {/* )} */}
+          )} */}
           {/* {firstCompany && (
             <CompanyCard
               company={firstCompany}
               text={isOnlyOneCompany ? "Single Experience" : "First Career"}
             />
           )} */}
-          {school && (
+          {/* {school && (
             <div className="flex flex-row items-start justify-start font-normal pt-3 border-t border-white/5">
               <div className="text-hgray600 text-sm w-24 pt-0.5 font-normal">
                 {m.data.education}
@@ -145,20 +176,18 @@ export default function CandidateCard({
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
       <div className="mt-8 text-hgray700 leading-relaxed font-light">
-        {!synthesizedSummary || synthesizedSummary.length === 0 ? (
-          <>{/* <div className="text-[15px]">{m.data.generating}</div> */}</>
-        ) : (
+        {synthesizedSummary && synthesizedSummary.length !== 0 && (
           <div>
             {synthesizedSummary?.map((item: any, index: number) => (
               <MemoizedSummaryBox
                 key={index}
                 reason={item.reason}
-                criteria={queryItem?.criteria?.[index] ?? ""}
+                criteria={criterias[index] ?? ""}
                 score={item.score}
               />
             ))}
@@ -166,18 +195,27 @@ export default function CandidateCard({
         )}
       </div>
 
-      <div className="flex flex-row items-center justify-start mt-6 gap-2 w-full">
+      <div
+        className={`flex flex-row items-center justify-start group-hover:opacity-100  absolute top-3 right-3 ${
+          isMyList ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
         <Bookmarkbutton
           userId={userId}
           candidId={c.id}
           connection={c.connection}
           isText={false}
+          size="sm"
         />
-        <Requestbutton c={c} isBeta={true} />
+        {/* <Requestbutton c={c} isBeta={true} /> */}
       </div>
     </div>
   );
 }
+export default React.memo(CandidateCard);
 
 const CompanyCard = ({
   company,
@@ -282,10 +320,11 @@ const CriteriaBox = ({
         <div
           className="mt-2 text-[14px] font-normal"
           dangerouslySetInnerHTML={{
-            __html: reason.replace(
-              /strong>/g,
-              'span class="text-white font-normal">'
-            ),
+            __html: reason
+              .split(",")
+              .slice(1)
+              .join(",")
+              .replace(/strong>/g, 'span class="text-white font-normal">'),
           }}
         />
       )}

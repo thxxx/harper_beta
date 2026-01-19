@@ -35,5 +35,18 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
 
+  const { error: messageError } = await supabase.from("messages").insert({
+    query_id: data.query_id,
+    user_id: userId,
+    role: 0,
+    content: queryText.trim(),
+  });
+
+  if (messageError)
+    return NextResponse.json(
+      { error: messageError.message ?? "Failed to insert message" },
+      { status: 500 }
+    );
+
   return NextResponse.json({ id: data.query_id }, { status: 200 });
 }

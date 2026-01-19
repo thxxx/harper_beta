@@ -9,7 +9,7 @@ export type CandidateDetail = CandidateType & {
 export const candidateKey = (id?: string, userId?: string) =>
   ["candidate", id, userId] as const;
 
-async function fetchCandidateDetail(id: string, userId?: string) {
+export async function fetchCandidateDetail(id: string, userId?: string) {
   const q = supabase
     .from("candid")
     .select(
@@ -20,7 +20,8 @@ async function fetchCandidateDetail(id: string, userId?: string) {
         degree,
         field,
         start_date,
-        end_date
+        end_date,
+        url
       ),
       experience_user (
         role,

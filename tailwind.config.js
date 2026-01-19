@@ -44,6 +44,19 @@ module.exports = {
         hgray700: "#BDC8CD", // caption
         hgray800: "#DCDEE3",
         hgray900: "#E3E3E3",
+        hgray1000: "#FFFFFF",
+
+        // hgray1000: "#000000",
+        // hgray900: "#111111",
+        // hgray800: "#212121", // bg2
+        // hgray700: "#2B2E35",
+        // hgray600: "#393D46",
+        // hgray500: "#5B606A",
+        // hgray400: "#868B94",
+        // hgray300: "#BDC8CD", // caption
+        // hgray200: "#DCDEE3",
+        // hgray100: "#E3E3E3",
+        // hgray0: "#FFFFFF",
 
         brightnavy: "#0624A8",
         beige100: "#FAF9F6",
@@ -136,6 +149,7 @@ module.exports = {
         textGlow: "textGlow 3s ease-in-out infinite",
       },
       fontFamily: {
+        sans: ["PretendardVariable", "system-ui", "sans-serif"],
         inter: ["var(--font-inter)", "sans-serif"],
         hedvig: ["Hedvig Letters Serif", "inter"],
         garamond: ["var(--font-garamond)", "serif"],

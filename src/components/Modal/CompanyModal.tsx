@@ -7,6 +7,7 @@ import {
   House,
   Linkedin,
   MapPinHouse,
+  Users,
   XIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -66,11 +67,24 @@ export default function CompanyModalRoot() {
     else return [];
   }, [company]);
 
+  const employeeCount = useMemo(() => {
+    let text = "";
+    if (company && company.employee_count_range) {
+      if ((company.employee_count_range as any).start) {
+        text += (company.employee_count_range as any).start + "명 이상";
+      }
+      if ((company.employee_count_range as any).end) {
+        text += " " + (company.employee_count_range as any).end + "명 이하";
+      }
+      return text;
+    } else return "";
+  }, [company]);
+
   return (
     <AnimatePresence>
       {isOpen && payload && company ? (
         <motion.div
-          className="fixed inset-0 z-[9999] font-inter"
+          className="fixed inset-0 z-[9999] font-sans"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -124,7 +138,7 @@ export default function CompanyModalRoot() {
                   className="w-20 h-20 rounded-md object-cover"
                 />
                 <div className="min-w-0">
-                  <div className="text-3xl font-medium leading-6">
+                  <div className="text-3xl font-medium leading-tight">
                     {company.name ?? "Company"}
                   </div>
 
@@ -143,11 +157,42 @@ export default function CompanyModalRoot() {
                 </div>
               </div>
             )}
+            <div className="mt-2 mb-6 px-5 text-sm flex flex-col gap-2">
+              <Row
+                label={<MapPinHouse className="w-4 h-4 text-hgray700" />}
+                // label={m.company.hq}
+                value={countryEnToKo(company.location ?? "")}
+              />
+              {company.founded_year !== null &&
+                company.founded_year !== undefined &&
+                company.founded_year > 1000 && (
+                  <Row
+                    label={<Calendar className="w-4 h-4 text-hgray700" />}
+                    value={company.founded_year + "년 설립"}
+                  />
+                )}
+              {employeeCount && (
+                <Row
+                  label={<Users className="w-4 h-4 text-hgray700" />}
+                  value={employeeCount}
+                />
+              )}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {tags.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-md bg-white/5 px-3 py-2 text-xs"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Body */}
             <div className="h-[calc(100%-64px)] px-5 py-4 flex flex-col gap-8">
-              <Section title={m.company.information}>
-                <div className="space-y-2 text-sm">
+              {/* <Section title={m.company.information}>
+                <div className="space-y-2 text-sm w-full">
                   <Row
                     label={<MapPinHouse className="w-4 h-4 text-hgray700" />}
                     // label={m.company.hq}
@@ -174,23 +219,13 @@ export default function CompanyModalRoot() {
                     isLink
                   />
                 </div>
-              </Section>
+              </Section> */}
 
               {!company.short_description && company.description ? (
                 <Section title={m.company.description}>
                   <p className="text-sm leading-6 whitespace-pre-wrap font-light">
                     {company.description}
                   </p>
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {tags.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-md bg-white/5 px-3 py-2 text-xs"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
                 </Section>
               ) : null}
 
@@ -242,7 +277,7 @@ function Row({
   return (
     <div className="flex items-center justify-start gap-4">
       <div className="flex items-center justify-center">{label}</div>
-      <div className="text-right break-all max-w-[70%]">
+      <div className="text-right break-all max-w-full">
         {isLink && v !== "—" ? (
           <a
             href={v}

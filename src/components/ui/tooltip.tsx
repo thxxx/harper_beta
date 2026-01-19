@@ -34,17 +34,21 @@ export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
 export function Tooltips({
   children,
   text,
+  side = "bottom",
 }: {
   children: React.ReactNode;
   text: string;
+  side?: "bottom" | "top" | "left" | "right";
 }) {
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent side="bottom" align="start" className="mb-[1px]">
-          <p>{text}</p>
-        </TooltipContent>
+        {text && (
+          <TooltipContent side={side} align="start" className="mb-[1px]">
+            <p>{text}</p>
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   );

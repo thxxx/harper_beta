@@ -8,17 +8,17 @@ const QueryHistories = ({
   collapsed,
   userId,
   activeQueryId,
+  isHoverModal = false,
 }: {
   collapsed: boolean;
   userId: string;
   activeQueryId: string | null;
+  isHoverModal?: boolean;
 }) => {
   const { m } = useMessages();
-  // fetchNextPage, hasNextPage, isFetchingNextPage 추가
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useQueriesHistory(userId);
 
-  // 2차원 배열인 data.pages를 1차원 배열로 평탄화
   const queryItems = data?.pages.flatMap((page) => page) ?? [];
 
   const deleteQueryItem = async (queryId: string) => {
@@ -35,19 +35,21 @@ const QueryHistories = ({
   };
 
   return (
-    <div className={`flex-col gap-2 ${collapsed ? "hidden" : "flex"}`}>
+    <div
+      className={`flex-col gap-2 ${collapsed ? "hidden" : "flex"} ${
+        isHoverModal ? "max-h-64" : "h-full"
+      }`}
+    >
       {queryItems.map((queryItem: any) => (
         <HistoryItem
           key={queryItem.query_id}
           queryItem={queryItem}
           onDelete={deleteQueryItem}
-          collapsed={collapsed}
+          collapsed={collapsed || isHoverModal}
           isActive={activeQueryId === queryItem.query_id}
         />
       ))}
 
-      {/* 무한 스크롤 트리거: 간단하게 버튼으로 구현하거나, 
-          추후 Intersection Observer(react-intersection-observer)를 붙이면 좋습니다. */}
       {hasNextPage && (
         <button
           onClick={() => fetchNextPage()}

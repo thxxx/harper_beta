@@ -63,6 +63,7 @@ async function fetchCandidatesByIds(
         location,
         name,
         profile_picture,
+        links,
         edu_user (
           school,
           degree,

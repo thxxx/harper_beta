@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import ToastProvider from "@/components/toast/ToastProvider";
 import ReactQueryProvider from "@/components/Provider";
+import { pretendard } from "./fonts";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className + ""}>
+      <body className={inter.className + pretendard.variable}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
       <ToastProvider />

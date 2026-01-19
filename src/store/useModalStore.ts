@@ -43,11 +43,9 @@ export const useCompanyModalStore = create<ModalState>((set, get) => ({
     set({ isOpen: false, payload: null });
   },
 
-  // 로직을 스토어 안으로 이동
   handleOpenCompany: async ({ companyId, queryClient }) => {
     const id = Number(companyId);
 
-    // 1. 유효성 검사 및 Fallback 처리
     if (!Number.isFinite(id) || id === 0) {
       return;
     }

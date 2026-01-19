@@ -4,6 +4,15 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Hedvig+Letters+Serif:opsz@12..24&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
+@font-face {
+  font-family: "PretendardVariable";
+  src: url("/fonts/pretendard/PretendardVariable.woff2")
+    format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 .hedvig-letters-serif {
   font-family: "Hedvig Letters Serif", serif;
   font-optical-sizing: auto;
@@ -392,5 +401,58 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.cell {
+  height: 100%;
+}
+
+.cell1 {
+  padding: 0px 16px;
+  height: 100%;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  gap: 0;
+}
+
+/* globals.css */
+.shimmer-bg {
+  --shimmer-a: 0.05;
+  --shimmer-b: 0.1;
+  --shimmer-c: 0.16;
+
+  background-image: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, var(--shimmer-a)) 38%,
+    rgba(255, 255, 255, var(--shimmer-b)) 46%,
+    rgba(255, 255, 255, var(--shimmer-c)) 50%,
+    rgba(255, 255, 255, var(--shimmer-b)) 54%,
+    rgba(255, 255, 255, var(--shimmer-a)) 62%,
+    rgba(255, 255, 255, 0) 100%
+  );
+
+  background-size: 240% 100%;
+  background-position: 120% 0;
+  animation: shimmer 2.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: background-position;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 140% 0;
+  }
+  100% {
+    background-position: -140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-bg {
+    animation: none;
   }
 }

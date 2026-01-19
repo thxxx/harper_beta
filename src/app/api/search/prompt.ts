@@ -3,7 +3,7 @@ Your core objective is:
 1. To **Rephrase** the user's natural language query into a precise, professional definition to confirm understanding.
 2. To professionally interpret the intent to define clear **Search Criteria**.
 3. To design and explain the **Thinking Process** of how Harper will find the best talent in a way that is engaging and transparent.
-4. value는 영어 키워드를 제외하면 한글로 작성해야한다.
+4. criteria오ㅏ thinking은 영어 키워드를 제외하면 한글로 작성해야한다.
 
 **Output Format:** JSON (keys: "rephrasing", "thinking", "criteria")
 Only return the JSON object, no other text or comments or code block or markdown.
@@ -69,7 +69,7 @@ Harper matches talent using the following data structure:
 ---
 
 ### [Criteria Output Rules]
-- criteria는 최소 1개 이상, 최대 4개 이하여야 한다. 각 기준은 명확히 다르고 겹치지 않아야 한다. 영어로 작성해야 한다.
+- criteria는 최소 1개 이상, 최대 4개 이하여야 한다. 각 기준은 명확히 다르고 겹치지 않아야 한다. 특정 키워드를 제외하고는 한글로 작성해야 한다.
 - 가능한 3개 이하로 해보고, 전체 검색 내용을 커버하기 위해 필요하면 4개로 늘려도 좋다.
 - criteria는 자연어 입력에 대해서만 세팅되고, thinking/rephrasing 과정의 기준은 반영되지 않아야 한다.
 - 각 criteria는 최대 30자 이하여야 한다.
@@ -352,7 +352,7 @@ export const sqlPrompt2 = `너의 핵심 목표는:
 ### Database Schema
 
 candid : T1
-- id (PK), headline: 보통 현재 상태에 대한 간략한 설명이다. ex) "Senior Software Engineer at Google", "Research Scientist at Meta", "Co-founder & CEO at a stealth startup" 등, name, location, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
+- id (PK), headline: 보통 현재 상태에 대한 간략한 설명이다. ex) "Senior Software Engineer at Google", "Research Scientist at Meta", "Co-founder & CEO at a stealth startup" 등, name, location: location은 항상 영어로 들어있다, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
 * summary: 본인에 대한 간략한 설명. 최대 500자 이하. 다른 모든 데이터들은 비어있을 수도 있지만, summary는 모든 candid row에 존재한다. summary는 full-text search를 위해 fts 칼럼에 저장되어 있으니, summary를 사용할 때는 fts 칼럼을 사용해야 한다.
 사용 예시 : fts @@ to_tsquery('english', 'computer <-> vision | research <-> scientist | researcher')
 
@@ -528,7 +528,7 @@ export const sqlExistsPrompt = `
 - experience_user에는 company_db를 함께 조회해서, experience_user에 company_db 정보를 포함하도록 해줘.
 
 모든 검색 조건과 Logic은 그대로 유지하되, 속도가 개선된 SQL Query를 리턴해줘.
-주석은 예시에는 있지만, 출력에는 절대 달면 안돼.
+예시에는 주석이 있지만, 출력에는 절대 주석을 달면 안돼.
 
 ---
 OUTPUT EXAMPLE: 
@@ -567,7 +567,7 @@ identified_ids AS (
           OR T1.fts @@ params.tsq
         )
     )
-  ORDER BY fts_rank DESC, T1.id
+  ORDER BY fts_rank DESC
   LIMIT 100 -- 여기서 100건만 남기고 나머지는 버립니다.
 )
 -- [2단계] 확정된 100건에 대해서만 상세 정보 및 JSON 집계 (Phase 2: Hydration)

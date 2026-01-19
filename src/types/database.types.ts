@@ -632,6 +632,69 @@ export type Database = {
         }
         Relationships: []
       }
+      logs: {
+        Row: {
+          created_at: string
+          id: number
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: number
+          query_id: string | null
+          role: number | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          query_id?: string | null
+          role?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: number
+          query_id?: string | null
+          role?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "queries"
+            referencedColumns: ["query_id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       new_people: {
         Row: {
           content: string | null
@@ -758,6 +821,7 @@ export type Database = {
           candidate_ids: Json[] | null
           created_at: string
           id: number
+          message_id: number
           page_idx: number | null
           query_id: string | null
         }
@@ -765,6 +829,7 @@ export type Database = {
           candidate_ids?: Json[] | null
           created_at?: string
           id?: number
+          message_id: number
           page_idx?: number | null
           query_id?: string | null
         }
@@ -772,6 +837,7 @@ export type Database = {
           candidate_ids?: Json[] | null
           created_at?: string
           id?: number
+          message_id?: number
           page_idx?: number | null
           query_id?: string | null
         }
@@ -863,6 +929,82 @@ export type Database = {
           },
         ]
       }
+      runs: {
+        Row: {
+          created_at: string
+          criteria: string[] | null
+          id: string
+          message_id: number | null
+          query_id: string | null
+          query_text: string | null
+          sql_query: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          criteria?: string[] | null
+          id?: string
+          message_id?: number | null
+          query_id?: string | null
+          query_text?: string | null
+          sql_query?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          criteria?: string[] | null
+          id?: string
+          message_id?: number | null
+          query_id?: string | null
+          query_text?: string | null
+          sql_query?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runs_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "queries"
+            referencedColumns: ["query_id"]
+          },
+        ]
+      }
+      runs_pages: {
+        Row: {
+          candidate_ids: Json[] | null
+          created_at: string
+          id: number
+          message_id: number | null
+          page_idx: number | null
+          run_id: string | null
+        }
+        Insert: {
+          candidate_ids?: Json[] | null
+          created_at?: string
+          id?: number
+          message_id?: number | null
+          page_idx?: number | null
+          run_id?: string | null
+        }
+        Update: {
+          candidate_ids?: Json[] | null
+          created_at?: string
+          id?: number
+          message_id?: number | null
+          page_idx?: number | null
+          run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runs_pages_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       summary: {
         Row: {
           candid_id: string | null
@@ -897,21 +1039,21 @@ export type Database = {
           candid_id: string | null
           created_at: string
           id: number
-          query_id: string | null
+          run_id: string | null
           text: string | null
         }
         Insert: {
           candid_id?: string | null
           created_at?: string
           id?: number
-          query_id?: string | null
+          run_id?: string | null
           text?: string | null
         }
         Update: {
           candid_id?: string | null
           created_at?: string
           id?: number
-          query_id?: string | null
+          run_id?: string | null
           text?: string | null
         }
         Relationships: [
@@ -923,11 +1065,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "synthesized_summary_query_id_fkey"
-            columns: ["query_id"]
+            foreignKeyName: "synthesized_summary_run_id_fkey"
+            columns: ["run_id"]
             isOneToOne: false
-            referencedRelation: "queries"
-            referencedColumns: ["query_id"]
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
           },
         ]
       }

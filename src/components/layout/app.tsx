@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   HelpCircle,
+  History,
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCompanyUserStore } from "@/store/useCompanyUserStore";
@@ -28,10 +29,16 @@ import {
 } from "../ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { useMessages } from "@/i18n/useMessage";
+import HoverHistory from "./HoverHistory";
 
-const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [openHistory, setOpenHistory] = useState(true);
+const AppLayout = ({
+  children,
+  initialCollapse = true,
+}: {
+  children: React.ReactNode;
+  initialCollapse?: boolean;
+}) => {
+  const [collapsed, setCollapsed] = useState(initialCollapse);
   const { credits, isLoading: isLoadingCredits } = useCredits();
   const { m } = useMessages();
   const { companyUser, loading, initialized } = useCompanyUserStore();
@@ -54,19 +61,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   // ✅ /my/c/[queryId] 라면 queryId 읽기 (쿼리스트링 유무 무관)
   const activeQueryId = useMemo(() => {
-    // route가 app/my/c/[queryId]/page.tsx 형태라면 params.queryId가 잡힘
     const q = params?.queryId;
     if (typeof q === "string" && q.length > 0) return q;
     if (Array.isArray(q) && q[0]) return q[0];
 
-    // 혹시 파일 구조가 아직 동적 라우트가 아니라면 fallback으로 pathname 파싱
-    // /my/c/~~~ 형태에서 ~~~만 추출
     const m = pathname?.match(/^\/my\/c\/([^/?#]+)/);
     return m?.[1] ?? null;
   }, [params, pathname]);
 
   return (
-    <div className="flex h-screen w-full bg-white text-neutral-900 font-roboto overflow-hidden">
+    <div className="flex h-screen font-sans w-full bg-white text-neutral-900 overflow-hidden">
       {/* Sidebar */}
       <aside
         className={[
@@ -77,7 +81,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         ].join(" ")}
       >
         {/* 1. Top bar: 고정 */}
-        <div className="flex items-center justify-between px-4 pt-4 flex-shrink-0">
+        <div className="flex items-center justify-between px-3 pt-4 flex-shrink-0">
           {!collapsed && (
             <div
               className="font-hedvig text-xl font-semibold truncate cursor-pointer"
@@ -86,7 +90,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               Harper
             </div>
           )}
-          <Tooltips text={collapsed ? "Open sidebar" : "Close sidebar"}>
+          <Tooltips
+            text={collapsed ? "Open sidebar" : "Close sidebar"}
+            side="right"
+          >
             <button
               type="button"
               onClick={() => setCollapsed((v) => !v)}
@@ -101,7 +108,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </Tooltips>
         </div>
 
-        <div className="flex flex-col mt-4 px-3 gap-1">
+        <div className="flex flex-col mt-4 px-3 gap-1 flex-1">
           {/* flex-1과 overflow-y-auto를 주어 남은 공간을 차지하고 스크롤 발생 */}
           <NavItem
             collapsed={collapsed}
@@ -117,67 +124,47 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             icon={<List size={16} />}
             onClick={() => router.push("/my/list")}
           />
-          <div
-            onClick={() => setOpenHistory((v) => !v)}
-            className={`mt-2 flex-row items-center justify-between px-3 my-2 py-1 text-[12px] text-hgray600 cursor-pointer  ${
-              collapsed ? "hidden" : "flex"
-            }`}
-          >
-            <div>History</div>
-            <div>
-              {openHistory ? (
-                <ChevronUp size={16} strokeWidth={1.5} />
-              ) : (
-                <ChevronDown size={16} strokeWidth={1.5} />
-              )}
-            </div>
-          </div>
-        </div>
-        {/* 2. Nav & History: 이 영역이 스크롤됨 */}
-        <div
-          className="mt-1 px-3 pb-3 gap-1 flex-1 overflow-y-auto 
-    [scrollbar-width:none]
-    [-ms-overflow-style:none]
-    [&::-webkit-scrollbar]:hidden"
-        >
-          {openHistory && userId && (
-            <QueryHistories
-              collapsed={collapsed}
-              userId={userId}
-              activeQueryId={activeQueryId}
-            />
-          )}
+          <div className="flex h-16"></div>
+          <HoverHistory
+            collapsed={collapsed}
+            userId={userId}
+            activeQueryId={activeQueryId ?? ""}
+          />
         </div>
 
         {/* 3. Bottom Section: 고정 */}
         <div className="p-3 gap-2 flex flex-col flex-shrink-0 border-t border-white/5">
-          <div
-            className="cursor-pointer"
-            onClick={() => router.push("/my/billing")}
-          >
-            <div className="rounded-lg p-4 pt-3 flex flex-col gap-2 border border-white/5 transition-color duration-300 ease-out hover:bg-[#FFFFFF12]">
-              <div className="w-full flex flex-row items-center justify-between text-[15px]">
-                <Database size={14} />
-                <div className="w-[65%]">Credits</div>
-                <div className="w-[20%] text-right text-xs text-accenta1/80">
-                  {credits?.remain_credit ?? 0}
+          {!collapsed && (
+            <>
+              <div
+                className="cursor-pointer"
+                onClick={() => router.push("/my/billing")}
+              >
+                <div className="rounded-lg p-4 pt-3 flex flex-col gap-2 border border-white/5 transition-color duration-300 ease-out hover:bg-[#FFFFFF12]">
+                  <div className="w-full flex flex-row items-center justify-between text-[15px]">
+                    <Database size={14} />
+                    <div className="w-[65%]">Credits</div>
+                    <div className="w-[20%] text-right text-xs text-accenta1/80">
+                      {credits?.remain_credit ?? 0}
+                    </div>
+                  </div>
+                  <div className="w-full flex relative rounded-full h-1 bg-white/10">
+                    <div
+                      className="absolute left-0 top-0 rounded-full h-1 bg-accenta1 transition-all duration-500 ease-out"
+                      style={{
+                        width: `${Math.min(
+                          ((credits?.remain_credit ?? 0) /
+                            (credits?.charged_credit ?? 1)) *
+                            100,
+                          100
+                        )}%`,
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-              <div className="w-full flex relative rounded-full h-1 bg-white/10">
-                <div
-                  className="absolute left-0 top-0 rounded-full h-1 bg-accenta1 transition-all duration-500 ease-out"
-                  style={{
-                    width: `${Math.min(
-                      ((credits?.remain_credit ?? 0) /
-                        (credits?.charged_credit ?? 1)) *
-                        100,
-                      100
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -254,7 +241,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         className="flex-1 h-screen overflow-y-auto bg-hgray200 text-white scroll-smooth"
       >
         {/* overflow-scroll 대신 overflow-y-auto 사용 (필요할 때만 스크롤바 생성) */}
-        <div className="max-w-5xl mx-auto px-4 pb-24 min-h-full flex flex-col items-center">
+        <div className="font-sans mx-auto pb-24 min-h-full flex flex-col items-center h-full">
           {!isLoadingCredits && userId && children}
         </div>
       </main>
