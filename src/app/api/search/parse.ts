@@ -108,15 +108,25 @@ export type RunRow = {
  * - Stores synthesized summaries in bulk.
  * - Does NOT write runs_pages here; caller decides how to chunk/cache.
  */
-export const searchDatabase = async (
-  query_text: string,
-  criteria: string[],
-  pageIdx: number,
-  run: RunRow,
-  sql_query: string,
-  limit: number = 50,
-  offset: number = 0
-) => {
+export const searchDatabase = async ({
+  query_text,
+  criteria,
+  pageIdx,
+  run,
+  sql_query,
+  limit = 50,
+  offset = 0,
+  review_count = 50
+}: {
+  query_text: string;
+  criteria: string[];
+  pageIdx: number;
+  run: RunRow;
+  sql_query: string;
+  limit?: number;
+  offset?: number;
+  review_count?: number;
+}) => {
   await updateRunStatus(run.id, ko.loading.searching_candidates);
 
   const start_time = performance.now();
@@ -168,8 +178,8 @@ export const searchDatabase = async (
       additional_prompt = timeoutHandlePrompt;
     }
 
-    const fixed_query = await xaiInference(
-      "grok-4-fast-reasoning",
+    const fixed_query = await geminiInference(
+      "gemini-3-flash-preview",
       "You are a specialized SQL query fixing assistant. Fix errors and return a single SQL statement only.",
       `You are an expert PostgreSQL SQL fixer for a recruitment candidate search system.
   
@@ -188,8 +198,8 @@ export const searchDatabase = async (
   [ERROR]
   ${error.message}
   `,
-      0.2,
-      1
+      0.5,
+      ThinkingLevel.LOW
     );
 
     const sqlQueryWithGroupBy2 = ensureGroupBy(fixed_query as string, "");
@@ -197,7 +207,7 @@ export const searchDatabase = async (
     // Save fixed SQL to the run (optional)
     await supabase
       .from("runs")
-      .update({ sql_query: fixed_query as string })
+      .update({ sql_query: sqlQueryWithGroupBy2 as string })
       .eq("id", run.id);
 
     const { data: data2, error: error2 } = await supabase.rpc(
@@ -241,8 +251,8 @@ export const searchDatabase = async (
 
   const scored: (ScoredCandidate & { summary: string })[] =
     await mapWithConcurrency(
-      data[0].slice(0, 50) as any[],
-      17,
+      data[0].slice(0, review_count) as any[],
+      20,
       async (candidate) => {
         const id = candidate.id as string;
 
@@ -271,20 +281,18 @@ export const searchDatabase = async (
       }
     );
 
-  logger.log("💠 전체 스코어링 완료: ", scored);
+  logger.log("💠 전체 스코어링 완료: ", scored.length);
   // Bulk upsert synthesized summaries
   // Prefer run_id if the column exists; fallback to query_id if not.
   const upsertData = scored
     .filter((s) => s.summary != null)
     .map((s) => ({
       candid_id: s.id,
-      run_id: run.id, // <-- recommended column\
+      run_id: run.id,
       text: s.summary,
     }));
 
   if (upsertData.length > 0) {
-    // If your synthesized_summary table does NOT have run_id yet,
-    // remove run_id from upsertData above and keep only query_id.
     const { error: upErr } = await supabase
       .from("synthesized_summary")
       .upsert(upsertData as any);

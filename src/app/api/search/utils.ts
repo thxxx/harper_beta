@@ -1,3 +1,4 @@
+import { SummaryScore } from "@/components/information/SummaryCell";
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/utils/logger";
 
@@ -69,8 +70,8 @@ export type ScoredCandidate = { id: string; score: number };
 
 export function scoreFromLabel(line: string): number {
   const s = (line ?? "").trim();
-  if (s.startsWith("만족")) return 2;
-  if (s.startsWith("모호")) return 1;
+  if (s.startsWith(SummaryScore.SATISFIED)) return 2;
+  if (s.startsWith(SummaryScore.AMBIGUOUS)) return 1;
   // "불만족" 또는 그 외
   return 0;
 }
@@ -79,7 +80,7 @@ export function sumScore(lines: string[]): number {
   if (!Array.isArray(lines)) return 0;
   let total = 0;
   for (const line of lines) total += scoreFromLabel(line);
-  return Math.max(Math.min(total, 10), 0);
+  return Math.max(Math.min(total, 20), 0);
 }
 
 /**

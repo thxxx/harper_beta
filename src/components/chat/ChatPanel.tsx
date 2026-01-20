@@ -49,7 +49,7 @@ export default function ChatPanel({
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const chat = useChatSessionDB({ scope, userId, candidDoc }); // ✅ 바뀐 부분
+  const chat = useChatSessionDB({ model: "gemini-3-flash-preview", scope, userId, candidDoc }); // ✅ 바뀐 부분
   const autoStartedRef = useRef(false);
 
   const isQueryScope = scope?.type === "query";

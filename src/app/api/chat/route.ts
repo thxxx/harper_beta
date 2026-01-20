@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { xaiClient } from "@/lib/llm/llm";
+import { geminiChatStream, xaiClient } from "@/lib/llm/llm";
 import { ChatScope } from "@/hooks/chat/useChatSession";
 import { buildSummary } from "@/utils/textprocess";
 import { logger } from "@/utils/logger";
@@ -168,40 +168,53 @@ ${information}
   }
 
   console.log("LLM이 호출됩니다. ");
-  const stream = await xaiClient.chat.completions.create({
-    model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...messages.map((message) => ({
-        role: message.role,
-        content: message.content,
-      })),
-    ],
-    temperature: 0.7,
-    stream: true,
-  });
+  if(model === "grok-4-fast-reasoning") {
+    const stream = await xaiClient.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages.map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+      ],
+      temperature: 0.7,
+      stream: true,
+    });
 
-  const encoder = new TextEncoder();
-  const responseStream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          const delta = chunk.choices?.[0]?.delta?.content ?? "";
-          if (delta) controller.enqueue(encoder.encode(delta));
+    const encoder = new TextEncoder();
+    const responseStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const delta = chunk.choices?.[0]?.delta?.content ?? "";
+            if (delta) controller.enqueue(encoder.encode(delta));
+          }
+        } catch (error) {
+          controller.error(error);
+        } finally {
+          controller.close();
         }
-      } catch (error) {
-        controller.error(error);
-      } finally {
-        controller.close();
-      }
-    },
-  });
+      },
+    });
 
-  return new Response(responseStream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-    },
-  });
+    return new Response(responseStream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
+  }
+
+  if(model === "gemini-3-flash-preview") {
+    const responseStream = await geminiChatStream({ model: "gemini-3-flash-preview", systemPrompt, messages, temperature: 0.7 });
+    return new Response(responseStream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
+  }
 }

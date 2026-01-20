@@ -7,6 +7,7 @@ import { logger } from "@/utils/logger";
 import { updateRunStatus } from "../utils";
 import { parseQueryWithLLM } from "../parse";
 import { searchDatabase } from "../parse";
+import { notifyToSlack } from "@/lib/slack";
 
 type RunRow = {
   id: string;
@@ -163,23 +164,28 @@ export async function POST(req: NextRequest) {
   }
 
   // 6) Run search
-  const { data: searchResults, status: searchStatus } = await searchDatabase(
+  const { data: searchResults, status: searchStatus } = await searchDatabase({
     query_text,
     criteria,
-    page,
-    run as RunRow,
-    sql_query,
-    50,
-    offset
-  );
+    pageIdx: page,
+    run: run as RunRow,
+    sql_query: sql_query,
+    limit: 100,
+    offset: offset,
+    review_count: 100
+  });
 
-  const oneScoreCount = searchResults.filter((r: any) => r.score === 1).length;
+  const fullScoreCount = searchResults.filter((r: any) => r.score === 1).length;
+  const onlyPartCriteriaSatisfiedCount = searchResults.filter((r: any) => r.score !== 1 && r.score > 0.5).length;
   const merged = deduplicateAndScore(searchResults, cachedCandidates);
 
-  let defaultMsg = `전체 후보자들 중 ${searchResults.length}명을 선정하고, 기준을 만족하는지 검사했습니다. ${oneScoreCount}명이 모든 기준을 만족했습니다.`;
-  if (searchResults.length > 0) {
-    defaultMsg += `\n${UI_START}{"type": "search_result", "text": "검색 결과 ${oneScoreCount}/${searchResults.length}", "run_id": "${runId}"}${UI_END}`;
-  }
+  logger.log("searchResults ", searchResults.length, fullScoreCount, onlyPartCriteriaSatisfiedCount, criteria.length);
+
+  let defaultMsg = `전체 후보자들 중 ${searchResults.length}명을 선정하고, 기준을 만족하는지 검사했습니다. ${fullScoreCount}명이 모든 기준을 만족했습니다.`;
+  if (criteria.length > 1)
+    defaultMsg += ` ${onlyPartCriteriaSatisfiedCount}명이 일부 기준만 만족했습니다.`;
+  if (searchResults.length > 0)
+    defaultMsg += `\n${UI_START}{"type": "search_result", "text": "검색 결과 ${fullScoreCount}/${searchResults.length}", "run_id": "${runId}"}${UI_END}`;
 
   const msg = await xaiInference(
     "grok-4-fast-reasoning",
@@ -192,21 +198,22 @@ Hard rules:
 - Output must be Korean.
 - Keep it short: 1–3 sentences (max 280 characters).
 - Be helpful and action-oriented: suggest what the user can do next.
-- Do not mention internal implementation details (SQL, LLM, limit=50, merged, oneScoreCount) unless it is necessary to clarify confusing results.
+- Do not mention internal implementation details (SQL, LLM, limit=50, merged, fullScoreCount) unless it is necessary to clarify confusing results.
 - If status is ERROR, do not reveal technical details. Tell them the search failed, credits were not deducted, and suggest trying again.
 
 Context (facts you may use):
 - user_query: "${run.query_text}"
 - search_status: "${searchStatus}"  // e.g., SUCCESS | PARTIAL | ERROR
 - candidates_matched: ${merged.length}   // count from SQL-filtered set (max 50)
-- candidates_fully_satisfied: ${oneScoreCount}  // count judged by assistant reading details
+- candidates_fully_satisfied: ${fullScoreCount}  // count judged by assistant reading details
+- candidates_partially_satisfied: ${onlyPartCriteriaSatisfiedCount}
 - criteria: ${criteria?.join(", ")}
 
 Default message (already shown to user; never repeat):
 ${defaultMsg}
 
 Now write the additional message:`,
-    0.7,
+    0.8,
     1
   );
   logger.log("msg ======================== ", msg);
@@ -235,34 +242,16 @@ Now write the additional message:`,
 
   const candidateIds = candidatesForCache.slice(0, 10).map((r: any) => r.id);
 
-  if (
-    page === 0 &&
-    (candidateIds.length === 0 ||
-      candidateIds.length < 10 ||
-      candidateIds.length >= 50 ||
-      oneScoreCount <= 5)
-  ) {
-    // const message = await makeMessage(
-    //   query_text,
-    //   criteria?.join(", ") ?? "",
-    //   candidateIds.length === 0
-    //     ? "no"
-    //     : candidateIds.length < 10
-    //     ? "less"
-    //     : "more"
-    // );
-  }
-
   // 9) Slack notify if nothing found on first page
-  // if (page === 0 && candidateIds.length === 0) {
-  //   await notifyToSlack(
-  //     `🔍 *Search Result Not Found! 검색 결과가 없어요!*\n\n` +
-  //       `• *Query*: ${query_text}\n` +
-  //       `• *Criteria*: ${criteria?.join(", ")}\n` +
-  //       `• *Run ID*: ${runId}\n` +
-  //       `• *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`
-  //   );
-  // }
+  if (page === 0 && candidateIds.length === 0) {
+    await notifyToSlack(
+      `🔍 *Search Result Not Found! 검색 결과가 없어요!*\n\n` +
+        `• *Query*: ${query_text}\n` +
+        `• *Criteria*: ${criteria?.join(", ")}\n` +
+        `• *Run ID*: ${runId}\n` +
+        `• *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`
+    );
+  }
 
   return NextResponse.json(
     { nextPageIdx, results: candidateIds, isNewSearch: true },

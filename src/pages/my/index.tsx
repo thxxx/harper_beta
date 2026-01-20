@@ -63,7 +63,7 @@ const Home: NextPage = () => {
     const start = performance.now();
     console.log("testSqlQuery start");
     const sql =
-      "```sql  WITH params AS (   SELECT      to_tsquery('english', 'payment | billing | checkout | stripe |  '%프리랜서%', '%외주%', '%계약직%', '%파트타임%'])       OR T1.summary ILIKE ANY (ARRAY['%freelance%', '%outsourcing%', '%contract%', '%part-time%', '%available%', '%open to work%', '%프리랜서%', '%외주%', '%계약직%', '%파트타임%'])       OR T1.fts @@ params.tsq3     )     AND EXISTS (       SELECT 1 FROM experience_user ex       WHERE ex.candid_id = T1.id         AND (           ex.role ILIKE ANY (ARRAY['%payment%', '%billingcandid_id = i.id ) exp_block ON TRUE ORDER BY i.fts_rank DESC, i.id ```";
+      "```sql WITH params AS ( ```";
     const newSql = ensureGroupBy(sql, "");
     console.log("newSql", newSql);
 

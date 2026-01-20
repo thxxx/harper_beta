@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Check, Dot, X, GraduationCap, BriefcaseBusiness } from "lucide-react";
 
-enum SummaryScore {
+export enum SummaryScore {
   SATISFIED = "만족",
   AMBIGUOUS = "모호",
   UNSATISFIED = "불만족",

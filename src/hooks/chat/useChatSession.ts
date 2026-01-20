@@ -6,8 +6,6 @@ import {
   insertMessage,
   updateMessageContent,
 } from "@/lib/message";
-import { logger } from "@/utils/logger";
-import { useCandidateDetail } from "../useCandidateDetail";
 import { CandidateDetail } from "../useCandidateDetail";
 
 const CHAT_MODEL = "grok-4-fast-reasoning";
@@ -92,7 +90,7 @@ export function useChatSessionDB(args: {
   scope?: ChatScope;
   userId?: string;
   apiPath?: string;
-  model?: string;
+  model?: "grok-4-fast-reasoning" | "gemini-3-flash-preview";
   candidDoc?: CandidateDetail;
 }) {
   const { scope, userId } = args;

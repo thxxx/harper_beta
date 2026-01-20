@@ -360,3 +360,93 @@ Output:
   const content = response.choices[0]?.message?.content;
   return content ?? "";
 }
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+type Msg = { role: "system" | "user" | "assistant"; content: string };
+
+function toGeminiContents(messages: Msg[]) {
+  // system은 config.systemInstruction로 넘길 거라서 contents에서는 제외
+  return messages
+    .filter((m) => m.role !== "system")
+    .map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content ?? "" }],
+    }));
+}
+
+// model, systemPrompt, messages(=대화 메시지들)만 받아서
+// "ReadableStream으로 텍스트 delta를 흘려보내는" 함수
+export async function geminiChatStream({
+  model,
+  systemPrompt,
+  messages,
+  temperature = 0.7,
+}: {
+  model: string; // e.g. "gemini-2.0-flash"
+  systemPrompt: string;
+  messages: Msg[];
+  temperature?: number;
+}) {
+  const contents = toGeminiContents([
+    { role: "system", content: systemPrompt },
+    ...messages,
+  ]);
+
+  const stream = await ai.models.generateContentStream({
+    model,
+    contents,
+    config: {
+      temperature,
+      systemInstruction: systemPrompt,
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.LOW,
+      },
+    },
+  });
+
+  const encoder = new TextEncoder();
+  let usage:
+  | {
+      promptTokenCount?: number;
+      candidatesTokenCount?: number;
+      totalTokenCount?: number;
+    }
+  | null = null;
+  const responseStream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          // 공식 예제는 chunk.text 사용
+          const delta =
+            (chunk as any).text ??
+            chunk.candidates?.[0]?.content?.parts
+              ?.map((p: any) => p.text ?? "")
+              .join("") ??
+            "";
+
+          if (delta) controller.enqueue(encoder.encode(delta));
+
+
+        // ✅ usageMetadata는 보통 마지막 chunk에 있음
+        if ((chunk as any).usageMetadata) {
+          usage = (chunk as any).usageMetadata;
+        }
+        }
+      } catch (error) {
+        controller.error(error);
+      } finally {
+        controller.close();
+
+
+      // ✅ 여기서 비용 로그
+      if (usage) {
+        console.log("[Gemini usage]", usage);
+        // DB 저장 / credit 차감 / analytics 여기서
+      }
+      }
+    },
+  });
+
+  return responseStream;
+}

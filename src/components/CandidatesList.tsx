@@ -8,21 +8,15 @@ import { useCompanyModalStore } from "@/store/useModalStore";
 import { useQueryClient } from "@tanstack/react-query";
 import NameProfile, { Avatar } from "./NameProfile";
 import Bookmarkbutton from "./ui/bookmarkbutton";
-import { QueryType } from "@/types/type";
 import { dateToFormat } from "@/utils/textprocess";
 import { Tooltips } from "./ui/tooltip";
 import { Check, Dot, X } from "lucide-react";
 import { useMessages } from "@/i18n/useMessage";
 import { useRouter } from "next/navigation";
 import { RoleBox, SchoolBox } from "./CandidatesListTable";
+import { SummaryScore } from "./information/SummaryCell";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
-
-enum SummaryScore {
-  SATISFIED = "만족",
-  AMBIGUOUS = "모호",
-  UNSATISFIED = "불만족",
-}
 
 type ParsedSummary = { score: string; reason: string };
 
