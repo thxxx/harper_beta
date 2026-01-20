@@ -8,6 +8,7 @@ import {
 } from "@/lib/message";
 import { logger } from "@/utils/logger";
 import { useCandidateDetail } from "../useCandidateDetail";
+import { CandidateDetail } from "../useCandidateDetail";
 
 const CHAT_MODEL = "grok-4-fast-reasoning";
 
@@ -92,20 +93,10 @@ export function useChatSessionDB(args: {
   userId?: string;
   apiPath?: string;
   model?: string;
+  candidDoc?: CandidateDetail;
 }) {
   const { scope, userId } = args;
   const apiPath = args.apiPath ?? "/api/chat";
-  let candidDoc = {};
-  if (scope?.type === "candid") {
-    const {
-      data: candidData,
-      isLoading,
-      error: candidateError,
-    } = useCandidateDetail(userId, scope?.candidId);
-    if (candidData) {
-      candidDoc = candidData;
-    }
-  }
   const model = args.model ?? CHAT_MODEL;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -113,6 +104,8 @@ export function useChatSessionDB(args: {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  const candidDoc = args.candidDoc;
 
   const abortRef = useRef<AbortController | null>(null);
 

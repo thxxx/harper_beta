@@ -11,9 +11,9 @@ import ChatComposer from "@/components/chat/ChatComposer";
 import { useChatSessionDB } from "@/hooks/chat/useChatSession";
 import { ArrowDown, ArrowLeft, Loader2, ScreenShareIcon } from "lucide-react";
 import { logger } from "@/utils/logger";
-import { useCandidateModalStore } from "@/store/useCandidateModalStore";
 import { Tooltips } from "../ui/tooltip";
 import { useRouter } from "next/router";
+import { CandidateDetail } from "@/hooks/useCandidateDetail";
 
 export type ChatScope =
   | { type: "query"; queryId: string }
@@ -28,6 +28,7 @@ type Props = {
 
   disabled?: boolean;
   isNewSearch?: boolean;
+  candidDoc?: CandidateDetail;
 };
 
 const BOTTOM_THRESHOLD_PX = 120;
@@ -40,6 +41,7 @@ export default function ChatPanel({
   onSearchFromConversation,
   disabled,
   isNewSearch,
+  candidDoc,
 }: Props) {
   const [isSearchSyncing, setIsSearchSyncing] = useState(false);
   const [stickToBottom, setStickToBottom] = useState(true);
@@ -47,7 +49,7 @@ export default function ChatPanel({
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const chat = useChatSessionDB({ scope, userId }); // ✅ 바뀐 부분
+  const chat = useChatSessionDB({ scope, userId, candidDoc }); // ✅ 바뀐 부분
   const autoStartedRef = useRef(false);
 
   const isQueryScope = scope?.type === "query";

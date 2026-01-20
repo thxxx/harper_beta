@@ -11,6 +11,7 @@ import { MIN_CREDITS_FOR_SEARCH } from "@/utils/constantkeys";
 import { showToast } from "@/components/toast/toast";
 import { supabase } from "@/lib/supabase";
 import { useMessages } from "@/i18n/useMessage";
+import { ensureGroupBy } from "@/utils/textprocess";
 
 const Home: NextPage = () => {
   const [query, setQuery] = useState("");
@@ -61,45 +62,22 @@ const Home: NextPage = () => {
   const testSqlQuery = async () => {
     const start = performance.now();
     console.log("testSqlQuery start");
-    const sql = `SELECT count(*) AS total_count
-FROM candid T1
-WHERE 
-  -- 1. 고등학교 조건 (과학고)
-  EXISTS (
-    SELECT 1 FROM edu_user ed1
-    WHERE ed1.candid_id = T1.id
-      AND ed1.school ILIKE ANY (ARRAY['%Science High School%', '%과학고%', '%과학고등학교%'])
-  )
-  
-  -- 2. 대학교 조건 (서울대/KAIST)
-  AND EXISTS (
-    SELECT 1 FROM edu_user ed2
-    WHERE ed2.candid_id = T1.id
-      AND ed2.school ILIKE ANY (ARRAY['%Seoul National University%', '%SNU%', '%서울대%', '%서울대학교%', '%KAIST%', '%카이스트%', '%Korea Advanced Institute of Science and Technology%'])
-  )
-  
-  -- 3. 경력 조건 (빅테크 기업 근무 경험)
-  AND EXISTS (
-    SELECT 1 FROM experience_user ex 
-    LEFT JOIN company_db c ON c.id = ex.company_id 
-    WHERE ex.candid_id = T1.id 
-      AND (
-        c.name ILIKE ANY (ARRAY['%Apple%', '%Microsoft%', '%Alphabet%', '%Google%', '%Amazon%', '%Meta%', '%Facebook%', '%NVIDIA%', '%Tesla%']) 
-        OR ex.role ILIKE ANY (ARRAY['%Apple%', '%Microsoft%', '%Alphabet%', '%Google%', '%Amazon%', '%Meta%', '%Facebook%', '%NVIDIA%', '%Tesla%'])
-      )
-  );`;
+    const sql =
+      "```sql  WITH params AS (   SELECT      to_tsquery('english', 'payment | billing | checkout | stripe |  '%프리랜서%', '%외주%', '%계약직%', '%파트타임%'])       OR T1.summary ILIKE ANY (ARRAY['%freelance%', '%outsourcing%', '%contract%', '%part-time%', '%available%', '%open to work%', '%프리랜서%', '%외주%', '%계약직%', '%파트타임%'])       OR T1.fts @@ params.tsq3     )     AND EXISTS (       SELECT 1 FROM experience_user ex       WHERE ex.candid_id = T1.id         AND (           ex.role ILIKE ANY (ARRAY['%payment%', '%billingcandid_id = i.id ) exp_block ON TRUE ORDER BY i.fts_rank DESC, i.id ```";
+    const newSql = ensureGroupBy(sql, "");
+    console.log("newSql", newSql);
 
-    const { data: data1, error: error1 } = await supabase.rpc(
-      "set_timeout_and_execute_raw_sql",
-      {
-        sql_query: sql,
-        page_idx: 0,
-        limit_num: 50,
-        offset_num: 0,
-      }
-    );
+    // const { data: data1, error: error1 } = await supabase.rpc(
+    //   "set_timeout_and_execute_raw_sql",
+    //   {
+    //     sql_query: sql,
+    //     page_idx: 0,
+    //     limit_num: 50,
+    //     offset_num: 0,
+    //   }
+    // );
 
-    console.log(data1, error1);
+    // console.log(data1, error1);
     const end = performance.now();
     console.log("testSqlQuery time", end - start);
   };

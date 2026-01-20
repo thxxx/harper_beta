@@ -407,3 +407,15 @@ ORDER BY i.fts_rank DESC, i.id
 Do not require any other text except for the SQL Query in the output. Only the SQL Query should be returned.
 
 `;
+
+export const timeoutHandlePrompt = `
+If the error indicates a timeout, treat it as a performance-fix task rather than a syntax-fix task.
+
+TIMEOUT rules:
+- Preserve meaning/rows as much as possible; restructure only for speed.
+- Prefer two-phase approach: select only T1.id with restrictive filters + LIMIT, then join to fetch final columns.
+- Do NOT add new tables/filters or change ranking semantics.
+- Replace JOIN-based filtering with EXISTS when joins are only for filtering.
+- Push down WHERE filters into phase-1 id CTE.
+- Output MUST be a single valid SQL statement only.
+`;

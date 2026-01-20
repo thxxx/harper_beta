@@ -25,13 +25,14 @@ export default function ProfileDetailPage() {
   return (
     <AppLayout>
       <div className="w-full flex flex-row min-h-screen items-start justify-between">
-        {candidId && (
+        {candidId && data && (
           <ChatPanel
             title={`${data?.name ?? ""}님`}
             scope={scope}
             userId={userId}
             onSearchFromConversation={noFunc}
             isNewSearch={false}
+            candidDoc={data}
           />
         )}
         {candidId && data && (

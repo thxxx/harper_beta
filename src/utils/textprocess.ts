@@ -459,8 +459,8 @@ function topLevelIndexOf(sql: string, needle: RegExp): number {
 export function ensureGroupBy(sql: string, groupByClause: string): string {
   let s = sql
     .trim()
-    .replace(/^```(?:\w+)?\n/, "") // ```, ```sql, ```tsx, ```json 등 모두 커버
-    .replace(/\n```$/, "")
+    .replace(/^```\w*\s*/, "") // 시작 부분의 ```와 언어 이름, 뒤따르는 공백/줄바꿈 제거
+    .replace(/\s*```$/, "") // 끝 부분의 공백/줄바꿈과 ``` 제거
     .trim();
   const hasSemi = s.endsWith(";");
   if (hasSemi) s = s.slice(0, -1).trimEnd();
