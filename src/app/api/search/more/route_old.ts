@@ -66,7 +66,7 @@ ${parsed_query}
 `
   );
   // 쿼리를 만들었다.
-  let searchResults = await searchDatabase(
+  let { data: searchResults, status: searchStatus } = await searchDatabase(
     q.raw_input_text ?? "",
     criteria,
     pageIdx,
