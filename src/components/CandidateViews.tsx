@@ -7,8 +7,6 @@ import { useSettingStore } from "@/store/useSettingStore";
 import { supabase } from "@/lib/supabase";
 import { Tooltips } from "./ui/tooltip";
 import { Columns2, Table } from "lucide-react";
-import CandidateModalRoot from "./Modal/CandidateModal";
-import { useCandidateModalStore } from "@/store/useCandidateModalStore";
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
 const CandidateViews = ({
@@ -38,10 +36,10 @@ const CandidateViews = ({
   const criteriaList = asArr(criterias ?? []);
   const gridTemplateColumns = useMemo(() => {
     // Candidate | Company | Location | School | (criteria * N) | Actions
-    const fixed = ["280px"];
-    const defaultCols = "240px";
+    const fixed = [isMyList ? "400px" : "280px"];
+    const defaultCols = isMyList ? "320px" : "240px";
     const criteriaCols = criteriaList.map(() => "140px"); // 한 criteria는 작은 칸
-    const actions = ["48px"];
+    const actions = ["0px"];
 
     if (criterias?.length === 0)
       return [...fixed, defaultCols, defaultCols, ...actions].join(" ");
@@ -58,17 +56,15 @@ const CandidateViews = ({
     <div className="w-full px-4 relative h-full">
       {items.length > 0 && (
         <div
-          className={`${
-            viewType === "table" ? "w-full " : "w-[980px]"
-          } flex flex-row items-center justify-between mt-2`}
+          className={`${viewType === "table" ? "w-full " : "w-[980px]"
+            } flex flex-row items-center justify-between mt-2`}
         >
           <div></div>
           <div className="flex flex-row items-center justify-start gap-2">
             <Tooltips text="Table view">
               <button
-                className={`cursor-pointer p-1.5 rounded-sm hover:bg-white/10 transition-all duration-200 ${
-                  viewType === "table" ? "bg-white/10" : ""
-                }`}
+                className={`cursor-pointer p-1.5 rounded-sm hover:bg-white/10 transition-all duration-200 ${viewType === "table" ? "bg-white/10" : ""
+                  }`}
                 onClick={() => changeViewType("table")}
               >
                 <Table className="w-4 h-4" strokeWidth={1.6} />
@@ -76,9 +72,8 @@ const CandidateViews = ({
             </Tooltips>
             <Tooltips text="Card view">
               <button
-                className={`cursor-pointer p-1.5 rounded-sm hover:bg-white/10 transition-all duration-200 ${
-                  viewType === "card" ? "bg-white/10" : ""
-                }`}
+                className={`cursor-pointer p-1.5 rounded-sm hover:bg-white/10 transition-all duration-200 ${viewType === "card" ? "bg-white/10" : ""
+                  }`}
                 onClick={() => changeViewType("card")}
               >
                 <Columns2 className="w-4 h-4" strokeWidth={1.6} />
@@ -97,7 +92,7 @@ const CandidateViews = ({
           >
             <div className="w-max min-w-full">
               <div
-                className="inline-grid items-center py-2 text-xs text-hgray800 font-light bg-hgray200 border border-white/5"
+                className="inline-grid items-center py-2 text-xs text-hgray800 font-light bg-hgray200 border border-white/5 w-full"
                 style={{ gridTemplateColumns }}
               >
                 <div className="sticky left-0 z-30 px-4 bg-hgray200 border-r border-white/5">
@@ -113,10 +108,10 @@ const CandidateViews = ({
                         </div>
                       </Tooltips>
                     ))}
-                    <div className="px-4">Company</div>
-                    <div className="px-4">School</div>
                   </>
                 )}
+                <div className="px-4">Company</div>
+                <div className="px-4">School</div>
                 <div />
               </div>
 

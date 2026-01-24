@@ -31,8 +31,8 @@ type Props = {
   candidDoc?: CandidateDetail;
 };
 
-const BOTTOM_THRESHOLD_PX = 120;
-const AUTO_SCROLL_THROTTLE_MS = 120;
+export const BOTTOM_THRESHOLD_PX = 120;
+export const AUTO_SCROLL_THROTTLE_MS = 120;
 
 export default function ChatPanel({
   title,
@@ -112,6 +112,13 @@ export default function ChatPanel({
     loadedOnceRef.current = true;
     void chat.loadHistory();
   }, [chat.ready, chat.loadHistory]);
+
+  useEffect(() => {
+    if (!chat.ready) return;
+    loadedOnceRef.current = true;
+    logger.log("chat.ready ", chat.ready, loadedOnceRef.current, scope);
+    void chat.loadHistory();
+  }, [chat.ready, scope]);
 
   // ✅ attach scroll listener
   useEffect(() => {

@@ -2,7 +2,7 @@
 // import { supabase } from "@/lib/supabase";
 // import { ensureGroupBy } from "@/utils/textprocess";
 // import { NextRequest, NextResponse } from "next/server";
-// import { criteriaPrompt, sqlPrompt2, sqlExistsPrompt } from "@/lib/prompt";
+// import { criteriaPrompt, firstSqlPrompt, sqlExistsPrompt } from "@/lib/prompt";
 // import { generateSummary } from "./criteria_summarize/utils";
 // import {
 //   deduplicateAndScore,
@@ -41,14 +41,14 @@
 //   return outJson as any;
 // }
 
-// async function parseQueryWithLLM(
+// async function makeSqlQuery(
 //   queryText: string,
 //   criteria: string[],
 //   extraInfo: string = ""
 // ): Promise<string | any> {
 //   try {
 //     let prompt = `
-// ${sqlPrompt2}
+// ${firstSqlPrompt}
 // Natural Language Query: ${queryText}
 // Criteria: ${criteria}
 // `.trim();
@@ -117,7 +117,7 @@
 
 //     return sqlQueryWithGroupBy2;
 //   } catch (e) {
-//     console.error("parseQueryWithLLM error ", e);
+//     console.error("makeSqlQuery error ", e);
 //     return e;
 //   }
 // }
@@ -485,7 +485,7 @@
 //       status: ko.loading.making_query,
 //     });
 
-//     parsed_query = await parseQueryWithLLM(q.raw_input_text, criteria, "");
+//     parsed_query = await makeSqlQuery(q.raw_input_text, criteria, "");
 //     if (typeof parsed_query !== "string") {
 //       await updateRunStatus(queryId, JSON.stringify(parsed_query));
 //       return NextResponse.json(parsed_query, { status: 404 });

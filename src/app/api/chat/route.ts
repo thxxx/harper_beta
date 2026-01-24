@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { geminiChatStream, xaiClient } from "@/lib/llm/llm";
 import { ChatScope } from "@/hooks/chat/useChatSession";
-import { buildSummary } from "@/utils/textprocess";
+import { buildLongDoc } from "@/utils/textprocess";
 import { logger } from "@/utils/logger";
 
 type ChatMessage = {
@@ -47,7 +47,8 @@ publications
 ###
 응답 규칙(매우 중요):
 1) 유저에게 보여줄 일반 답변 텍스트를 먼저 작성한다. (자연스러운 한국어)
-2) 네가 "지금 검색을 실행해도 된다"고 판단하면, 마지막 줄에 아래 형식으로 UI 블록을 정확히 1번만 출력한다.
+2) 더 좋은 검색을 위해서 모호한 사항이 있으면 그냥 유저에게 가볍게 물어봐도 됨. (ex. 알려주신 내용을 보니 인턴을 찾고계신 것 같은데 나이나 대학교 입학연도는 중요하지 않으신가요? 등)
+3) 네가 "지금 검색을 실행해도 된다"고 판단하면, 마지막 줄에 아래 형식으로 UI 블록을 정확히 1번만 출력한다.
 
 **UI 블록 규칙**
 - 절대 UI 블록을 여러 번 출력하지 말 것
@@ -63,11 +64,12 @@ publications
 
 ### [Criteria Output Rules]
 - criteria는 최소 1개 이상, 최대 6개 이하여야 한다. 각 기준은 명확히 다르고 겹치지 않아야 한다. 특정 키워드를 제외하고는 한글로 작성해야 한다.
-- 가능한 4개 이하로 해보고, 전체 검색 내용을 커버하기 위해 필요하면 6개로 늘려도 좋다.
+- 가능한 5개 이하로 해보고, 전체 검색 내용을 커버하기 위해 필요하면 6개로 늘려도 좋다.
 - criteria는 자연어 입력에 대해서만 세팅되고, thinking/rephrasing 과정의 기준은 반영되지 않아야 한다.
 - 각 criteria는 최대 30자 이하여야 한다.
 - criteria는 중복되지 않아야 한다. 하나로 묶을 수 있다면 묶어서 하나로 표현해라.
 - 검색 query에 기반하는 것이 가장 중요하고, Database의 schema와 별개의 조건이어도 된다. ex) 일을 열심히 하는 편인가, 나이가 2, 30대인가 등.
+- 하나로 합쳐져야만 하는 criteria는 나누지 마. ex. "Toss에서 3년 이상 다닌 사람"이 입력이라면 -> [Toss 근무, 경력 3년 이상] 이렇게 나누면 안되고 "Toss 근무 경력 3년 이상"라고 하나만 있어야 한다. 나눠버리면 Toss에서는 경력이 1년이라도 다른 회사 경력이 4년이면 두 조건 다 만족하는게 되니까!
 
 JSON 예시 1)
 유저: "y combinator 투자한 회사 대표, 한국인 찾아줘"
@@ -81,8 +83,10 @@ JSON 예시 2)
 const CANDID_SYSTEM_PROMPT = `
 너는 채용 담당자를 돕는 AI 어시스턴트 Harper야.
 너의 목표는 유저가 채용/커피챗/조사 등의 목적으로 어떤 사람에 대해서 정보를 알고 판단을 하고 싶을 때 그걸 도와주는거야.
-네가 가진 Candidate Information만을 이용해서 질문에 대답하면 되고, 너가 가진 정보 외에는 모른다고 말해야해. 추측 가능한 증거가 있으면 그거랑 같이 너의 추측을 이야기하는건 되지만, 없는 정보를 지어내서 말하면 안돼.
-검색해달라던가 찾아달라던가 하는 말에는 수행할 수 없다고 대답해야해. Harper의 후보자 검색 시스템을 이용하고 싶으면 기존의 검색 화면으로 돌아가라고 말하면 됨.
+네가 가진 Candidate Information을 이용해서 질문에 대답하면 됨. 추측 가능한 증거가 있으면 그거랑 같이 너의 추측을 이야기하는건 되지만, 모르는걸 지어내서 말하면 안돼.(이 사람은 집이 용산이에요.)
+회사 정보 같은건 여기 안적혀있어도 너가 아는 범위 내에서 대답해도 돼.
+
+사람을 검색해달라던가 찾아달라던가 하는 말에는 수행할 수 없다고 대답해야해. Harper의 후보자 검색 시스템을 이용하고 싶으면 기존의 검색 화면으로 돌아가라고 말하면 됨.
 한국 학교나 회사의 경우는 이름이 영어로 적혀있더라도 한글로 말해줘.
 
 유저가 후보자와 연결하거나 이메일을 달라고 하면 화면 우측 상단의 '연결 요청'버튼을 클릭하라고 해줘.
@@ -155,8 +159,7 @@ export async function POST(req: NextRequest) {
 
   let systemPrompt = "";
   if (body.scope?.type === "candid") {
-    const information = buildSummary(body.doc);
-    logger.log("information ", information);
+    const information = buildLongDoc(body.doc);
     systemPrompt =
       CANDID_SYSTEM_PROMPT +
       `### Candidate Information
@@ -167,8 +170,7 @@ ${information}
     systemPrompt = SYSTEM_PROMPT;
   }
 
-  console.log("LLM이 호출됩니다. ");
-  if(model === "grok-4-fast-reasoning") {
+  if (model === "grok-4-fast-reasoning") {
     const stream = await xaiClient.chat.completions.create({
       model,
       messages: [
@@ -207,7 +209,7 @@ ${information}
     });
   }
 
-  if(model === "gemini-3-flash-preview") {
+  if (model === "gemini-3-flash-preview") {
     const responseStream = await geminiChatStream({ model: "gemini-3-flash-preview", systemPrompt, messages, temperature: 0.7 });
     return new Response(responseStream, {
       headers: {

@@ -1,4 +1,5 @@
-import { ExternalLink } from "lucide-react";
+import { normalizeVenue } from "@/utils/conference_map";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
 import React from "react";
 
 const PublicationBox = ({
@@ -10,25 +11,29 @@ const PublicationBox = ({
   published_at: string;
   link: string;
 }) => {
+  const mapped = normalizeVenue(published_at);
+
   return (
-    <div className="rounded-2xl bg-white/5 p-4">
-      <div className="text-base font-light">{title}</div>
-      <div className="text-xs text-xgray500 mt-1">{published_at}</div>
+    <div className="rounded-sm flex flex-row items-center justify-between px-2 py-2 group cursor-pointer hover:bg-white/5 transition-all duration-200">
+      <div className="flex flex-col items-start justify-start">
+        <div className="text-base font-light">{title}</div>
+        <div className="text-sm text-hgray600 mt-1">{published_at}</div>
+      </div>
       {link ? (
         <a
           href={link}
           target="_blank"
           rel="noreferrer"
-          className="mt-2 inline-flex items-center gap-2 text-sm text-xgray700 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-hgray700 hover:underline"
         >
-          <ExternalLink size={16} />
           Open
+          <ArrowUpRight className="group-hover:translate-x-[1px] group-hover:translate-y-[-1px] transition-all duration-200" size={16} />
         </a>
       ) : (
-        <div className="mt-2 text-sm text-xgray500">No link</div>
+        <div className="text-sm text-xgray500">No link</div>
       )}
     </div>
   );
 };
 
-export default PublicationBox;
+export default React.memo(PublicationBox);

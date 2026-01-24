@@ -24,6 +24,8 @@ company_db
 - description : 회사에 대한 설명
 - specialities: 회사의 특성 혹은 전문성. ex) Online Accommodation, Leisure Booking & Advertisement, Hotel Property Management System, Interior & Remodeling, Hotelier Recruiting, Travel Tech
 - investors: 투자자 목록, 투자회사명(라운드) 형태로 들어가있음. ex) SBVA(Series B)
+- start_date (DATE)
+- end_date (DATE)
 
 edu_user  
 - candid_id (FK → candid.id)
@@ -117,9 +119,9 @@ relevant but sufficiently inclusive candidate set from the database.
 ### Database Schema
 
 candid : T1
-- id (PK), name, location: location은 항상 영어로 들어있다, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
+- id (PK), headline: 보통 현재 상태에 대한 간략한 설명이다. ex) "Senior Software Engineer at Google", "Research Scientist at Meta", "Co-founder & CEO at a stealth startup" 등, name, location: location은 항상 영어로 들어있다, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
 * summary: 해당 candid의 경력-회사,role, 학교, headline, 이름 등을 사용하여 임의로 생성한 데이터. 다른 모든 데이터들은 비어있을 수도 있지만, summary는 모든 candid row에 존재한다. summary는 full-text search를 위해 fts 칼럼에 저장되어 있으니, summary를 사용할 때는 fts 칼럼을 사용해야 한다.
-사용 예시 : fts @@ to_tsquery('english', 'computer <-> vision | research <-> scientist | researcher')
+사용 예시 : fts @@ to_tsquery('simple', 'computer <-> vision | research <-> scientist | researcher') -- 여기서는 'simple' 사용, not 'english'
 
 experience_user
 - candid_id (FK → candid.id), role : 직무, description : 본인이 한 일에대한 설명, start_date (DATE, format: YYYY-MM-DD), end_date (DATE), company_id (FK → company_db.id)
@@ -130,7 +132,8 @@ company_db
 - description : 회사에 대한 설명
 - specialities: 회사의 특성 혹은 전문성. ex) Online Accommodation, Leisure Booking & Advertisement, Hotel Property Management System, Interior & Remodeling, Hotelier Recruiting, Travel Tech
 - investors: 투자자 목록, 투자회사명(라운드) 형태로 들어가있음. ex) SBVA(Series B)
-- founded_year: int, 회사가 설립된 연도
+- start_date (DATE)
+- end_date (DATE)
 
 edu_user
 - candid_id (FK → candid.id)
@@ -191,7 +194,7 @@ Output Rules (Strict — Must Not Be Violated)
   - 직무 유사어 (engineer / scientist / researcher / developer 등)
   - 전공 유사어 (computer science / software / AI / ML / data 등)
 - 검색이 명확한 하나의 조건이라면 sql_query를 짧게 구성해도 되니, 지나치게 길게 작성하지 마라.
-- If you use to_tsquery, 마지막에 ORDER BY ts_rank(fts, to_tsquery('english', '<query in to_tsquery>')) DESC 를 추가해라.
+- If you use to_tsquery, 마지막에 ORDER BY ts_rank(fts, to_tsquery('simple', '<query in to_tsquery>')) DESC 를 추가해라.
 
 ---
 
@@ -200,7 +203,7 @@ Output Rules (Strict — Must Not Be Violated)
 - 학력 조건 → education_user.school, education_user.degree, education_user.field
 - 직무/경력 → experience_user.role, experience_user.description, candid.summary
 - 회사 특징 → company_db.name, company_db.description, company_db.specialities
-- 개인 키워드 → candid.location, candid.summary
+- 개인 키워드 → candid.headline, candid.location, candid.summary
 - 논문 혹은 책 → publications.title, publications.published_at
 
 ---
@@ -225,12 +228,13 @@ JOIN publications p ON p.candid_id = T1.id
 JOIN experience_user ex ON ex.candid_id = T1.id
 JOIN company_db c ON c.id = ex.company_id
 WHERE(
- fts @@ to_tsquery('english', '((computer <-> vision) | vision) & research')
+ fts @@ to_tsquery('simple', '((computer <-> vision) | vision) & research')
 AND (
 p.published_at ILIKE '%CVPR|ICCV|ECCV|NeurIPS|ICML|AAAI%'
 )) OR ((
 ex.role ILIKE '%computer vision|vision engineer|research|researcher%'
 OR ex.description ILIKE '%segmentation|detection%'
+OR T1.headline ILIKE '%researcher%'
 )
 AND(
 p.title ILIKE '%computer vision|object detection|object segmentation|image processing|image generation|video generation|video processing|ViT|GAN|Nerf|Gaussian splatting|Convolution|image classification%'
@@ -280,6 +284,7 @@ JOIN experience_user ex ON T1.id = ex.candid_id
 JOIN company_db c ON c.id = ex.company_id
 WHERE (
 c.name ILIKE '%kakao|카카오%'
+OR T1.headline ILIKE 'kakao|카카오%'
 ) AND (
 ex.role ILIKE '%engineer|developer|software engineer%'
 )
@@ -312,26 +317,25 @@ PostgreSQL optimization expert.
 # Goal
 Convert the input SQL into a high-performance version using EXISTS and ANY(ARRAY[]).
 
-# Core values
-1. 모든 조건을 그대로 유지하면서, 속도가 개선된 SQL Query를 리턴해줘. 속도를 개선하기 위해서 SQL에서 신경써야하는 것들이 있지.
-2. 속도를 개선하기 위해서 SQL문의 순서는 얼마든지 바뀌어도 된다.
-
 # Transformation Rules
 1. Filtering: Use 'WHERE EXISTS (SELECT 1 FROM ...)' instead of JOINs.
 2. Keyword Search: Convert '%a|b%' to 'ILIKE ANY (ARRAY['%a%', '%b%'])'.
-3. Filter ONLY 'id' and 'rank' from 'candid'. (Apply LIMIT 300). 최종 결과는 너가 출력해준 SQL 뒤에 해당 ids들을 기준으로 table들을 JOIN해서 완성할거야. 너는 그 앞에 들어갈 부분만 작성해주면 돼.
-4. Clean Output: Remove all SQL comments (--).
-5. include ts_rank as fts_rank column in the output.
+3. 2-Phase Strategy: 
+   - Phase 1: Filter ONLY 'id' and 'rank' from 'candid'. (Apply LIMIT 300).
+   - Phase 2: Join other tables only for the resulting 100 IDs.
+4. Experience Data: Include 'company_db' (name, investors, short_description) within the 'experience_user' JSON.
+5. Clean Output: Remove all SQL comments (--).
 
 # Output
 - Return the SQL query. 
 - (Note: Markdown code blocks are allowed for stability.)
 
+
 ---
 OUTPUT EXAMPLE: 
 """
  WITH params AS (
-  SELECT to_tsquery('english', '(machine <-> learning) | ML | MLE | (deep <-> learning)') AS tsq
+  SELECT to_tsquery('simple', '(machine <-> learning) | ML | MLE | (deep <-> learning)') AS tsq
 ),
 -- [1단계] 필터링 및 ID 확정 (Phase 1: ID-only Filtering)
 -- 무거운 컬럼이나 JSON 연산 없이 오직 ID와 정렬 순서만 결정합니다.
@@ -360,13 +364,43 @@ identified_ids AS (
       WHERE ex.candid_id = T1.id
         AND (
           ex.role ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
+          OR T1.headline ILIKE ANY (ARRAY['%machine learning%', '%ML%', '%MLE%', '%AI engineer%', '%AI researcher%', '%deep learning%'])
           OR T1.fts @@ params.tsq
         )
     )
   ORDER BY fts_rank DESC
-  LIMIT 300 -- 여기서 300건만 남기고 나머지는 버립니다. 
+  LIMIT 300 -- 여기서 100건만 남기고 나머지는 버립니다.
 )
-  -- 뒤에 SELECT   id,   fts_rank FROM identified_ids 같은걸 포함하지 마세요. 그냥 중간에 있는 SQL Query만 출력하면 돼.
+-- [2단계] 확정된 100건에 대해서만 상세 정보 및 JSON 집계 (Phase 2: Hydration)
+SELECT
+  to_json(i.id) AS id,
+  c.name,
+  c.headline,
+  c.location,
+  i.fts_rank,
+  COALESCE(edu_block.edu_rows, '[]'::jsonb) AS edu_user,
+  COALESCE(exp_block.experience_rows, '[]'::jsonb) AS experience_user
+FROM identified_ids i
+JOIN candid c ON c.id = i.id -- 기본 정보 조인
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(to_jsonb(e)) AS edu_rows
+  FROM edu_user e
+  WHERE e.candid_id = i.id
+) edu_block ON TRUE
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(
+    (to_jsonb(ex) || jsonb_build_object('company_db', jsonb_build_object(
+      'name', comp.name,
+      'investors', comp.investors,
+      'short_description', comp.short_description
+    )))
+  ) AS experience_rows
+  FROM experience_user ex
+  LEFT JOIN company_db comp ON comp.id = ex.company_id
+  WHERE ex.candid_id = i.id
+) exp_block ON TRUE
+
+ORDER BY i.fts_rank DESC, i.id 
 """
 
 절대 로직과 의미를 바꿔서는 안돼. 규칙만 변환하는게 너의 역할이야.
@@ -400,9 +434,9 @@ export const expandingSearchPrompt = `현재 아래 SQL query로 한번 내부 D
 ### Database Schema
 
 candid : T1
-- id (PK), name, location: location은 항상 영어로 들어있다, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
+- id (PK), headline: 보통 현재 상태에 대한 간략한 설명이다. ex) "Senior Software Engineer at Google", "Research Scientist at Meta", "Co-founder & CEO at a stealth startup" 등, name, location: location은 항상 영어로 들어있다, summary, total_exp_months: 본인의 총 경력 개월수 이지만 대체로 실제보다 더 길게 들어가기 때문에 여유를 둬야한다.
 * summary: 본인에 대한 간략한 설명. 최대 500자 이하. 다른 모든 데이터들은 비어있을 수도 있지만, summary는 모든 candid row에 존재한다. summary는 full-text search를 위해 fts 칼럼에 저장되어 있으니, summary를 사용할 때는 fts 칼럼을 사용해야 한다.
-사용 예시 : fts @@ to_tsquery('english', 'computer <-> vision | research <-> scientist | researcher')
+사용 예시 : fts @@ to_tsquery('simple', 'computer <-> vision | research <-> scientist | researcher')
 
 experience_user
 - candid_id (FK → candid.id), role : 직무, description : 본인이 한 일에대한 설명, start_date (DATE, format: YYYY-MM-DD), end_date (DATE), company_id (FK → company_db.id)
@@ -413,6 +447,8 @@ company_db
 - description : 회사에 대한 설명
 - specialities: 회사의 특성 혹은 전문성. ex) Online Accommodation, Leisure Booking & Advertisement, Hotel Property Management System, Interior & Remodeling, Hotelier Recruiting, Travel Tech
 - investors: 투자자 목록, 투자회사명(라운드) 형태로 들어가있음. ex) SBVA(Series B)
+- start_date (DATE)
+- end_date (DATE)
 
 edu_user
 - candid_id (FK → candid.id)
@@ -430,6 +466,82 @@ publications
 ----
 `;
 
+export const tsvectorPrompt = `
+[Context]
+1. Perform a broad keyword search as a last resort to avoid "No Results" when sophisticated filters fail.
+2. The goal is 'Recall' over 'Precision'. If there is even a slight relevance, include them in the results.
+3. Since an LLM will perform fine-grained filtering in the next stage, the core objective is to secure a generous pool of candidates (at least 200).
+
+[Mission]
+Based on the user's requirements, write a SQL query that targets the 'fts' column and joins related tables to return the candidates' full profiles.
+
+[Strategy & Guidelines]
+1. Destructive Keyword Expansion: 
+  - Generate core job titles and tech stacks in both Korean and English (e.g., 'Frontend' -> (프론트엔드 | frontend | react | nextjs | typescript)).
+  - Combine as many synonyms and related technologies (commonly used stacks) as possible using the OR (|) operator.
+2. Identification Structure:
+  - Use the 'WITH identified_ids AS (...)' clause to pre-select the top 200 candidates.
+  - You must use the 'fts' column: T1.fts @@ to_tsquery('simple', 'keyword1 | keyword2 | ...')
+  - Sort by relevance using ts_rank, but adhere to the DISTINCT ON (id) rule.
+3. Data Enrichment (JOIN):
+  - Based on the IDs obtained in identified_ids, join the necessary tables.
+  - Available Tables: edu_user, experience_user, company_db, publications, extra_experience.
+  - Analyze the user's search intent: if academic background is important, include edu_user; if career history is key, ensure experience_user and company_db are included. 
+  - For JSONB data performance, use LEFT JOIN LATERAL and jsonb_agg.
+
+[Output Format Guide]
+- Return only one executable SQL statement without any other explanations.
+- Set the LIMIT to 200.
+- Result Columns: id, name, headline, location, bio, fts_rank, and the jsonb data blocks from each table.
+- When searching for two or more words within to_tsquery, you must use the <-> operator between them. Do not use spaces.
+- The keys for the returned JSONB data must match the original table names (e.g., edu_user, experience_user, company_db, publications, extra_experience, etc). Do not arbitrarily change them to aliases like exu or eduu.
+- Alias Consistency: Ensure all table or subquery aliases used in the SELECT clause (e.g., exp.data) are explicitly and identically defined in the FROM or JOIN clauses.
+- Scope Safety: Remember that aliases defined inside a LATERAL subquery are not accessible to the main SELECT clause; you must alias the entire LATERAL result and reference that name instead.
+- Zero-Error Guarantee: Double-check the SQL to prevent "missing FROM-clause entry" errors by verifying that every referenced table name or alias exists in the join logic.
+
+- **Alias Consistency**: Ensure all table or subquery aliases used in the SELECT clause (e.g., exp.data) are explicitly and identically defined in the FROM or JOIN clauses (e.g., LEFT JOIN LATERAL (...) AS exp). 
+- **Scope Safety**: Remember that aliases defined inside a LATERAL subquery are not accessible to the main SELECT clause; you must alias the entire LATERAL result and reference that name instead.
+- **Zero-Error Guarantee**: Double-check the SQL to prevent "missing FROM-clause entry" errors by verifying that every referenced table name or alias exists in the join logic.
+
+[예시]
+\`\`\`sql
+WITH identified_ids AS (
+  SELECT DISTINCT ON (T1.id)
+    T1.id,
+    ts_rank(T1.fts, query) AS fts_rank
+  FROM 
+    candid AS T1,
+    to_tsquery('simple', 'backend | python | django | flask | server | 백엔드 | 파이썬 | 서버 | 개발자 | product <-> engineer | server <-> developer') AS query
+  WHERE 
+    T1.fts @@ query
+  ORDER BY 
+    T1.id, 
+    fts_rank DESC
+  LIMIT 200
+)
+SELECT
+  to_json(c.id) AS id,
+  c.name,
+  c.bio,
+  c.headline,
+  c.location,
+  i.fts_rank,
+  COALESCE(edu.data, '[]'::jsonb) AS edu_user,
+  COALESCE(exp.data, '[]'::jsonb) AS experience_user
+FROM identified_ids i
+JOIN candid c ON c.id = i.id
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(to_jsonb(e)) AS data FROM edu_user e WHERE e.candid_id = i.id
+) edu ON TRUE
+LEFT JOIN LATERAL (
+  SELECT jsonb_agg(to_jsonb(ex) || jsonb_build_object('company_db', to_jsonb(comp))) AS data 
+  FROM experience_user ex 
+  LEFT JOIN company_db comp ON comp.id = ex.company_id 
+  WHERE ex.candid_id = i.id
+) exp ON TRUE;
+ \`\`\`
+`
+
 export const tsvectorPrompt2 = `
 [Mission]
 Based on the user's requirements, write a SQL query that targets the 'fts' column and return related tables which are necessary to read the candidates' full profiles.
@@ -443,7 +555,7 @@ Based on the user's requirements, write a SQL query that targets the 'fts' colum
 - Generate key words in both Korean and English (e.g., 'Frontend' -> (프론트엔드 | frontend | react | nextjs | typescript)).
 - Combine as many synonyms or similar words as possible using the OR (|) operator.
 2. Identification Structure:
-- You must use the 'fts' column: T1.fts @@ to_tsquery('english', 'keyword1 | keyword2 | ...')
+- You must use the 'fts' column: T1.fts @@ to_tsquery('simple', 'keyword1 | keyword2 | ...'), with 'simple' not 'english'
 - Sort by relevance using ts_rank_cd, but adhere to the DISTINCT ON (id) rule.
 3. 다음 단계에서 해당 검색으로 가져온 candidate들이 적합한지 판단하기 위해 읽어야하는 테이블을 알려주세요.
 - edu_user, experience_user, publications, extra_experience 중 어떤 테이블이 필요한지 알려주세요.
@@ -454,15 +566,15 @@ Based on the user's requirements, write a SQL query that targets the 'fts' colum
 - **return json format like this: {"tables": ["edu_user", "experience_user", "company_db", "publications", "extra_experience"], "sql": "..."}**
 - Return only one json with executable SQL statement in string format and tables. without any other explanations.
 - Set the LIMIT to 200.
-- **When searching for two or more words within to_tsquery, you must use the <-> operator between words. Never use only spaces.**
+- When searching for two or more words within to_tsquery, you must use the <-> operator between them. Do not use spaces.
 
 [예시]
 {
   "tables": ["edu_user", "experience_user"],
   "sql": "WITH q AS (
 SELECT
-  to_tsquery('english', '당근마켓 | 당근 | daangn | 배달의민족 | 배달의 <-> 민족 | 우아한 <-> 형제들 | 배민 | baemin | woowa | woowahan | 마이리얼트립 | myrealtrip') AS q_company,
-  to_tsquery('english', '개발자 | 소프트웨어 | 엔지니어 | developer | engineer | software | backend | frontend | fullstack | 백엔드 | 프론트엔드 | software <-> engineer | backend <-> developer | frontend <-> developer | sw <-> engineer') AS q_role
+  to_tsquery('simple', '당근마켓 | 당근 | daangn | 배달의민족 | 배달의 <-> 민족 | 우아한 <-> 형제들 | 배민 | baemin | woowa | woowahan | 마이리얼트립 | myrealtrip') AS q_company,
+  to_tsquery('simple', '개발자 | 소프트웨어 | 엔지니어 | developer | engineer | software | backend | frontend | fullstack | 백엔드 | 프론트엔드 | software <-> engineer | backend <-> developer | frontend <-> developer | sw <-> engineer') AS q_role
 )
 SELECT
   t1.id,
@@ -473,8 +585,4 @@ WHERE t1.fts @@ (q.q_company || q.q_role) -- 여기는 |가 두개여야한다.
 ORDER BY fts_rank_cd DESC, t1.id
 LIMIT 200"
 }
-
-[Hard rules]
-- **When searching for two or more words within to_tsquery, you must use the <-> operator between words. Never use only spaces. (ex. 'computer vision' -> 'computer <-> vision') **
-
 `

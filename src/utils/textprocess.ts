@@ -204,34 +204,135 @@ export function highlightDifferences2(originalText: string, newText: string) {
   return result.join(" ");
 }
 
-export const buildSummary = (doc: any) => {
+export const buildLongDoc = (doc: any) => {
+  const companies: string[] = []
   const exps = doc.experience_user?.map((exp: any, idx: number) => {
-    let expText = `\n${idx + 1}. Role: ${exp.role}, Company: ${
-      exp.company_db.name
-    }`;
+    let expText = `\n${idx + 1}. Role: ${exp.role}, Company: ${exp.company_db.name}`;
     if (exp.start_date) {
-      expText += `, Start Date of the experience: ${exp.start_date}`;
+      expText += `, Started at: ${exp.start_date}`;
     }
     if (exp.end_date) {
-      expText += `, End Date of the experience: ${exp.end_date ?? "Present"}`;
+      expText += exp.end_date ? `, Ended at : ${exp.end_date}` : ", Still working";
     }
     if (exp.description) {
-      expText += `, Description of the experience: ${exp.description}`;
-    }
-    if (exp.company_db.investors) {
-      expText += `, Investors of the company: ${exp.company_db.investors}`;
-    }
-    if (exp.company_db.short_description) {
-      expText += `, Short Description about the company: ${exp.company_db.short_description}`;
+      expText += `\nDescription of the experience: ${exp.description}`;
     }
 
+    if (!companies.includes(exp.company_db.name)) {
+      companies.push(exp.company_db.name);
+      if (exp.company_db) {
+        expText += `\n==== Company Info: ${exp.company_db.name} ====`;
+      }
+      if (exp.company_db.short_description) {
+        expText += `\nShort description: ${exp.company_db.short_description}`;
+      }
+      if (exp.company_db.investors) {
+        expText += `\nInvestors: ${exp.company_db.investors}`;
+      }
+      if (exp.company_db.specialities) {
+        expText += `\nSpecialities: ${exp.company_db.specialities}`;
+      }
+      if (exp.company_db.founded_year && exp.company_db.founded_year > 0) {
+        expText += `\nFounded at: ${exp.company_db.founded_year}`;
+      }
+      if (exp.employee_count_range) {
+        expText += `\nEmployee count range: ${exp.employee_count_range["start"]}명 이상`;
+        if (exp.employee_count_range["end"]) {
+          expText += `, ${exp.employee_count_range["end"]}명 이하`;
+        }
+      }
+    }
     return expText;
   });
 
   const educations = doc.edu_user?.map((edu: any, idx: number) => {
-    let eduText = `${idx + 1}. School: ${edu.school}, Degree: ${
-      edu.degree
-    }, Field: ${edu.field}`;
+    let eduText = `${idx + 1}. School: ${edu.school}, Degree: ${edu.degree
+      }, Field: ${edu.field}`;
+    if (edu.start_date) {
+      eduText += `, Start Date: ${edu.start_date}`;
+    }
+    if (edu.end_date) {
+      eduText += `, End Date: ${edu.end_date ?? "Present"}`;
+    }
+    return eduText;
+  });
+
+  const publications = doc.publications
+    ?.slice(0, 60)
+    .map((pub: any, idx: number) => {
+      return `${idx + 1}. Title: ${pub.title}, Published At: ${pub.published_at}`;
+    });
+
+  const awards = doc.extra_experience
+    ?.slice(0, 20)
+    .map((award: any, idx: number) => {
+      return `${idx + 1}. Title: ${award.title}, Awarded At: ${award.awarded_at
+        }`;
+    });
+
+  const bio = doc.bio ?? "";
+
+  let docSummary = `Name: ${doc.name}`;
+  if (doc.location) {
+    docSummary += `\nLocation: ${doc.location}`;
+  }
+  if (doc.headline) {
+    docSummary += `\nHeadline: ${doc.headline}`;
+  }
+  if (bio) {
+    docSummary += `\nBio: ${bio}`;
+  }
+  if (exps) {
+    docSummary += `\nExperiences: ${exps}`;
+  }
+  if (educations) {
+    docSummary += `\nEducations: ${educations}`;
+  }
+  if (publications) {
+    docSummary += `\nPublications: ${publications}`;
+  }
+  if (awards) {
+    docSummary += `\nAwards: ${awards}`;
+  }
+
+  return docSummary;
+}
+
+export const buildSummary = (doc: any) => {
+  const exps = doc.experience_user?.map((exp: any, idx: number) => {
+    let expText = `\n${idx + 1}. Role: ${exp.role}, Company: ${exp.company_db.name
+      }`;
+    if (exp.start_date) {
+      expText += `, Start at: ${exp.start_date}`;
+    }
+    if (exp.end_date) {
+      expText += exp.end_date ? `, Ended at : ${exp.end_date}` : ", Still working";
+    }
+    if (exp.description) {
+      expText += `\nDescription of the experience: ${exp.description}`;
+    }
+
+    if (exp.company_db) {
+      expText += `\n==== company info ====`;
+    }
+    if (exp.company_db.short_description) {
+      expText += `\nShort description about the company: ${exp.company_db.short_description}`;
+    }
+    if (exp.company_db.investors) {
+      expText += `\nInvestors of the company: ${exp.company_db.investors}`;
+    }
+    if (exp.company_db.specialities) {
+      expText += `\nSpecialities of the company: ${exp.company_db.specialities}`;
+    }
+    if (exp.company_db.founded_year && exp.company_db.founded_year > 0) {
+      expText += `\nFounded at: ${exp.company_db.founded_year}`;
+    }
+    return expText;
+  });
+
+  const educations = doc.edu_user?.map((edu: any, idx: number) => {
+    let eduText = `${idx + 1}. School: ${edu.school}, Degree: ${edu.degree
+      }, Field: ${edu.field}`;
     if (edu.start_date) {
       eduText += `, Start Date: ${edu.start_date}`;
     }
@@ -244,10 +345,17 @@ export const buildSummary = (doc: any) => {
   const publications = doc.publications
     ?.slice(0, 20)
     .map((pub: any, idx: number) => {
-      return `${idx + 1}. Title: ${pub.title}, Published At: ${
-        pub.published_at
-      }`;
+      return `${idx + 1}. Title: ${pub.title}, Published At: ${pub.published_at
+        }`;
     });
+
+  // const awards = doc.awards
+  //   ?.slice(0, 20)
+  //   .map((award: any, idx: number) => {
+  //     return `${idx + 1}. Title: ${award.title}, Awarded At: ${
+  //       award.awarded_at
+  //     }`;
+  //   });
 
   const bio = doc.bio ?? "";
 
@@ -256,7 +364,7 @@ export const buildSummary = (doc: any) => {
     docSummary += `\nLocation: ${doc.location}`;
   }
   if (bio) {
-    docSummary += `\nAbout: ${bio}`;
+    docSummary += `\nBio: ${bio}`;
   }
   if (doc.headline) {
     docSummary += `\nHeadline: ${doc.headline}`;
@@ -373,7 +481,6 @@ export function fixUnbalancedParens(sql: string) {
       }
 
       if (!inD && c === "'" && !inLine && !inBlock) {
-        // SQL 표준: '' escape
         if (inS && n === "'") {
           i++;
           continue;
@@ -483,8 +590,8 @@ export function ensureGroupBy(sql: string, groupByClause: string): string {
     insertAt === -1
       ? `${s}\n${groupByClause}`
       : `${s.slice(0, insertAt).trimEnd()}\n${groupByClause}\n${s
-          .slice(insertAt)
-          .trimStart()}`;
+        .slice(insertAt)
+        .trimStart()}`;
 
   const replaced = out.replace(
     /\bto_jsonb\s*\(\s*c\s*\)/g,
@@ -501,3 +608,21 @@ export function ensureGroupBy(sql: string, groupByClause: string): string {
 export const replaceName = (text: string, name: string) => {
   return text.replace(/<name>/g, name);
 };
+
+export const sqlRefine = (sql: string, ensure: boolean = false) => {
+  let out = sql.trim()?.replace(/^```\w*\s*/, "")?.replace(/\s*```$/, "")?.trim().trim().replace(/\n/g, " ").trim();
+  if (ensure) {
+    out = ensureGroupBy(out as string, "");
+    const final = `
+  ${out}
+  SELECT
+    to_json(c.id) AS id,
+    c.name,
+    i.fts_rank
+  FROM identified_ids i
+  JOIN candid c ON c.id = i.id
+  ORDER BY i.fts_rank DESC`
+    return final;
+  }
+  return out as string;
+}

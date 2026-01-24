@@ -28,7 +28,7 @@ export const CriteriaItem = ({
   onRemove,
   onConfirm,
   startEditing,
-  placeholder = "Add criterion...",
+  placeholder = "Add criteria...",
   autoRemoveIfEmpty,
   onCancel,
 }: CriteriaItemProps) => {
@@ -90,10 +90,9 @@ export const CriteriaItem = ({
         if (!isEditing) setIsEditing(true);
       }}
       className={`relative flex items-center gap-2 rounded-2xl text-[13px] font-light px-3 pt-2 group cursor-pointer hover:bg-white/5 transition-all duration-200
-        ${
-          isEditing
-            ? "border border-white/5 bg-white/5 pb-4"
-            : "border border-white/0 pb-2"
+        ${isEditing
+          ? "border border-white/5 bg-white/5 pb-4"
+          : "border border-white/0 pb-2"
         }
         `}
     >
@@ -139,12 +138,12 @@ export const CriteriaItem = ({
             }}
             className={`absolute bottom-1 right-2 text-xs opacity-100 transition-all duration-200
               ${
-                // ✅ Add-mode should be enabled when there's text
-                autoRemoveIfEmpty
-                  ? draft.trim()
-                    ? "text-accenta1"
-                    : "text-hgray600"
-                  : isChanged
+              // ✅ Add-mode should be enabled when there's text
+              autoRemoveIfEmpty
+                ? draft.trim()
+                  ? "text-accenta1"
+                  : "text-hgray600"
+                : isChanged
                   ? "text-accenta1"
                   : "text-hgray600"
               }
@@ -254,7 +253,7 @@ function CriteriaCard({
               criteria=""
               startEditing
               autoRemoveIfEmpty
-              placeholder="Add criterion..."
+              placeholder="Add criteria..."
               onRemove={cancelAdd}
               onCancel={cancelAdd}
               onConfirm={(next) => commitAdd(next)}
@@ -272,14 +271,13 @@ function CriteriaCard({
           className="rounded-2xl font-light hover:bg-white/5 pl-2 pr-3 py-2 text-sm text-hgray900 flex items-center gap-1 mt-4 transition-all duration-200"
         >
           <Plus size={16} />
-          Add Criterion
+          Add Criteria
         </button>
 
         <button
           type="button"
-          className={`mt-4 w-full rounded-full bg-accenta1 text-black py-2.5 text-sm hover:opacity-90 disabled:opacity-50 ${
-            disabled ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
+          className={`mt-4 w-full rounded-full bg-accenta1 text-black py-2.5 text-sm hover:opacity-90 disabled:opacity-50 ${disabled ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
           disabled={disabled}
           // disabled={!draft.ready || disabled}
           onClick={() => onConfirm?.(draft)}
@@ -363,7 +361,7 @@ export default function ChatMessageList({
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto pr-2 space-y-8">
+    <div className="flex-1 pr-2 space-y-8">
       {messages.length === 0 && (
         <div className="text-sm text-hgray600">
           검색 요청을 입력하면 대화가 시작됩니다.
@@ -379,9 +377,8 @@ export default function ChatMessageList({
         return (
           <div className="flex flex-col gap-1" key={`${m.role}-${idx}`}>
             <div
-              className={`text-xs text-ngray600 ${
-                isUser ? "text-right" : "text-left"
-              }`}
+              className={`text-xs text-ngray600 ${isUser ? "text-right" : "text-left"
+                }`}
             >
               {isUser ? (
                 "me"
@@ -411,7 +408,7 @@ export default function ChatMessageList({
                       <div
                         key={`text-${idx}-${si}`}
                         className="whitespace-pre-wrap break-words"
-                        // dangerouslySetInnerHTML={{ __html: s.content }}
+                      // dangerouslySetInnerHTML={{ __html: s.content }}
                       >
                         {s.content.replace(/<br\s*\/?>/g, "\n")}
                         {!isUser &&
@@ -442,7 +439,7 @@ export default function ChatMessageList({
                             onConfirmCriteriaCard?.(Number(m.id))
                           }
                           disabled={false}
-                          // disabled={idx < lastBlockMessageIdx}
+                        // disabled={idx < lastBlockMessageIdx}
                         />
                       );
                     }

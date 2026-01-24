@@ -7,7 +7,14 @@ export const generateSummary = async (
   criteria: string[],
   raw_input_text: string
 ) => {
-  const information = buildSummary(doc);
+  let information = "";
+  try{
+    information = buildSummary(doc);
+    // logger.log("information for generating summary:", information);
+  } catch (e) {
+    logger.log("error for generating summary:", e);
+    return "";
+  }
 
   const systemPrompt = `You are a helpful assistant. Given a search query and criteria, generate a relevance-focused summary explaining whether this candidate matches the query or not.
 Highlight especially important skills, experiences, or keywords by wrapping them with <strong> tags. 영어 단어가 들어가는건 상관없는데, 한글로 대답해줘.
@@ -16,6 +23,8 @@ List of string의 형태로 criteria의 순서에 맞게, 검색된 사람이 �
   const userPrompt = `
 ## 필수 : 출력은 criteria와 길이가 같고, 순서도 일치하는 List of string 이어야 한다.
 리스트의 각 string은 항상 만족/모호/불만족 중 하나로 시작하고 뒤에 이유 혹은 추측을 붙여줘.
+
+- 정보 : 미국 M7은 magnificient7 회사들을 의미한다. 
 
 ## 예시
 search query: 생략

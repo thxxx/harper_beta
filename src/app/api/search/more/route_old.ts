@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { deduplicateAndScore, ScoredCandidate } from "../utils";
 import { updateRunStatus } from "../utils";
-import { parseQueryWithLLM, searchDatabase } from "../parse";
+import { makeSqlQuery, searchDatabase } from "../parse";
 import { logger } from "@/utils/logger";
 
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   let parsed_query = q.query;
   let criteria = q.criteria;
 
-  parsed_query = await parseQueryWithLLM(
+  parsed_query = await makeSqlQuery(
     q.raw_input_text,
     criteria,
     `

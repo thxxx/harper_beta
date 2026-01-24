@@ -1,8 +1,9 @@
 // components/result/ResultHeader.tsx
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Clock, Loader2, Tags, ThumbsDown, ThumbsUp } from "lucide-react";
 import { dateToFormatLong } from "@/utils/textprocess";
 import { useRunDetail } from "@/hooks/useRunDetail";
+import { supabase } from "@/lib/supabase";
 
 type Props = {
   queryItem: any;
@@ -22,6 +23,15 @@ export default function ResultHeader({
   const statusMessage = useMemo(() => {
     return q.data?.status;
   }, [q.data]);
+
+  // implement like (= runs.feedback = 1)
+  const like = useCallback(() => {
+  }, []);
+
+  // implement dislike (= runs.feedback = -1)
+  const dislike = useCallback(() => {
+
+  }, []);
 
   if (!queryItem) return null;
 

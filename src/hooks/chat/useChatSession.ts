@@ -166,28 +166,46 @@ export function useChatSessionDB(args: {
 
       try {
         const baseDbArgs = scopeToDbArgs(scope!);
+        const existingUserMsg =
+          content != null
+            ? [...messagesRef.current]
+              .reverse()
+              .find(
+                (m) =>
+                  m.role === "user" &&
+                  ((m as any).rawContent ?? m.content ?? "") === trimmed
+              )
+            : null;
 
-        // 1) insert user message
-        const userMsg = await insertMessage({
-          ...baseDbArgs,
-          userId: userId!,
-          role: "user",
-          content: trimmed,
-        });
+        let userMsg: ChatMessage;
+        let appendToHistory = false;
 
-        // UI 반영: content를 직접 호출했을 때도 userMsg는 화면에 보여줘야 자연스러움
-        // (원래 코드는 content 인자로 호출하면 화면에 안 붙는 케이스가 생김)
-        if (!content) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              ...userMsg,
-              rawContent: trimmed,
-              segments: [{ type: "text", content: trimmed }],
-            },
-          ]);
+        if (!existingUserMsg) {
+          // 1) insert user message
+          userMsg = await insertMessage({
+            ...baseDbArgs,
+            userId: userId!,
+            role: "user",
+            content: trimmed,
+          });
+          appendToHistory = true;
+
+          // UI 반영: content를 직접 호출했을 때도 userMsg는 화면에 보여줘야 자연스러움
+          // (원래 코드는 content 인자로 호출하면 화면에 안 붙는 케이스가 생김)
+          if (!content) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                ...userMsg,
+                rawContent: trimmed,
+                segments: [{ type: "text", content: trimmed }],
+              },
+            ]);
+          }
+          if (!content) setInput("");
+        } else {
+          userMsg = existingUserMsg as ChatMessage;
         }
-        if (!content) setInput("");
 
         // 2) assistant placeholder insert (DB row 확보)
         const assistantPlaceholder = await insertMessage({
@@ -204,7 +222,11 @@ export function useChatSessionDB(args: {
         abortRef.current = controller;
 
         // ✅ 최신 messages를 기준으로 모델 대화 구성
-        const historyForModel = [...messagesRef.current, userMsg].map((m) => ({
+        const historyForModel = (
+          appendToHistory
+            ? [...messagesRef.current, userMsg]
+            : [...messagesRef.current]
+        ).map((m) => ({
           role: m.role,
           content: (m as any).rawContent ?? m.content ?? "",
         }));

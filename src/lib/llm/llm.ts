@@ -94,6 +94,31 @@ const gemini = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+export async function openaiInference({
+  model,
+  systemPrompt,
+  userPrompt,
+  temperature
+}: {
+  model: "gpt-4.1-mini" | "gpt-4.1-nano" | "gpt-5-mini" | "gpt-5.2";
+  systemPrompt: string;
+  userPrompt: string;
+  temperature: number;
+}): Promise<string> {
+  console.log("openaiInference", model, temperature);
+
+  const response = await client.chat.completions.create({
+    model: model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: temperature,
+  });
+
+  return response?.choices?.[0]?.message?.content ?? "";
+}
+
 export async function geminiInference(
   model: "gemini-3-flash-preview",
   systemPrompt: string,
@@ -123,12 +148,26 @@ export async function geminiInference(
 
     logger.log("[GEMINI] cost ", cost * 1450, "원");
 
-    return response?.text ?? "";
+    const text = response?.text?.trim()?.replace(/^```\w*\s*/, "")?.replace(/\s*```$/, "")?.trim() ?? "";
+    if(text.length === 0) {
+      throw new Error("Gemini inference returned empty text");
+    }
+    return text;
   } catch (e) {
-    await supabase.from("landing_logs").insert({
-      type: JSON.stringify(e),
+    logger.log("🚨 geminiInference error:", e, "\nSo, use xaiInference instead.");
+    // await supabase.from("landing_logs").insert({
+    //   type: JSON.stringify(e),
+    // });
+    // const response = await xaiInference("grok-4-fast-reasoning", systemPrompt, userPrompt, temperature, 1, false, "geminiInferenceError");
+    // return response;
+
+    const response  = await openaiInference({
+      model: "gpt-5.2",
+      systemPrompt: systemPrompt,
+      userPrompt: userPrompt,
+      temperature: temperature,
     });
-    throw e;
+    return response;
   }
 }
 

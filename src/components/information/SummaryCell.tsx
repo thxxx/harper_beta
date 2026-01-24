@@ -1,11 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Check, Dot, X, GraduationCap, BriefcaseBusiness } from "lucide-react";
-
-export enum SummaryScore {
-  SATISFIED = "만족",
-  AMBIGUOUS = "모호",
-  UNSATISFIED = "불만족",
-}
+import { Check, Dot, X } from "lucide-react";
+import { SummaryScore } from "@/types/type";
 
 export type SynthItem = { score: string; reason: string };
 

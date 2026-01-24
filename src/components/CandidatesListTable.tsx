@@ -91,7 +91,7 @@ function CandidateRow({
             >
               <div
                 className={
-                  isMyList ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  isMyList || c.connection?.map((con: any) => con.typed).includes(0) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                 }
               >
                 <Bookmarkbutton
@@ -127,11 +127,10 @@ function CandidateRow({
             title={
               latestEdu?.school ? koreaUniversityEnToKo(latestEdu.school) : "-"
             }
-            description={`${
-              latestEdu?.field_of_study
-                ? majorEnToKo(latestEdu.field_of_study)
-                : ""
-            }
+            description={`${latestEdu?.field_of_study
+              ? majorEnToKo(latestEdu.field_of_study)
+              : ""
+              }
                 ${latestEdu?.field_of_study && latestEdu?.degree ? " • " : ""}
                 ${latestEdu?.degree ? degreeEnToKo(latestEdu.degree) : ""}`}
           />
@@ -157,7 +156,7 @@ const Cell = ({
           {title}
         </div>
       </div>
-      <div className="text-[13px] text-hgray600 truncate mt-0.5">
+      <div className="text-[13px] text-hgray600 truncate mt-0.5 max-w-full">
         {description}
       </div>
     </div>
@@ -178,9 +177,8 @@ export const RoleBox = ({
   return (
     <div className="flex flex-col items-start gap-0 text-sm col-span-4">
       <Tooltips
-        text={`${startDate ? startDate : ""} ${startDate ? " - " : ""} ${
-          endDate && endDate
-        } ${!endDate && startDate && "현재"}`}
+        text={`${startDate ? startDate : ""} ${startDate ? " - " : ""} ${endDate && endDate
+          } ${!endDate && startDate && "현재"}`}
       >
         <div className="flex flex-row items-start justify-between w-full pr-8">
           <div className="flex flex-row items-start justify-start gap-x-2 min-w-0 relative">

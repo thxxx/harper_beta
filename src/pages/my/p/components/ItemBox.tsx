@@ -9,7 +9,7 @@ import { ExperienceCal } from "../CandidateProfile";
 const ItemBox = ({
   title,
   name,
-  isEdu = false,
+  typed = "experience",
   months,
   start_date,
   end_date,
@@ -20,7 +20,7 @@ const ItemBox = ({
 }: {
   title: string;
   name: string;
-  isEdu?: boolean;
+  typed?: "edu" | "experience" | "award";
   start_date: string;
   end_date: string;
   link: string;
@@ -31,6 +31,8 @@ const ItemBox = ({
 }) => {
   const startDate = useMemo(() => dateToFormat(start_date), [start_date]);
   const endDate = useMemo(() => dateToFormat(end_date), [end_date]);
+  const isEdu = typed === "edu";
+
   const logoUrl = useMemo(() => {
     if (isEdu) {
       return getSchoolLogo(link);
@@ -108,8 +110,8 @@ const ItemBox = ({
               {startDate ? (
                 <div className="flex flex-row items-center gap-2">
                   <span>{startDate}</span>
-                  <span>⎻</span>
-                  {endDate === "" ? (
+                  {typed !== "award" && <span>⎻</span>}
+                  {endDate === "" && typed !== "award" ? (
                     <span className="text-accenta1">현재</span>
                   ) : (
                     <span>{endDate}</span>
@@ -132,9 +134,8 @@ const ItemBox = ({
 
         {hasDescription && !isEdu ? (
           <div
-            className={`flex flex-row gap-2 shrink-0 absolute right-0 top-0 w-24 h-full items-center justify-center hover:bg-hgray1000/5 transition-all cursor-pointer ${
-              isOpen ? "rounded-tr-xl" : "rounded-r-xl"
-            }`}
+            className={`flex flex-row gap-2 shrink-0 absolute right-0 top-0 w-24 h-full items-center justify-center hover:bg-hgray1000/5 transition-all cursor-pointer ${isOpen ? "rounded-tr-xl" : "rounded-r-xl"
+              }`}
             onClick={toggleDesc}
           >
             <button
@@ -146,9 +147,8 @@ const ItemBox = ({
               <ChevronDown
                 size={24}
                 strokeWidth={1.3}
-                className={`transition-transform duration-200 text-hgray1000 ${
-                  isOpen ? "rotate-180" : "rotate-0"
-                }`}
+                className={`transition-transform duration-200 text-hgray1000 ${isOpen ? "rotate-180" : "rotate-0"
+                  }`}
               />
             </button>
           </div>

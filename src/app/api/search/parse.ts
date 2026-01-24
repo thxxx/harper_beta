@@ -1,26 +1,27 @@
 import { logger } from "@/utils/logger";
 import { geminiInference, xaiInference } from "@/lib/llm/llm";
-import { ensureGroupBy } from "@/utils/textprocess";
-import { sqlExistsPrompt, sqlPrompt2, timeoutHandlePrompt } from "@/lib/prompt";
+import { ensureGroupBy, sqlRefine } from "@/utils/textprocess";
+import { expandingSearchPrompt, sqlExistsPrompt, firstSqlPrompt, timeoutHandlePrompt, tsvectorPrompt2 } from "@/lib/prompt";
 import { supabase } from "@/lib/supabase";
-import { updateRunStatus } from "./utils";
+import { deduplicateCandidates, updateQuery, updateRunStatus } from "./utils";
 import { ScoredCandidate } from "./utils";
 import { mapWithConcurrency } from "./utils";
 import { generateSummary } from "./criteria_summarize/utils";
 import { sumScore } from "./utils";
 import { ko } from "@/lang/ko";
 import { ThinkingLevel } from "@google/genai";
+import { rpc_set_timeout_and_execute_raw_sql_via_runs } from "./worker";
 
-export async function parseQueryWithLLM(
+export async function makeSqlQuery(
   queryText: string,
   criteria: string[],
   extraInfo: string = ""
 ): Promise<string | any> {
-  logger.log("🔥 시작 parseQueryWithLLM: ", queryText, criteria, extraInfo);
+  logger.log("🔥 시작 makeSqlQuery: ", queryText, criteria, extraInfo);
 
   try {
     let prompt = `
-  ${sqlPrompt2}
+  ${firstSqlPrompt}
   Natural Language Query: ${queryText}
   Criteria: ${criteria}
   `.trim();
@@ -28,230 +29,56 @@ export async function parseQueryWithLLM(
     if (extraInfo) prompt += `Extra Info: ${extraInfo}`;
 
     const start1 = performance.now();
-    let outText = "";
-    let count = 0;
-    while (outText.trim().length === 0 && count < 2) {
-      if (count > 1) {
-        const end = performance.now();
-        logger.log(`\n\n 🍊 재시도 합니다 재시도!! [${end - start1}ms] \n\n`);
-      }
-      outText = (await geminiInference(
-        "gemini-3-flash-preview",
-        "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
-        prompt,
-        0.6,
-        ThinkingLevel.MEDIUM
-      )) as string;
-      count += 1;
-    }
-    const end1 = performance.now();
-    const cleanText = (outText as string).trim().replace(/\n/g, " ").trim();
-    logger.log(`🔥 First query [${end1 - start1}ms] : `, cleanText);
+    let outText = (await geminiInference(
+      "gemini-3-flash-preview",
+      "You are a head hunting expertand SQL Query parser. Your input is a natural-language request describing criteria for searching job candidates.",
+      prompt,
+      0.4,
+      ThinkingLevel.LOW
+    )) as string;
+    outText = sqlRefine(outText);
+    logger.log(`🔥 First query [${performance.now() - start1}ms] : `, outText);
 
     const sqlQuery = `
-  SELECT DISTINCT ON (T1.id)
-    to_json(T1.id) AS id,
-    T1.name,
-    T1.headline,
-    T1.location
-  FROM 
-    candid AS T1
-  ${cleanText}
-  `;
+SELECT DISTINCT ON (T1.id)
+  to_json(T1.id) AS id,
+  T1.name,
+  T1.headline,
+  T1.location
+FROM 
+  candid AS T1
+${outText}
+`;
     const sqlQueryWithGroupBy = ensureGroupBy(sqlQuery, "");
 
     const refinePrompt =
       sqlExistsPrompt + `\n Input SQL Query: """${sqlQueryWithGroupBy}"""`;
 
     const start = performance.now();
-    let outText2 = "";
-    count = 0;
-    while (outText2.trim().length === 0 && count < 2) {
-      if (count > 1) {
-        const end = performance.now();
-        logger.log(`\n\n 🍊 재시도 합니다 재시도!! [${end - start}ms] \n\n`);
-      }
-      outText2 = (await geminiInference(
-        "gemini-3-flash-preview",
-        "You are a SQL Query refinement expert, for stable and fast search.",
-        refinePrompt,
-        0.7,
-        ThinkingLevel.THINKING_LEVEL_UNSPECIFIED
-      )) as string;
-      count += 1;
-    }
-    const end = performance.now();
-    const cleanedResponse2 = (outText2 as string)
-      .trim()
-      .replace(/\n/g, " ")
-      .trim();
-    const sqlQueryWithGroupBy2 = ensureGroupBy(cleanedResponse2, "");
-    logger.log(`🥬 Second query [${end - start}ms] : `, sqlQueryWithGroupBy2);
+    const outText2 = (await geminiInference(
+      "gemini-3-flash-preview",
+      "You are a SQL Query refinement expert, for stable and fast search.",
+      refinePrompt,
+      0.4,
+      ThinkingLevel.LOW
+    )) as string;
 
-    return sqlQueryWithGroupBy2;
+    const final = sqlRefine(outText2, true);
+    logger.log(`🥬 Final query [${performance.now() - start}ms] : `, final, "\n");
+
+    return final;
   } catch (e) {
-    logger.log("parseQueryWithLLM error", e);
-    return e;
+    logger.log("makeSqlQuery error", e);
+    throw e;
   }
 }
 
-export type RunRow = {
-  id: string;
-  query_id: string;
-  criteria?: any | null; // jsonb
-  sql_query?: string | null;
-  query_text?: string | null;
-};
-
-/**
- * Search the database and return scored candidates.
- * - Stores synthesized summaries in bulk.
- * - Does NOT write runs_pages here; caller decides how to chunk/cache.
- */
-export const searchDatabase = async ({
-  query_text,
-  criteria,
-  pageIdx,
-  run,
-  sql_query,
-  limit = 50,
-  offset = 0,
-  review_count = 50
-}: {
-  query_text: string;
-  criteria: string[];
-  pageIdx: number;
-  run: RunRow;
-  sql_query: string;
-  limit?: number;
-  offset?: number;
-  review_count?: number;
-}) => {
-  await updateRunStatus(run.id, ko.loading.searching_candidates);
-
-  const start_time = performance.now();
-
-  let data: any[] | null = [];
-  let error: any;
-
-  const { data: data1, error: error1 } = await supabase.rpc(
-    "set_timeout_and_execute_raw_sql",
-    {
-      sql_query,
-      page_idx: pageIdx,
-      limit_num: limit,
-      offset_num: offset,
-    }
-  );
-
-  data = data1;
-  error = error1;
-
-  logger.log("time for fetching data:", performance.now() - start_time, error);
-
-  // Retry once on timeout
-  if (error && String(error.message || "").includes("timeout")) {
-    await updateRunStatus(run.id, ko.loading.searching_again);
-
-    const { data: data2, error: error2 } = await supabase.rpc(
-      "set_timeout_and_execute_raw_sql",
-      {
-        sql_query,
-        page_idx: pageIdx,
-        limit_num: limit,
-        offset_num: offset,
-      }
-    );
-
-    data = data2;
-    error = error2;
-  }
-
-  // Fix query on error (timeout or syntax)
-  if (error) {
-    logger.log("First sql query error => try fix:", error);
-
-    await updateRunStatus(run.id, ko.loading.retrying_error);
-
-    let additional_prompt = "";
-    if (String(error.message || "").includes("timeout")) {
-      additional_prompt = timeoutHandlePrompt;
-    }
-
-    const fixed_query = await geminiInference(
-      "gemini-3-flash-preview",
-      "You are a specialized SQL query fixing assistant. Fix errors and return a single SQL statement only.",
-      `You are an expert PostgreSQL SQL fixer for a recruitment candidate search system.
-  
-  Rules:
-  - Fix ONLY what is necessary.
-  - Preserve original intent/meaning.
-  - Do NOT add new tables/filters unless required to fix the error.
-  - Keep tsvector logic in place.
-  - Output MUST be a single valid SQL statement only. No explanations.
-  
-  ${additional_prompt}
-  
-  [SQL]
-  ${sql_query}
-  
-  [ERROR]
-  ${error.message}
-  `,
-      0.5,
-      ThinkingLevel.LOW
-    );
-
-    const sqlQueryWithGroupBy2 = ensureGroupBy(fixed_query as string, "");
-
-    // Save fixed SQL to the run (optional)
-    await supabase
-      .from("runs")
-      .update({ sql_query: sqlQueryWithGroupBy2 as string })
-      .eq("id", run.id);
-
-    const { data: data2, error: error2 } = await supabase.rpc(
-      "set_timeout_and_execute_raw_sql",
-      {
-        sql_query: sqlQueryWithGroupBy2,
-        page_idx: pageIdx,
-        limit_num: limit,
-        offset_num: offset,
-      }
-    );
-
-    data = data2;
-    error = error2;
-  }
-
-  if (error) {
-    await updateRunStatus(
-      run.id,
-      `Error: ${String(error.message || error)}` || "Error"
-    );
-    return {
-      data: [],
-      status: `검색 도중 에러가 발생했습니다. Error message : ${String(
-        error.message || error
-      )}`,
-    };
-  }
-
-  if (!data || !data[0] || data[0].length === 0) {
-    await updateRunStatus(run.id, "No data found");
-    return {
-      data: [],
-      status: "no data found",
-    };
-  }
-
-  await updateRunStatus(run.id, ko.loading.summarizing);
-
+export const reranking = async ({ candidates, criteria, query_text, review_count_num, runId }: { candidates: any[], criteria: string[], query_text: string, review_count_num: number, runId: string }) => {
   const fullScore = criteria.length * 2;
 
   const scored: (ScoredCandidate & { summary: string })[] =
     await mapWithConcurrency(
-      data[0].slice(0, review_count) as any[],
+      candidates.slice(0, review_count_num) as any[],
       20,
       async (candidate) => {
         const id = candidate.id as string;
@@ -288,7 +115,7 @@ export const searchDatabase = async ({
     .filter((s) => s.summary != null)
     .map((s) => ({
       candid_id: s.id,
-      run_id: run.id,
+      run_id: runId,
       text: s.summary,
     }));
 
@@ -302,7 +129,211 @@ export const searchDatabase = async ({
   // Sort by score desc (stable-ish by id)
   scored.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 
-  await updateRunStatus(run.id, "Done");
+  return scored;
+}
+
+export type RunRow = {
+  id: string;
+  query_id: string;
+  criteria?: any | null; // jsonb
+  sql_query?: string | null;
+  query_text?: string | null;
+};
+
+/**
+ * Search the database and return scored candidates.
+ * - Stores synthesized summaries in bulk.
+ * - Does NOT write runs_pages here; caller decides how to chunk/cache.
+ */
+export const searchDatabase = async ({
+  query_text,
+  criteria,
+  pageIdx,
+  run,
+  sql_query,
+  limit = 50,
+  offset = 0,
+  review_count = 50
+}: {
+  query_text: string;
+  criteria: string[];
+  pageIdx: number;
+  run: RunRow;
+  sql_query: string;
+  limit?: number;
+  offset?: number;
+  review_count?: number;
+}) => {
+  await updateRunStatus(run.id, ko.loading.searching_candidates);
+  let limit_num = limit;
+  let review_count_num = review_count;
+
+  const start_time = performance.now();
+
+  let data: any[] | null = [];
+  let error: any;
+
+  const { data: data1, error: error1 } = await rpc_set_timeout_and_execute_raw_sql_via_runs({
+    runId: run.id,
+    queryId: run.query_id,
+    sql_query,
+    page_idx: pageIdx,
+    limit_num: limit_num,
+    offset_num: offset,
+  });
+
+  data = data1;
+  error = error1;
+
+  logger.log("time for fetching data:", performance.now() - start_time, "\nFirst query results : ", data, error);
+
+  let candidates = data?.[0] ?? [];
+
+  // Fix query on error (timeout or syntax)
+  if (error || candidates.length < 10) {
+    logger.log("First sql query error [error || candidates.length < 10] => ", error, data?.[0]?.length);
+    // case 1) timeout
+    // case 2) 너무 좁게 검색해서 결과가 잡히지 않음.
+    let additional_prompt = "";
+    if (error && String(error.message || "").includes("timeout"))
+      additional_prompt = timeoutHandlePrompt;
+
+    if (candidates.length < 10)
+      additional_prompt = expandingSearchPrompt;
+
+    if (error)
+      additional_prompt += `\n\n [ERROR]\n ${error.message}\n`;
+
+    if (error)
+      await updateRunStatus(run.id, ko.loading.retrying_error)
+
+    if (!error && candidates.length < 10)
+      await updateRunStatus(run.id, `${candidates.length}명의 후보자를 찾았습니다. 더 많은 후보자를 찾기 위해 검색 조건을 확장하겠습니다. ` + ko.loading.expanding_search);
+
+    const fixed_query = await geminiInference(
+      "gemini-3-flash-preview",
+      "You are a specialized SQL query fixing assistant. Fix errors and return a single SQL statement only.",
+      `You are an expert PostgreSQL SQL fixer for a recruitment candidate search system.
+${additional_prompt}
+
+[Input for search from user]
+criteria: ${criteria}
+input text for searching: ${query_text}
+
+[Original SQL]
+${sql_query}
+`,
+      0.5,
+      ThinkingLevel.LOW
+    );
+    const sqlQueryWithGroupBy2 = ensureGroupBy(fixed_query as string, "");
+    await updateQuery({ sql: sqlQueryWithGroupBy2 as string, runId: run.id });
+
+    const { data: data2, error: error2 } = await rpc_set_timeout_and_execute_raw_sql_via_runs({
+      runId: run.id,
+      queryId: run.query_id,
+      sql_query: sqlQueryWithGroupBy2 as string,
+      page_idx: pageIdx,
+      limit_num: limit_num,
+      offset_num: offset,
+    });
+
+    data = data2;
+    if (data && data[0]) {
+      candidates = deduplicateCandidates([...candidates, ...data[0]]);
+    }
+    error = error2;
+    logger.log(" 🔥 Second sql query error => try fix:", sqlQueryWithGroupBy2);
+  }
+
+
+  // 🍭 🍭 2차 시도 실패 시: Harper 최후의 보루 모드
+  if (candidates.length < 5 || error) {
+    logger.log("🚨 [Harper Search] Falling back to Broad Keyword Mode due to low results/error.", error, data?.[0]?.length, "\n\n");
+
+    // 유저에게 상황을 친절하게 알림
+    if (!error) {
+      await updateRunStatus(
+        run.id,
+        candidates.length + "명의 후보자를 찾았습니다. 더 많은 후보자를 찾기 위해 광범위 검색으로 전환합니다..."
+      );
+    } else
+      await updateRunStatus(
+        run.id,
+        "검색 조건을 확장하여 더 많은 후보자를 찾기 위해 광범위 검색으로 전환합니다..."
+      );
+
+    let fallback_sql = '';
+
+    fallback_sql = await xaiInference(
+      "grok-4-fast-reasoning",
+      "You are a recruitment search expert for 'Harper'. Your goal is to maximize candidate recall using broad FTS keywords.",
+      tsvectorPrompt2 + `
+[Input for search from user]
+criteria: ${criteria}
+input text for searching: ${query_text}
+
+`,
+      0.5, // 유의어 확장을 위해 온도를 약간 올림
+      1, false, "tsvectorPrompt2"
+    )
+
+    const out = JSON.parse(fallback_sql);
+    const finalQuery = sqlRefine(out.sql as string, false);
+    logger.log(" 🦕 Third sql query : ", finalQuery, "\n\n");
+
+    const final = `
+WITH identified_ids AS (
+${finalQuery}
+)
+SELECT
+  to_json(c.id) AS id,
+  c.name,
+  i.fts_rank_cd
+FROM identified_ids i
+JOIN candid c ON c.id = i.id
+ORDER BY i.fts_rank_cd DESC`;
+    await updateQuery({ sql: final as string, runId: run.id });
+
+    limit_num = limit + 50;
+    review_count_num = review_count_num + 50;
+
+    const { data: finalData, error: finalError } = await rpc_set_timeout_and_execute_raw_sql_via_runs({
+      runId: run.id,
+      queryId: run.query_id,
+      sql_query: final,
+      page_idx: pageIdx,
+      limit_num: limit_num,
+      offset_num: offset,
+    });
+
+    data = finalData;
+    if (data && data[0])
+      candidates = deduplicateCandidates([...candidates, ...data[0]]);
+    error = finalError;
+
+    if (data && data[0]) {
+      logger.log(`✅ [Harper Search] Fallback successful. Found ${data[0].length} potential candidates.`);
+    }
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  if (candidates.length === 0) {
+    await updateRunStatus(run.id, "done");
+    return {
+      data: [],
+      status: "no data found",
+    };
+  }
+
+  await updateRunStatus(run.id, candidates.length + "명의 " + ko.loading.summarizing);
+
+  const scored = await reranking({ candidates, criteria, query_text, review_count_num, runId: run.id });
+
+  await updateRunStatus(run.id, "done");
 
   return {
     data: scored,

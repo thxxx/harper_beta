@@ -63,21 +63,48 @@ const Home: NextPage = () => {
     const start = performance.now();
     console.log("testSqlQuery start");
     const sql =
-      "```sql WITH params AS ( ```";
-    const newSql = ensureGroupBy(sql, "");
-    console.log("newSql", newSql);
+      `
+WITH identified_ids AS (
+WITH q AS (
+SELECT
+  to_tsquery('english', 'science <-> high') AS q_edu_high
+)
+SELECT
+  t1.id,
+  ts_rank_cd(t1.fts, q.q_edu_high) AS fts_rank_cd
+FROM candid t1
+CROSS JOIN q
+WHERE t1.fts @@ q.q_edu_high
 
-    // const { data: data1, error: error1 } = await supabase.rpc(
-    //   "set_timeout_and_execute_raw_sql",
-    //   {
-    //     sql_query: sql,
-    //     page_idx: 0,
-    //     limit_num: 50,
-    //     offset_num: 0,
-    //   }
-    // );
+ORDER BY fts_rank_cd DESC, t1.id
+LIMIT 20
+)
+SELECT
+  to_json(c.id) AS id,
+  c.name,
+  c.headline,
+  c.location,
+  c.summary,
+  i.fts_rank_cd
+FROM identified_ids i
+JOIN candid c ON c.id = i.id
 
-    // console.log(data1, error1);
+ORDER BY i.fts_rank_cd DESC
+`;
+    const newSql = ensureGroupBy(sql, ""); // 이건 무시해도 됨.
+    // console.log("newSql", newSql);
+
+    const { data: data1, error: error1 } = await supabase.rpc(
+      "set_timeout_and_execute_raw_sql",
+      {
+        sql_query: newSql,
+        page_idx: 0,
+        limit_num: 250,
+        offset_num: 0,
+      }
+    );
+
+    console.log(data1, error1);
     const end = performance.now();
     console.log("testSqlQuery time", end - start);
   };

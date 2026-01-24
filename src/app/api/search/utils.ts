@@ -1,6 +1,7 @@
-import { SummaryScore } from "@/components/information/SummaryCell";
+import { SummaryScore } from "@/types/type";
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/utils/logger";
+import { ensureGroupBy } from "@/utils/textprocess";
 
 export const UI_START = "<<UI>>";
 export const UI_END = "<<END_UI>>";
@@ -134,3 +135,65 @@ export const updateRunStatus = async (runId: string, status: string) => {
   logger.log("\n updateRunStatus: ", runId, status);
   await supabase.from("runs").update({ status }).eq("id", runId);
 };
+
+export const makeJoinQuery = (tables: string[]) => {
+  let coalesce = ``
+  if (tables.includes('edu_user')) {
+    coalesce += `COALESCE(edu.data, '[]'::jsonb) AS edu_user,`
+  }
+  if (tables.includes('experience_user')) {
+    coalesce += `\nCOALESCE(exp.data, '[]'::jsonb) AS experience_user,`
+  }
+  if (tables.includes('publications')) {
+    coalesce += `\nCOALESCE(pub.data, '[]'::jsonb) AS publications,`
+  }
+  if (tables.includes('extra_experience')) {
+    coalesce += `\nCOALESCE(ext.data, '[]'::jsonb) AS extra_experience,`
+  }
+  coalesce = coalesce.slice(0, -1);
+
+  let leftJoin = ``
+  if (tables.includes('edu_user')) {
+    leftJoin += `
+LEFT JOIN LATERAL (
+SELECT jsonb_agg(to_jsonb(e)) AS data FROM edu_user e WHERE e.candid_id = i.id
+) edu ON TRUE`
+  }
+  if (tables.includes('experience_user')) {
+    leftJoin += `
+LEFT JOIN LATERAL (
+SELECT jsonb_agg(to_jsonb(ex) || jsonb_build_object('company_db', to_jsonb(comp))) AS data 
+FROM experience_user ex 
+LEFT JOIN company_db comp ON comp.id = ex.company_id 
+WHERE ex.candid_id = i.id
+) exp ON TRUE`
+  }
+  if (tables.includes('publications')) {
+    leftJoin += `
+LEFT JOIN LATERAL (
+SELECT jsonb_agg(to_jsonb(p)) AS data FROM publications p WHERE p.candid_id = i.id
+) pub ON TRUE`
+  }
+  if (tables.includes('extra_experience')) {
+    leftJoin += `
+LEFT JOIN LATERAL (
+SELECT jsonb_agg(to_jsonb(ee)) AS data FROM extra_experience ee WHERE ee.candid_id = i.id
+) ext ON TRUE`
+  }
+
+  return {coalesce, leftJoin}
+}
+
+export const updateQuery = async ({sql, runId}: {sql:string, runId:string}) => {
+  return await supabase
+    .from("runs")
+    .update({ sql_query: sql as string })
+    .eq("id", runId);
+}
+
+export const deduplicateCandidates = (candidates: ScoredCandidate[]) => {
+  const deduped = Array.from(
+    new Map(candidates.map(item => [item.id, item])).values()
+  );
+  return deduped;
+}

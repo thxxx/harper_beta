@@ -5,7 +5,7 @@ import { deduplicateAndScore, UI_END, UI_START } from "../utils";
 import { ko } from "@/lang/ko";
 import { logger } from "@/utils/logger";
 import { updateRunStatus } from "../utils";
-import { parseQueryWithLLM } from "../parse";
+import { makeSqlQuery } from "../parse";
 import { searchDatabase } from "../parse";
 import { notifyToSlack } from "@/lib/slack";
 
@@ -122,10 +122,15 @@ export async function POST(req: NextRequest) {
   // 3) Load run (source of truth for raw_input_text / criteria / sql_query)
   const { data: run, error: rErr } = await supabase
     .from("runs")
-    .select("id, query_id, query_text, criteria, sql_query")
+    .select("id, query_id, query_text, criteria, sql_query, status")
     .eq("id", runId)
     .eq("query_id", queryId)
     .single();
+
+  if (!(run?.status?.includes("error") || run?.status === null || run?.status.includes("done"))) {
+    logger.log("\n\n 🦾 지금 진행중입니다. 건드리지 마세요. ", run?.status, "\n\n");
+    return NextResponse.json({ error: "Run not found" }, { status: 404 });
+  }
 
   if (rErr || !run) {
     return NextResponse.json({ error: "Run not found" }, { status: 404 });
@@ -138,8 +143,6 @@ export async function POST(req: NextRequest) {
     : [];
   let sql_query: string | null = run.sql_query ?? null;
 
-  // If criteria is stored as object {criteria:[],...} in jsonb, normalize here
-  // Example: run.criteria = { criteria: [...], thinking: "...", rephrasing: "..." }
   if (!criteria.length && run.criteria && typeof run.criteria === "object") {
     const maybe = (run.criteria as any)?.criteria;
     if (Array.isArray(maybe)) criteria = maybe;
@@ -148,7 +151,7 @@ export async function POST(req: NextRequest) {
   if (!sql_query) {
     await updateRunStatus(run.id, ko.loading.making_query);
 
-    const parsedQuery = await parseQueryWithLLM(query_text, criteria, "");
+    const parsedQuery = await makeSqlQuery(query_text, criteria, "");
     if (typeof parsedQuery !== "string") {
       await updateRunStatus(run.id, JSON.stringify(parsedQuery));
       return NextResponse.json(parsedQuery, { status: 404 });
@@ -164,16 +167,25 @@ export async function POST(req: NextRequest) {
   }
 
   // 6) Run search
-  const { data: searchResults, status: searchStatus } = await searchDatabase({
-    query_text,
-    criteria,
-    pageIdx: page,
-    run: run as RunRow,
-    sql_query: sql_query,
-    limit: 100,
-    offset: offset,
-    review_count: 100
-  });
+  let searchResults: any[] = [];
+  let searchStatus: string = "";
+  try {
+    const { data: searchResultsData, status: searchStatusData } = await searchDatabase({
+      query_text,
+      criteria,
+      pageIdx: page,
+      run: run as RunRow,
+      sql_query: sql_query,
+      limit: 150,
+      offset: offset,
+      review_count: 100
+    });
+    searchResults = searchResultsData;
+    searchStatus = searchStatusData;
+  } catch (e) {
+    updateRunStatus(run.id, "error: " + String(e));
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
+  }
 
   const fullScoreCount = searchResults.filter((r: any) => r.score === 1).length;
   const onlyPartCriteriaSatisfiedCount = searchResults.filter((r: any) => r.score !== 1 && r.score > 0.5).length;
@@ -246,10 +258,10 @@ Now write the additional message:`,
   if (page === 0 && candidateIds.length === 0) {
     await notifyToSlack(
       `🔍 *Search Result Not Found! 검색 결과가 없어요!*\n\n` +
-        `• *Query*: ${query_text}\n` +
-        `• *Criteria*: ${criteria?.join(", ")}\n` +
-        `• *Run ID*: ${runId}\n` +
-        `• *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`
+      `• *Query*: ${query_text}\n` +
+      `• *Criteria*: ${criteria?.join(", ")}\n` +
+      `• *Run ID*: ${runId}\n` +
+      `• *Time(Standard Korea Time)*: ${new Date().toLocaleString("ko-KR")}`
     );
   }
 

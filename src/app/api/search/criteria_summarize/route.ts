@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  logger.log("body ", body);
   if (body.is_one_line) {
     const { doc } = body as {
       doc: any;

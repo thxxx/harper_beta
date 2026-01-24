@@ -33,13 +33,22 @@ export async function fetchCandidateDetail(id: string, userId?: string) {
         company_db (
           name,
           logo,
-          linkedin_url
+          linkedin_url,
+          founded_year,
+          employee_count_range,
+          specialities,
+          investors,
+          short_description,
+          location
         )
       ),
       publications (
         title,
         link,
         published_at
+      ),
+      extra_experience(
+        *
       ),
       connection (
         user_id,

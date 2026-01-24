@@ -14,7 +14,7 @@ import { Check, Dot, X } from "lucide-react";
 import { useMessages } from "@/i18n/useMessage";
 import { useRouter } from "next/navigation";
 import { RoleBox, SchoolBox } from "./CandidatesListTable";
-import { SummaryScore } from "./information/SummaryCell";
+import { SummaryScore } from "@/types/type";
 
 const asArr = (v: any) => (Array.isArray(v) ? v : []);
 
