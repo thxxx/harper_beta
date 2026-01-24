@@ -13,7 +13,7 @@ const Requestbutton = ({
   isBeta?: boolean;
 }) => {
   const initialRequested = useMemo(
-    () => c.connection?.some((con) => con.typed === 1) ?? false,
+    () => c.connection?.some((con: any) => con.typed === 1) ?? false,
     [c.connection]
   );
 
@@ -93,4 +93,4 @@ const Requestbutton = ({
   );
 };
 
-export default Requestbutton;
+export default React.memo(Requestbutton);
