@@ -67,12 +67,16 @@ ${parsed_query}
   );
   // 쿼리를 만들었다.
   let { data: searchResults, status: searchStatus } = await searchDatabase(
-    q.raw_input_text ?? "",
-    criteria,
-    pageIdx,
-    queryId,
-    q.user_id,
-    50
+    {
+      query_text: q.raw_input_text ?? "",
+      criteria: criteria,
+      pageIdx: pageIdx,
+      run: { id: queryId, query_id: queryId, criteria: criteria, sql_query: parsed_query },
+      sql_query: parsed_query,
+      limit: 50,
+      offset: 0,
+      review_count: 50
+    }
   );
 
   const upRes2 = await supabase.from("queries").upsert({
