@@ -140,7 +140,6 @@ export default function ShareTokenPage() {
                                 headline={candid.headline}
                                 location={candid.location}
                                 total_exp_months={candid.total_exp_months}
-                                links={links}
                             />
 
                             {/* 오른쪽 정보/액션 (공유 전용) */}
@@ -167,6 +166,7 @@ export default function ShareTokenPage() {
                                 name={candid.name ?? ""}
                                 oneline={candid.oneline ?? ""} // 없으면 빈값
                                 isLoadingOneline={false}
+                                links={links}
                             />
                         </div>
                     </div>
