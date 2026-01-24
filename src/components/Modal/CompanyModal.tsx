@@ -232,7 +232,7 @@ export default function CompanyModalRoot() {
               {company.investors && (
                 <Section title={m.company.investors}>
                   <div className="flex flex-wrap gap-2">
-                    {company.investors.split(",").map((i) => (
+                    {company.investors.split(",").map((i: string) => (
                       <span
                         key={i}
                         className="rounded-md bg-white/5 px-3 py-2 text-xs"
@@ -247,7 +247,7 @@ export default function CompanyModalRoot() {
               {company.related_links && (
                 <Section title={m.company.news}>
                   <div className="flex flex-wrap gap-2">
-                    {company.related_links.map((l) => (
+                    {company.related_links.map((l: string) => (
                       <LinkPreview key={l} url={l} />
                     ))}
                   </div>
