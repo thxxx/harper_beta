@@ -14,6 +14,7 @@ import { MIN_CREDITS_FOR_SEARCH } from "@/utils/constantkeys";
 import { useCredits } from "@/hooks/useCredit";
 import { showToast } from "@/components/toast/toast";
 import CandidateModalRoot from "@/components/Modal/CandidateModal";
+import { useRunDetail } from "@/hooks/useRunDetail";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -231,6 +232,7 @@ export default function ResultPage() {
     () => ({ type: "query", queryId: queryId ?? "" } as ChatScope),
     [queryId]
   );
+  const { data: runData, isLoading: isRunDetailLoading } = useRunDetail(runId);
 
   if (!queryId) return <AppLayout>Loading...</AppLayout>;
 
@@ -255,6 +257,8 @@ export default function ResultPage() {
                 isFirst={isFirst}
                 isLoading={isLoading}
                 runId={runId}
+                status={runData?.status ?? ""}
+                feedback={runData?.feedback ?? 0}
               />
             )}
 
@@ -272,7 +276,7 @@ export default function ResultPage() {
                 canPrev={canPrev}
                 canNext={canNext}
                 isFetchingNextPage={isFetchingNextPage}
-                onRunMoreSearch={() => {}}
+                onRunMoreSearch={() => { }}
                 onPrevPage={prevPage}
                 onNextPage={nextPage}
                 runId={runId}

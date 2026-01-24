@@ -99,7 +99,7 @@ Your goal is to generate high-quality SQL WHERE clauses that retrieve a
 relevant but sufficiently inclusive candidate set from the database.
 - Go beyond simple keyword matching.
   Expand conditions using contextual synonyms, role/field variants,
-  abbreviations, and English/Korean equivalents.
+  abbreviations, and English/Korean equivalents. 이름, location 등을 포함한 많은 데이터들이 영어로 작성되어있는 경우도 있기 때문에, 영어 동의어도 항상 포함해야한다.
 - Preserve the user's core intent using AND conditions.
   Use OR only to expand equivalent expressions of the same intent
   (never to merge different roles or domains).
@@ -322,6 +322,7 @@ Convert the input SQL into a high-performance version using EXISTS and ANY(ARRAY
 3. Filter ONLY 'id' and 'rank' from 'candid'. (Apply LIMIT 300). 최종 결과는 너가 출력해준 SQL 뒤에 해당 ids들을 기준으로 table들을 JOIN해서 완성할거야. 너는 그 앞에 들어갈 부분만 작성해주면 돼.
 4. Clean Output: Remove all SQL comments (--).
 5. include ts_rank as fts_rank column in the output.
+6. 혹은 DB 검색에 있어 꼭 들어가야하는 동의어나 키워드가 있다면 그것도 추가해도 됨. ex) "서울대학교" → "seoul national university" | "SNU" or "김호진" -> "Hojin Kim", "Kim Hojin" 등
 
 # Output
 - Return the SQL query. 

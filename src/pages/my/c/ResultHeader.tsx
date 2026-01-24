@@ -2,7 +2,6 @@
 import React, { useCallback, useMemo } from "react";
 import { Clock, Loader2, Tags, ThumbsDown, ThumbsUp } from "lucide-react";
 import { dateToFormatLong } from "@/utils/textprocess";
-import { useRunDetail } from "@/hooks/useRunDetail";
 import { supabase } from "@/lib/supabase";
 
 type Props = {
@@ -10,6 +9,8 @@ type Props = {
   isFirst: boolean;
   isLoading: boolean;
   runId: string;
+  status: string;
+  feedback: number;
 };
 
 export default function ResultHeader({
@@ -17,21 +18,34 @@ export default function ResultHeader({
   isFirst,
   isLoading,
   runId,
+  status,
+  feedback,
 }: Props) {
-  const q = useRunDetail(runId);
 
   const statusMessage = useMemo(() => {
-    return q.data?.status;
-  }, [q.data]);
+    return status;
+  }, [status]);
 
   // implement like (= runs.feedback = 1)
   const like = useCallback(() => {
-  }, []);
+    if (!runId) return;
+    supabase.from("runs").update({ feedback: feedback === 1 ? 0 : 1 }).eq("id", runId).then(({ error }) => {
+      if (error) {
+        console.error("Like feedback update failed:", error);
+      }
+    });
+  }, [feedback, runId]);
 
   // implement dislike (= runs.feedback = -1)
   const dislike = useCallback(() => {
+    if (!runId) return;
+    supabase.from("runs").update({ feedback: feedback === -1 ? 0 : -1 }).eq("id", runId).then(({ error }) => {
+      if (error) {
+        console.error("Dislike feedback update failed:", error);
+      }
+    });
 
-  }, []);
+  }, [feedback, runId]);
 
   if (!queryItem) return null;
 
@@ -56,11 +70,11 @@ export default function ResultHeader({
           )}
         </div>
         <div className="flex flex-row items-center justify-center gap-4 text-hgray600">
-          <button>
-            <ThumbsUp className="w-3.5 h-3.5" strokeWidth={1.6} />
+          <button onClick={like} className="p-1.5 rounded-sm hover:bg-white/10 cursor-pointer">
+            <ThumbsUp className={`w-3.5 h-3.5`} fill={feedback === 1 ? "rgba(255,255,255,0.9)" : "none"} strokeWidth={1.6} />
           </button>
-          <button>
-            <ThumbsDown className="w-3.5 h-3.5" strokeWidth={1.6} />
+          <button onClick={dislike} className="p-1.5 rounded-sm hover:bg-white/10 cursor-pointer">
+            <ThumbsDown className={`w-3.5 h-3.5`} fill={feedback === -1 ? "rgba(255,255,255,0.9)" : "none"} strokeWidth={1.6} />
           </button>
         </div>
       </div>
